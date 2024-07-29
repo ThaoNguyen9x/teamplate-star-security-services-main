@@ -2,9 +2,9 @@ import React, { useEffect, useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import Loading from "../../../components/Loading";
 import Delete from "../../../components/admin/Delete";
-import AccountService from "../../../services/AccountService";
 import DataTable from "react-data-table-component";
-import EmployeeService from "../../../services/EmployeeService";
+import CustomerService from "../../../services/CustomerService";
+import { no_avatar } from "../../../assets";
 
 const paginationComponentOptions = {
   rowsPerPageText: "Rows per page",
@@ -16,29 +16,28 @@ const paginationComponentOptions = {
 
 const email_REGEX =
   /^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$/;
-const password_REGEX =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[#$@!%&*?])[A-Za-z\d#$@!%&*?]{8,30}$/;
 
-const ListAccount = () => {
+const ListCustomer = () => {
   const [values, setValues] = useState({
-    fullname: "",
+    customerName: "",
     email: "",
-    password: "",
-    confirmPassword: "",
-    employeeId: "",
+    phone: "",
+    file: null,
   });
-  const [accounts, setAccounts] = useState([]);
-  const [employees, setEmployees] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [photo, setPhoto] = useState(null);
   const [loading, setLoading] = useState(false);
   const [remove, setRemove] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [editItem, setEditItem] = useState({
     id: "",
-    fullname: "",
-    employeeId: "",
-    model: "account",
+    customerName: "",
+    email: "",
+    phone: "",
+    file: null,
+    model: "customer",
   });
-  const [searchQuery, setSearchQuery] = useState({ account: "" });
+  const [searchQuery, setSearchQuery] = useState({ customer: "" });
   const [showModal, setShowModal] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -49,13 +48,8 @@ const ListAccount = () => {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const [accountsData, employeesData] = await Promise.all([
-        AccountService.getAllAccounts(),
-        EmployeeService.getAllEmployees(),
-      ]);
-
-      if (accountsData.data) setAccounts(accountsData.data);
-      if (employeesData.data) setEmployees(employeesData.data);
+      const data = await CustomerService.getAllCustomers();
+      setCustomers(data || []);
     } catch (error) {
       toast.error(
         "Failed to fetch data. Please check the console for more details."
@@ -65,15 +59,24 @@ const ListAccount = () => {
     }
   };
 
-  const handleEditClick = useCallback((id, fullname, employeeId) => {
-    setEditItem({ id, fullname, employeeId, model: "account" });
-  }, []);
+  const handleEditClick = useCallback(
+    (id, customerName, email, phone, file) => {
+      setEditItem({ id, customerName, email, phone, file, model: "customer" });
+    },
+    []
+  );
 
   const handleUpdate = useCallback(async () => {
     setLoading(true);
     try {
-      const { id, fullname, employeeId } = editItem;
-      await AccountService.updateAccount(id, fullname, employeeId);
+      const { id, customerName, email, phone, file } = editItem;
+      await CustomerService.updateCustomer(
+        id,
+        customerName,
+        email,
+        phone,
+        file
+      );
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
@@ -82,25 +85,26 @@ const ListAccount = () => {
       setLoading(false);
       setEditItem({
         id: "",
-        fullname: "",
-        employeeId: "",
-        model: "account",
+        customerName: "",
+        email: "",
+        phone: "",
+        file: null,
+        model: "customer",
       });
     }
   }, [editItem]);
 
-  const handleDeleteClick = useCallback((id, model) => {
+  const handleDeleteClick = useCallback((id) => {
     setRemove(true);
     setCurrentId(id);
-    setEditItem((prevState) => ({ ...prevState, model }));
   }, []);
 
   const handleDelete = useCallback(async () => {
     setLoading(true);
     try {
-      await AccountService.deleteAccount(currentId);
-      setAccounts((prevAccounts) =>
-        prevAccounts.filter((c) => c.id !== currentId)
+      await CustomerService.deleteCustomer(currentId);
+      setCustomers((prevCustomers) =>
+        prevCustomers.filter((c) => c.id !== currentId)
       );
       toast.success("Deleted successfully.");
       handleCloseModal();
@@ -112,18 +116,6 @@ const ListAccount = () => {
     }
   }, [currentId]);
 
-  const getEmployeesOptions = () => {
-    return employees.map((c) => (
-      <option key={c.id} value={c.id}>
-        {c.name}
-      </option>
-    ));
-  };
-
-  const getEmployeeName = (row) => {
-    return employees.find((c) => c.id === row.employeeId)?.name || "N/A";
-  };
-
   const renderColumns = useCallback(
     (model) => [
       {
@@ -132,53 +124,95 @@ const ListAccount = () => {
         sortable: true,
       },
       {
-        name: "Full Name",
-        selector: (row) => row.fullName || "",
+        name: "Name",
+        selector: (row) => row.customerName || "",
         cell: (row) =>
           editItem.id === row.id && editItem.model === model ? (
             <input
               type="text"
-              value={editItem.fullname}
+              value={editItem.customerName}
               onChange={(e) =>
-                setEditItem({ ...editItem, fullname: e.target.value })
+                setEditItem({ ...editItem, customerName: e.target.value })
               }
               className="border px-2 py-1 rounded-md outline-none"
             />
           ) : (
-            row.fullName || ""
+            row.customerName || ""
           ),
         sortable: true,
       },
       {
         name: "Email",
         selector: (row) => row.email || "",
-        sortable: true,
-      },
-      {
-        name: "Employee",
-        selector: (row) => getEmployeeName(row),
         cell: (row) =>
           editItem.id === row.id && editItem.model === model ? (
-            <select
-              value={editItem.employeeId}
+            <input
+              type="email"
+              value={editItem.email}
               onChange={(e) =>
-                setEditItem((prevState) => ({
-                  ...prevState,
-                  employeeId: e.target.value,
-                }))
+                setEditItem({ ...editItem, email: e.target.value })
               }
-              className="border px-3 py-2 rounded-md"
-            >
-              <option value="">Select</option>
-              {getEmployeesOptions()}
-            </select>
+              className="border px-2 py-1 rounded-md outline-none"
+            />
           ) : (
-            getEmployeeName(row)
+            row.email || ""
           ),
         sortable: true,
       },
       {
-        name: "Actions",
+        name: "Phone",
+        selector: (row) => row.phone || "",
+        cell: (row) =>
+          editItem.id === row.id && editItem.model === model ? (
+            <input
+              type="text"
+              value={editItem.phone}
+              onChange={(e) =>
+                setEditItem({ ...editItem, phone: e.target.value })
+              }
+              className="border px-2 py-1 rounded-md outline-none"
+            />
+          ) : (
+            row.phone || ""
+          ),
+        sortable: true,
+      },
+      {
+        name: "Image",
+        selector: (row) => row.image || "",
+        cell: (row) =>
+          editItem.id === row.id && editItem.model === model ? (
+            <label>
+              <img
+                className="h-[3rem] w-[3rem] object-cover rounded-full"
+                src={
+                  editItem.file
+                    ? URL.createObjectURL(editItem.file)
+                    : editItem.Image
+                    ? editItem.Image
+                    : no_avatar
+                }
+                alt="Customer profile photo"
+              />
+              <input
+                type="file"
+                onChange={(e) =>
+                  setEditItem({ ...editItem, file: e.target.files[0] })
+                }
+                className="hidden"
+              />
+            </label>
+          ) : (
+            <img
+              className="h-[3rem] w-[3rem] object-cover rounded-full"
+              src={row.image ? row.image : no_avatar}
+              alt="Current profile photo"
+            />
+          ),
+        sortable: true,
+      },
+      {
+        customerName: "Actions",
         cell: (row) => (
           <div className="flex items-center gap-2">
             {editItem.id === row.id && editItem.model === model ? (
@@ -193,9 +227,11 @@ const ListAccount = () => {
                   onClick={() =>
                     setEditItem({
                       id: "",
-                      fullname: "",
-                      employeeId: "",
-                      model: "account",
+                      customerName: "",
+                      email: "",
+                      phone: "",
+                      file: null,
+                      model: "customer",
                     })
                   }
                   className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
@@ -207,14 +243,20 @@ const ListAccount = () => {
               <>
                 <button
                   onClick={() =>
-                    handleEditClick(row.id, row.fullName, row.employeeId)
+                    handleEditClick(
+                      row.id,
+                      row.customerName,
+                      row.email,
+                      row.phone,
+                      row.file
+                    )
                   }
                   className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
                 >
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDeleteClick(row.id, model)}
+                  onClick={() => handleDeleteClick(row.id)}
                   className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
                 >
                   Delete
@@ -239,62 +281,54 @@ const ListAccount = () => {
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setValues("");
+    setValues({
+      value: "",
+    });
     setErrors({});
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { fullname, email, password, confirmPassword, employeeId } = values;
+    const { customerName, email, phone, file } = values;
     let newErrors = {};
 
-    if (!fullname) newErrors.fullname = "Full name is required.";
-
+    if (!customerName) newErrors.customerName = "Name is required.";
     if (!email) newErrors.email = "Email is required.";
     else if (!email_REGEX.test(email))
       newErrors.email = "Invalid email format.";
+    if (!phone) newErrors.phone = "Phone is required.";
+    if (!file) newErrors.file = "Image is required.";
 
-    if (!password) newErrors.password = "Password is required.";
-    else if (!password_REGEX.test(password))
-      newErrors.password =
-        "Password must be 8-30 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.";
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setTimeout(() => setErrors({}), 5000);
+      return;
+    }
 
-    if (!confirmPassword)
-      newErrors.confirmPassword = "Confirm password is required.";
-    else if (password !== confirmPassword)
-      newErrors.confirmPassword = "Passwords do not match.";
-
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length > 0) return;
-
+    setErrors({});
     setLoading(true);
 
     try {
-      const response = await AccountService.createAccount(
-        fullname,
-        email,
-        password,
-        confirmPassword,
-        employeeId
-      );
-      setAccounts((prevAccounts) => [...prevAccounts, response.data]);
-      toast.success("Account created successfully.");
+      await CustomerService.createCustomer(customerName, email, phone);
       handleCloseModal();
+      await fetchAllData();
+      toast.success("Customer created successfully.");
     } catch (error) {
-      toast.error("Failed to create account.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleChangeInput = (e) => {
-    const { name, value } = e.target;
-    setValues((prevValues) => ({
-      ...prevValues,
-      [name]: value,
-    }));
+    const { name, value, files } = e.target;
+    if (name === "file") {
+      setValues({ ...values, [name]: files[0] });
+      setPhoto(URL.createObjectURL(files[0]));
+    } else {
+      setValues({ ...values, [name]: value });
+    }
   };
 
   return (
@@ -303,7 +337,7 @@ const ListAccount = () => {
 
       <div className="flex flex-col gap-5 mt-5">
         <div className="flex items-center justify-between">
-          <div className="font-semibold text-xl capitalize">Account</div>
+          <div className="font-semibold text-xl capitalize">Customer</div>
           <button
             onClick={handleOpenModal}
             className="px-3 py-2 bg-blue-950 text-white rounded-md"
@@ -317,19 +351,15 @@ const ListAccount = () => {
             <div className="flex items-center justify-end">
               <input
                 type="text"
-                placeholder="Search account"
-                value={searchQuery.account}
-                onChange={handleSearchChange("account")}
+                placeholder="Search customer"
+                value={searchQuery.customer}
+                onChange={handleSearchChange("customer")}
                 className="border border-gray-300 px-3 py-2 rounded-md outline-none mb-3"
               />
             </div>
             <DataTable
-              columns={renderColumns("account")}
-              data={accounts.filter((c) =>
-                c.fullName
-                  ?.toLowerCase()
-                  .includes(searchQuery.account.toLowerCase())
-              )}
+              columns={renderColumns("customer")}
+              data={customers}
               pagination
               paginationComponentOptions={paginationComponentOptions}
               customStyles={{
@@ -373,22 +403,22 @@ const ListAccount = () => {
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
           <div className="bg-white p-4 rounded-lg w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-5">Create Account</h2>
+            <h2 className="text-xl font-semibold mb-5">Create Customer</h2>
             <form onSubmit={handleSubmit}>
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
-                  Full Name:
+                  Name:
                 </span>
                 <input
                   type="text"
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                  placeholder="Enter full name"
-                  name="fullname"
-                  value={values.fullname}
+                  placeholder="Enter full customerName"
+                  customerName="customerName"
+                  value={values.customerName}
                   onChange={handleChangeInput}
                 />
-                {errors.fullname && (
-                  <span className="text-red-700">{errors.fullname}</span>
+                {errors.customerName && (
+                  <span className="text-red-700">{errors.customerName}</span>
                 )}
               </label>
               <label className="block mb-1">
@@ -399,7 +429,7 @@ const ListAccount = () => {
                   type="email"
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                   placeholder="Enter email"
-                  name="email"
+                  customerName="email"
                   value={values.email}
                   onChange={handleChangeInput}
                 />
@@ -409,55 +439,39 @@ const ListAccount = () => {
               </label>
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
-                  Password:
+                  Phone:
                 </span>
                 <input
-                  type="password"
+                  type="text"
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                  placeholder="Enter password"
-                  name="password"
-                  value={values.password}
+                  placeholder="Enter phone"
+                  customerName="phone"
+                  value={values.phone}
                   onChange={handleChangeInput}
                 />
-                {errors.password && (
-                  <span className="text-red-700">{errors.password}</span>
+                {errors.phone && (
+                  <span className="text-red-700">{errors.phone}</span>
                 )}
               </label>
-              <label className="block mb-1">
+              <label className="block mb-2">
                 <span className="block font-medium text-primary mb-1">
-                  Confirm Password:
+                  Image:
                 </span>
-                <input
-                  type="password"
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                  placeholder="Enter confirm password"
-                  name="confirmPassword"
-                  value={values.confirmPassword}
-                  onChange={handleChangeInput}
-                />
-                {errors.confirmPassword && (
-                  <span className="text-red-700">{errors.confirmPassword}</span>
-                )}
-              </label>
-              <label className="block mb-1">
-                <span className="block font-medium text-primary mb-1">
-                  Employee:
-                </span>
-                <select
-                  name="employeeId"
-                  value={values.employeeId}
-                  onChange={handleChangeInput}
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                >
-                  <option value="">Select a employee</option>
-                  {employees.map((employee) => (
-                    <option key={employee.id} value={employee.id}>
-                      {employee.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.employeeId && (
-                  <span className="text-red-700">{errors.employeeId}</span>
+                <label className="flex items-center justify-center">
+                  <img
+                    className="h-[4rem] w-[4rem] object-cover rounded-full"
+                    src={image ? URL.createObjectURL(image) : no_avatar}
+                    alt="Current profile photo"
+                  />
+                  <input
+                    type="file"
+                    name="file"
+                    className="hidden"
+                    onChange={handleChangeInput}
+                  />
+                </label>
+                {errors.file && (
+                  <span className="text-red-700">{errors.file}</span>
                 )}
               </label>
               <div className="flex items-center gap-2 mt-4">
@@ -483,4 +497,4 @@ const ListAccount = () => {
   );
 };
 
-export default ListAccount;
+export default ListCustomer;

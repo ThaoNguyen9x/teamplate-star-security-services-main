@@ -36,6 +36,9 @@ import ListDepartment from "./pages/admin/department/ListDepartment";
 import CreateDepartment from "./pages/admin/department/CreateDepartment";
 import ListEducation from "./pages/admin/education/ListEducation";
 import ListAccount from "./pages/admin/account/ListAccount";
+import ListCustomer from "./pages/admin/customer/ListCustomer";
+import ListGeneral from "./pages/admin/general/ListGeneral";
+import CreateGeneral from "./pages/admin/general/CreateGeneral";
 
 // ScrollToTop Component
 const ScrollToTop = () => {
@@ -138,6 +141,10 @@ function App() {
           <Route path="educations" element={<ListEducation />}
            />
           <Route path="accounts" element={<ListAccount />} />
+          <Route path="customers" element={<ListCustomer />} />
+
+          <Route path="general" element={<ListGeneral />} />
+          <Route path="general/create" element={<CreateGeneral />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

@@ -1,25 +1,23 @@
 import axios from "./axios";
 
-const getAllAccounts = async () => {
+const getAllCustomers = async () => {
   try {
-    let response = await axios.get("/authenCation/all");
+    let response = await axios.get("/customers");
     return response.data;
   } catch (error) {
-    throw error.response?.data || error.message;
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "An unknown error occurred";
+    throw { flag: false, message: errorMessage };
   }
 };
 
-const createAccount = async (
-  email,
-  password,
-  confirmPassword,
-  fullname,
-  employeeId
-) => {
+const createCustomer = async (name, email, phone, file) => {
   try {
     const response = await axios.post(
-      "/authencation/register",
-      { email, password, confirmPassword, fullname, employeeId },
+      "/customers",
+      { name, email, phone, file },
       {
         headers: {
           "Content-Type": "application/json",
@@ -44,7 +42,7 @@ const createAccount = async (
   }
 };
 
-const getByIdAccount = async (id) => {
+const getByIdCustomer = async (id) => {
   try {
     const response = await axios.get(`/authencation/single/${id}`);
 
@@ -65,7 +63,7 @@ const getByIdAccount = async (id) => {
   }
 };
 
-const updateAccount = async (id, name) => {
+const updateCustomer = async (id, name) => {
   try {
     const response = await axios.post(
       `/authencation/update`,
@@ -97,7 +95,7 @@ const updateAccount = async (id, name) => {
   }
 };
 
-const deleteAccount = async (id) => {
+const deleteCustomer = async (id) => {
   try {
     const response = await axios.delete(`/authencation/delete/${id}`, {
       id,
@@ -120,12 +118,12 @@ const deleteAccount = async (id) => {
   }
 };
 
-const AccountService = {
-  getAllAccounts,
-  createAccount,
-  getByIdAccount,
-  updateAccount,
-  deleteAccount,
+const CustomerService = {
+  getAllCustomers,
+  createCustomer,
+  getByIdCustomer,
+  updateCustomer,
+  deleteCustomer,
 };
 
-export default AccountService;
+export default CustomerService;

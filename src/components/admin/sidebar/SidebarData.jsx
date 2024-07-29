@@ -22,6 +22,16 @@ const SidebarData = ({ toggle }) => {
           icon: <i className="bi bi-person"></i>,
         },
         {
+          title: "Customers",
+          path: "/dashboard/customers",
+          icon: <i className="bi bi-person-plus"></i>,
+        },
+        {
+          title: "General",
+          path: "/dashboard/general",
+          icon: <i className="bi bi-balloon-heart"></i>,
+        },
+        {
           title: "Geo",
           path: "/dashboard/geo",
           icon: <i className="bi bi-cursor"></i>,

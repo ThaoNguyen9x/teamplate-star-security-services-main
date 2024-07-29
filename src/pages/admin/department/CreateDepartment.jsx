@@ -89,6 +89,7 @@ const CreateDepartment = () => {
           generalDepartmentId,
           managerId
         );
+        
         toast.success("Department created successfully.");
       } else if (showModal === "branch") {
         await DepartmentService.createBranch(name, departnentId);
