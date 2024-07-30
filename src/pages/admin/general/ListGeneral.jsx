@@ -5,7 +5,6 @@ import Delete from "../../../components/admin/Delete";
 import GeneralService from "../../../services/GeneralService";
 import DataTable from "react-data-table-component";
 import { Link } from "react-router-dom";
-import EmployeeService from "../../../services/EmployeeService";
 
 const paginationComponentOptions = {
   rowsPerPageText: "Rows per page",
@@ -17,10 +16,10 @@ const paginationComponentOptions = {
 
 const ListGeneral = () => {
   const [workTypes, setWorkTypes] = useState([]);
-  const [attendances, setAttendances] = useState([]);
-  const [departments, setDepartments] = useState([]);
-  const [branchs, setBranchs] = useState([]);
-  const [employees, setEmployees] = useState([]);
+  const [trainingPrograms, setTrainingPrograms] = useState([]);
+  const [vacationTypes, setVacationTypes] = useState([]);
+  const [sanctionTypes, setSanctionTypes] = useState([]);
+  const [overtimeTypes, setOvertimeTypes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [remove, setRemove] = useState(false);
   const [currentId, setCurrentId] = useState(null);
@@ -28,23 +27,20 @@ const ListGeneral = () => {
     id: "",
     name: "",
     coefficient: "",
-    year: "",
-    month: "",
-    day: "",
-    reportedHours: "",
-    minutesIn: "",
-    minutesOut: "",
-    hoursOut: "",
-    employeeId: "",
-    workTypeId: "",
+    description: "",
+    objectives: "",
+    startDate: "",
+    endDate: "",
+    instructor: "",
     model: "",
   });
 
   const [searchQuery, setSearchQuery] = useState({
     workType: "",
-    attendance: "",
-    department: "",
-    branch: "",
+    trainingProgram: "",
+    vacationType: "",
+    sanctionType: "",
+    overtimeType: "",
   });
 
   useEffect(() => {
@@ -56,25 +52,23 @@ const ListGeneral = () => {
     try {
       const [
         workTypesData,
-        attendancesData,
-        departmentsData,
-        branchsData,
-        employeesData,
+        trainingProgramsData,
+        vacationTypesData,
+        sanctionTypeData,
+        overtimeTypeData,
       ] = await Promise.all([
         GeneralService.getAllWorkTypes(),
-        GeneralService.getAllAttendances(),
-        GeneralService.getAllDepartments(),
-        GeneralService.getAllBranchs(),
-        EmployeeService.getAllEmployees(),
+        GeneralService.getAllTrainingPrograms(),
+        GeneralService.getAllVacationTypes(),
+        GeneralService.getAllSanctionTypes(),
+        GeneralService.getAllOvertimeTypes(),
       ]);
 
-      console.log(workTypesData.$values || []);
-
       setWorkTypes(workTypesData.$values || []);
-      setAttendances(attendancesData.$values || []);
-      setDepartments(departmentsData.$values || []);
-      setBranchs(branchsData.$values || []);
-      setEmployees(employeesData.$values || []);
+      setTrainingPrograms(trainingProgramsData || []);
+      setVacationTypes(vacationTypesData.$values || []);
+      setSanctionTypes(sanctionTypeData.$values || []);
+      setOvertimeTypes(overtimeTypeData.$values || []);
     } catch (error) {
       toast.error("Failed to fetch data.");
     } finally {
@@ -87,30 +81,22 @@ const ListGeneral = () => {
       id,
       name,
       coefficient,
-      year,
-      month,
-      day,
-      reportedHours,
-      minutesIn,
-      minutesOut,
-      hoursOut,
-      employeeId,
-      workTypeId,
+      description,
+      objectives,
+      startDate,
+      endDate,
+      instructor,
       model
     ) => {
       setEditItem({
         id,
         name,
         coefficient,
-        year,
-        month,
-        day,
-        reportedHours,
-        minutesIn,
-        minutesOut,
-        hoursOut,
-        employeeId,
-        workTypeId,
+        description,
+        objectives,
+        startDate,
+        endDate,
+        instructor,
         model,
       });
     },
@@ -124,37 +110,32 @@ const ListGeneral = () => {
         id,
         name,
         coefficient,
-        year,
-        month,
-        day,
-        reportedHours,
-        minutesIn,
-        minutesOut,
-        hoursOut,
-        employeeId,
-        workTypeId,
+        description,
+        objectives,
+        startDate,
+        endDate,
+        instructor,
         model,
       } = editItem;
 
       if (model === "workType") {
         await GeneralService.updateWorkType(id, name, coefficient);
-      } else if (model === "attendance") {
-        await GeneralService.updateAttendance(
+      } else if (model === "trainingProgram") {
+        await GeneralService.updateTrainingProgram(
           id,
-          year,
-          month,
-          day,
-          reportedHours,
-          minutesIn,
-          minutesOut,
-          hoursOut,
-          employeeId,
-          workTypeId
+          name,
+          description,
+          objectives,
+          startDate,
+          endDate,
+          instructor
         );
-      } else if (model === "department") {
-        await GeneralService.updateDepartment(id, name, workTypeId);
-      } else if (model === "branch") {
-        await GeneralService.updateBranch(id, name, departnentId);
+      } else if (model === "vacationType") {
+        await GeneralService.updateVacationType(id, name);
+      } else if (model === "sanctionType") {
+        await GeneralService.updateSanctionType(id, name);
+      } else if (model === "overtimeType") {
+        await GeneralService.updateOvertimeType(id, name, description);
       }
 
       await fetchAllData();
@@ -190,19 +171,24 @@ const ListGeneral = () => {
         setWorkTypes((prevWorkTypes) =>
           prevWorkTypes.filter((c) => c.Id !== currentId)
         );
-      } else if (model === "attendance") {
-        await GeneralService.deleteAttendance(currentId);
-        setAttendances((prevAttendances) =>
-          prevAttendances.filter((p) => p.Id !== currentId)
+      } else if (model === "trainingProgram") {
+        await GeneralService.deleteTrainingProgram(currentId);
+        setTrainingPrograms((prevTrainingPrograms) =>
+          prevTrainingPrograms.filter((c) => c.Id !== currentId)
         );
-      } else if (model === "department") {
-        await GeneralService.deleteDepartment(currentId);
-        setDepartments((prevDepartments) =>
-          prevDepartments.filter((d) => d.Id !== currentId)
+      } else if (model === "vacationType") {
+        await GeneralService.deleteVacationType(currentId);
+        setVacationTypes((prevVacationTypes) =>
+          prevVacationTypes.filter((d) => d.Id !== currentId)
         );
-      } else if (model === "branch") {
-        await GeneralService.deleteBranch(currentId);
-        setBranchs((prevBrachs) =>
+      } else if (model === "sanctionType") {
+        await GeneralService.deleteSanctionType(currentId);
+        setSanctionTypes((prevBrachs) =>
+          prevBrachs.filter((d) => d.Id !== currentId)
+        );
+      } else if (model === "overtimeType") {
+        await GeneralService.deleteOvertimeType(currentId);
+        setSanctionTypes((prevBrachs) =>
           prevBrachs.filter((d) => d.Id !== currentId)
         );
       }
@@ -223,71 +209,71 @@ const ListGeneral = () => {
     }
   }, [editItem, currentId]);
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const renderColumns = useCallback(
     (model) => {
-      const getName = (row) => {
+      const fieldMappings = {
+        workType: {
+          id: "Id",
+          name: "Name",
+          coefficient: "Coefficient",
+        },
+        vacationType: {
+          id: "Id",
+          name: "Name",
+        },
+        sanctionType: {
+          id: "Id",
+          name: "Name",
+        },
+        overtimeType: {
+          id: "Id",
+          name: "Description",
+        },
+        trainingProgram: {
+          id: "programID",
+          name: "programName",
+          description: "description",
+          instructor: "instructor",
+          objectives: "objectives",
+          startDate: "startDate",
+          endDate: "endDate",
+        },
+      };
+
+      const getId = (row) => {
         switch (model) {
           case "workType":
-            return row.Name;
-          case "department":
-            return row.Name;
-          case "branch":
-            return row.Name;
+          case "vacationType":
+          case "sanctionType":
+          case "overtimeType":
+            return row.Id;
+          case "trainingProgram":
+            return row.programID;
           default:
-            return "";
+            return null;
         }
       };
 
-      const getWorkTypesOptions = () => {
-        return workTypes.map((c) => (
-          <option key={c.Id} value={c.Id}>
-            {c.Name}
-          </option>
-        ));
-      };
-
-      const getAttendancesOptions = () => {
-        return attendances.map((p) => (
-          <option key={p.Id} value={p.Id}>
-            {p.Name}
-          </option>
-        ));
-      };
-
-      const getDepartmentsOptions = () => {
-        return departments.map((p) => (
-          <option key={p.Id} value={p.Id}>
-            {p.Name}
-          </option>
-        ));
-      };
-
-      const getEmployeesOptions = () => {
-        return employees.map((p) => (
-          <option key={p.Id} value={p.Id}>
-            {p.Name}
-          </option>
-        ));
-      };
-
-      const getWorkTypeName = (row) => {
-        return workTypes.find((c) => c.Id === row.workTypeId)?.Name || "N/A";
-      };
-
-      const getAttendanceName = (row) => {
-        return (
-          attendances.find((c) => c.Id === row.AttendancerId)?.Name || "N/A"
-        );
-      };
-
-      const getDepartmentName = (row) => {
-        return (
-          departments.find((c) => c.Id === row.DepartnentId)?.Name || "N/A"
-        );
-      };
-
-      const getEmployeeName = (row) => {
-        return employees.find((c) => c.Id === row.employeeId)?.Name || "N/A";
+      const getName = (row) => {
+        switch (model) {
+          case "workType":
+          case "vacationType":
+          case "sanctionType":
+          case "overtimeType":
+            return row.Name;
+          case "trainingProgram":
+            return row.programName;
+          default:
+            return "";
+        }
       };
 
       return [
@@ -300,7 +286,7 @@ const ListGeneral = () => {
           name: "Name",
           selector: (row) => getName(row),
           cell: (row) =>
-            editItem.id === row.Id && editItem.model === model ? (
+            editItem.id === getId(row) && editItem.model === model ? (
               <input
                 type="text"
                 value={editItem.name}
@@ -321,9 +307,9 @@ const ListGeneral = () => {
           ? [
               {
                 name: "Coefficient",
-                selector: (row) => row.coefficient,
+                selector: (row) => row.Coefficient || "",
                 cell: (row) =>
-                  editItem.id === row.Id && editItem.model === model ? (
+                  editItem.id === getId(row) && editItem.model === model ? (
                     <input
                       type="text"
                       value={editItem.coefficient}
@@ -333,230 +319,167 @@ const ListGeneral = () => {
                           coefficient: e.target.value,
                         }))
                       }
-                      className="border p-1 rounded"
+                      className="border px-2 py-1 rounded-md outline-none"
                     />
                   ) : (
-                    row.Coefficient
+                    row.Coefficient || ""
                   ),
                 sortable: true,
               },
             ]
           : []),
-        ...(model === "attendance"
+        ...(model === "trainingProgram"
           ? [
               {
-                name: "Employee",
-                selector: (row) => getEmployeeName(row),
+                name: "Description",
+                selector: (row) => row.description || "",
                 cell: (row) =>
-                  editItem.id === row.Id && editItem.model === model ? (
-                    <select
-                      value={editItem.employeeId}
-                      onChange={(e) =>
-                        setEditItem((prevState) => ({
-                          ...prevState,
-                          employeeId: e.target.value,
-                        }))
-                      }
-                      className="border px-3 py-2 rounded-md"
-                    >
-                      <option value="">Select</option>
-                      {getEmployeesOptions()}
-                    </select>
-                  ) : (
-                    getEmployeeName(row)
-                  ),
-                sortable: true,
-              },
-              {
-                name: "Year",
-                selector: (row) => row.year,
-                cell: (row) =>
-                  editItem.id === row.Id && editItem.model === model ? (
+                  editItem.id === getId(row) && editItem.model === model ? (
                     <input
-                      type="number"
-                      value={editItem.year}
+                      type="text"
+                      value={editItem.description}
                       onChange={(e) =>
                         setEditItem((prevState) => ({
                           ...prevState,
-                          year: e.target.value,
+                          description: e.target.value,
                         }))
                       }
-                      className="border p-1 rounded"
+                      className="border px-2 py-1 rounded-md outline-none"
                     />
                   ) : (
-                    row.year
+                    row.description || ""
                   ),
                 sortable: true,
               },
               {
-                name: "Month",
-                selector: (row) => row.month,
+                name: "Instructor",
+                selector: (row) => row.instructor || "",
                 cell: (row) =>
-                  editItem.id === row.Id && editItem.model === model ? (
+                  editItem.id === getId(row) && editItem.model === model ? (
                     <input
-                      type="number"
-                      value={editItem.month}
+                      type="text"
+                      value={editItem.instructor}
                       onChange={(e) =>
                         setEditItem((prevState) => ({
                           ...prevState,
-                          month: e.target.value,
+                          instructor: e.target.value,
                         }))
                       }
-                      className="border p-1 rounded"
+                      className="border px-2 py-1 rounded-md outline-none"
                     />
                   ) : (
-                    row.month
+                    row.instructor || ""
                   ),
                 sortable: true,
               },
               {
-                name: "Day",
-                selector: (row) => row.day,
+                name: "Objectives",
+                selector: (row) => row.objectives || "",
                 cell: (row) =>
-                  editItem.id === row.Id && editItem.model === model ? (
+                  editItem.id === getId(row) && editItem.model === model ? (
                     <input
-                      type="number"
-                      value={editItem.day}
+                      type="text"
+                      value={editItem.objectives}
                       onChange={(e) =>
                         setEditItem((prevState) => ({
                           ...prevState,
-                          day: e.target.value,
+                          objectives: e.target.value,
                         }))
                       }
-                      className="border p-1 rounded"
+                      className="border px-2 py-1 rounded-md outline-none"
                     />
                   ) : (
-                    row.day
+                    row.objectives || ""
                   ),
                 sortable: true,
               },
               {
-                name: "Reported Hours",
-                selector: (row) => row.reportedHours,
+                name: "Start Date",
+                selector: (row) => formatDate(row.startDate) || "",
                 cell: (row) =>
-                  editItem.id === row.Id && editItem.model === model ? (
+                  editItem.id === getId(row) && editItem.model === model ? (
                     <input
-                      type="number"
-                      value={editItem.reportedHours}
+                      type="date"
+                      value={formatDate(editItem.startDate)}
                       onChange={(e) =>
                         setEditItem((prevState) => ({
                           ...prevState,
-                          reportedHours: e.target.value,
+                          startDate: e.target.value,
                         }))
                       }
-                      className="border p-1 rounded"
+                      className="border px-2 py-1 rounded-md outline-none"
                     />
                   ) : (
-                    row.reportedHours
+                    formatDate(row.startDate) || ""
                   ),
                 sortable: true,
               },
               {
-                name: "Minutes In",
-                selector: (row) => row.minutesIn,
+                name: "End Date",
+                selector: (row) => formatDate(row.endDate) || "",
                 cell: (row) =>
-                  editItem.id === row.Id && editItem.model === model ? (
+                  editItem.id === getId(row) && editItem.model === model ? (
                     <input
-                      type="number"
-                      value={editItem.minutesIn}
+                      type="date"
+                      value={formatDate(editItem.endDate)}
                       onChange={(e) =>
                         setEditItem((prevState) => ({
                           ...prevState,
-                          minutesIn: e.target.value,
+                          endDate: e.target.value,
                         }))
                       }
-                      className="border p-1 rounded"
+                      className="border px-2 py-1 rounded-md outline-none"
                     />
                   ) : (
-                    row.minutesIn
+                    formatDate(row.endDate) || ""
                   ),
                 sortable: true,
               },
+              // {
+              //   name: "VacationType",
+              //   selector: (row) => getVacationTypeName(row),
+              //   cell: (row) =>
+              //     editItem.id === row.Id && editItem.model === model ? (
+              //       <select
+              //         value={editItem.departnentId}
+              //         onChange={(e) =>
+              //           setEditItem((prevState) => ({
+              //             ...prevState,
+              //             departnentId: e.target.value,
+              //           }))
+              //         }
+              //         className="border px-3 py-1 rounded-md outline-none"
+              //       >
+              //         <option value="">Select VacationType</option>
+              //         {getVacationTypesOptions()}
+              //       </select>
+              //     ) : (
+              //       getVacationTypeName(row)
+              //     ),
+              //   sortable: true,
+              // },
+            ]
+          : []),
+        ...(model === "overtimeType"
+          ? [
               {
-                name: "Minutes Out",
-                selector: (row) => row.minutesOut,
+                name: "Description",
+                selector: (row) => row.Description || "",
                 cell: (row) =>
-                  editItem.id === row.Id && editItem.model === model ? (
+                  editItem.id === getId(row) && editItem.model === model ? (
                     <input
-                      type="number"
-                      value={editItem.minutesOut}
+                      type="text"
+                      value={editItem.description}
                       onChange={(e) =>
                         setEditItem((prevState) => ({
                           ...prevState,
-                          minutesOut: e.target.value,
+                          description: e.target.value,
                         }))
                       }
-                      className="border p-1 rounded"
+                      className="border px-2 py-1 rounded-md outline-none"
                     />
                   ) : (
-                    row.minutesOut
-                  ),
-                sortable: true,
-              },
-              {
-                name: "Hours Out",
-                selector: (row) => row.hoursOut,
-                cell: (row) =>
-                  editItem.id === row.Id && editItem.model === model ? (
-                    <input
-                      type="number"
-                      value={editItem.hoursOut}
-                      onChange={(e) =>
-                        setEditItem((prevState) => ({
-                          ...prevState,
-                          hoursOut: e.target.value,
-                        }))
-                      }
-                      className="border p-1 rounded"
-                    />
-                  ) : (
-                    row.hoursOut
-                  ),
-                sortable: true,
-              },
-              {
-                name: "Work Type",
-                selector: (row) => getWorkTypeName(row),
-                cell: (row) =>
-                  editItem.id === row.Id && editItem.model === model ? (
-                    <select
-                      value={editItem.workTypeId}
-                      onChange={(e) =>
-                        setEditItem((prevState) => ({
-                          ...prevState,
-                          workTypeId: e.target.value,
-                        }))
-                      }
-                      className="border px-3 py-2 rounded-md"
-                    >
-                      <option value="">Select</option>
-                      {getWorkTypesOptions()}
-                    </select>
-                  ) : (
-                    getWorkTypeName(row)
-                  ),
-                sortable: true,
-              },
-              {
-                name: "Attendance",
-                selector: (row) => getAttendanceName(row),
-                cell: (row) =>
-                  editItem.id === row.Id && editItem.model === model ? (
-                    <select
-                      value={editItem.attendancerId}
-                      onChange={(e) => {
-                        setEditItem((prevState) => ({
-                          ...prevState,
-                          attendancerId: e.target.value,
-                        }));
-                      }}
-                      className="border px-3 py-2 rounded-md"
-                    >
-                      <option value="">Select</option>
-                      {getAttendancesOptions()}
-                    </select>
-                  ) : (
-                    getAttendanceName(row)
+                    row.Description || ""
                   ),
                 sortable: true,
               },
@@ -566,11 +489,11 @@ const ListGeneral = () => {
           name: "Actions",
           cell: (row) => (
             <>
-              {editItem.id === row.Id && editItem.model === model ? (
+              {editItem.id === getId(row) && editItem.model === model ? (
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleUpdate}
-                    className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
+                    className="whitespace-nowrap px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
                   >
                     Update
                   </button>
@@ -580,19 +503,16 @@ const ListGeneral = () => {
                         id: null,
                         name: "",
                         coefficient: "",
-                        year: "",
-                        month: "",
-                        day: "",
-                        reportedHours: "",
-                        minutesIn: "",
-                        minutesOut: "",
-                        hoursOut: "",
-                        employeeId: "",
-                        workTypeId: "",
+                        programName: "",
+                        description: "",
+                        startDate: "",
+                        endDate: "",
+                        instructor: "",
+                        objectives: "",
                         model: "",
                       })
                     }
-                    className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
+                    className="whitespace-nowrap px-3 py-2 border border-red-700 text-red-700 rounded-md"
                   >
                     Cancel
                   </button>
@@ -602,21 +522,24 @@ const ListGeneral = () => {
                   <button
                     onClick={() =>
                       handleEditClick(
-                        row.Id,
+                        getId(row),
                         getName(row),
-                        row.GeneralDepartmentId,
-                        row.AttendancerId,
-                        row.DepartnentId,
+                        row.Coefficient,
+                        row.description,
+                        row.objectives,
+                        row.startDate,
+                        row.endDate,
+                        row.instructor,
                         model
                       )
                     }
-                    className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
+                    className="whitespace-nowrap px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
                   >
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDeleteClick(row.Id, model)}
-                    className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
+                    onClick={() => handleDeleteClick(getId(row), model)}
+                    className="whitespace-nowrap px-3 py-2 border border-red-700 text-red-700 rounded-md"
                   >
                     Delete
                   </button>
@@ -630,8 +553,8 @@ const ListGeneral = () => {
     [
       editItem,
       workTypes,
-      attendances,
-      departments,
+      trainingPrograms,
+      vacationTypes,
       handleEditClick,
       handleUpdate,
       handleDeleteClick,
@@ -660,70 +583,103 @@ const ListGeneral = () => {
         </div>
 
         <div className="grid p-5 bg-gray-100 rounded-md">
-          {["workType", "attendance"].map((model) => (
-            <div key={model}>
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold my-5">
-                  {model.charAt(0).toUpperCase() + model.slice(1)}
-                </h3>
+          <div className="container  mx-auto overflow-y-auto">
+            {[
+              "workType",
+              "trainingProgram",
+              "vacationType",
+              "sanctionType",
+              "overtimeType",
+            ].map((model) => (
+              <div key={model}>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold my-5">
+                    {model.charAt(0).toUpperCase() + model.slice(1)}
+                  </h3>
 
-                <input
-                  type="text"
-                  placeholder={`Search ${
-                    model === "workType" ? "workTypes" : "attendances"
-                  }`}
-                  value={searchQuery[model]}
-                  onChange={handleSearchChange(model)}
-                  className="border border-gray-300 px-3 py-2 rounded-md outline-none"
+                  <input
+                    type="text"
+                    placeholder={`Search ${
+                      model === "workType"
+                        ? "workTypes"
+                        : model === "trainingProgram"
+                        ? "trainingPrograms"
+                        : model === "vacationTypes"
+                        ? "vacationTypes"
+                        : model === "sanctionType"
+                        ? "sanctionTypes"
+                        : "overtimeTypes"
+                    }`}
+                    value={searchQuery[model]}
+                    onChange={handleSearchChange(model)}
+                    className="border border-gray-300 px-3 py-2 rounded-md outline-none"
+                  />
+                </div>
+                <DataTable
+                  columns={renderColumns(model)}
+                  data={
+                    model === "workType"
+                      ? workTypes.filter((c) =>
+                          c.Name?.toLowerCase().includes(
+                            searchQuery.workType.toLowerCase()
+                          )
+                        )
+                      : model === "trainingProgram"
+                      ? trainingPrograms.filter((p) =>
+                          p.programName
+                            ?.toLowerCase()
+                            .includes(searchQuery.trainingProgram.toLowerCase())
+                        )
+                      : model === "vacationType"
+                      ? vacationTypes.filter((d) =>
+                          d.Name.toLowerCase().includes(
+                            searchQuery.vacationType.toLowerCase()
+                          )
+                        )
+                      : model === "sanctionType"
+                      ? sanctionTypes.filter((d) =>
+                          d.Name.toLowerCase().includes(
+                            searchQuery.sanctionType.toLowerCase()
+                          )
+                        )
+                      : overtimeTypes.filter((d) =>
+                          d.Name.toLowerCase().includes(
+                            searchQuery.overtimeType.toLowerCase()
+                          )
+                        )
+                  }
+                  pagination
+                  paginationComponentOptions={paginationComponentOptions}
+                  fixedHeader
+                  customStyles={{
+                    headCells: {
+                      style: {
+                        fontSize: "16px",
+                        fontWeight: "700",
+                        textTransform: "uppercase",
+                        background: "#f3f4f6",
+                        padding: "12px 24px",
+                      },
+                    },
+                    cells: {
+                      style: {
+                        fontSize: "14px",
+                        background: "#f3f4f6",
+                        padding: "12px 24px",
+                      },
+                    },
+                    pagination: {
+                      style: {
+                        fontSize: "14px",
+                        background: "#f3f4f6",
+                        padding: "12px 24px",
+                      },
+                    },
+                  }}
                 />
               </div>
-              <DataTable
-                columns={renderColumns(model)}
-                data={
-                  model === "workType"
-                    ? workTypes.filter((c) =>
-                        c.Name?.toLowerCase().includes(
-                          searchQuery.workType.toLowerCase()
-                        )
-                      )
-                    : model === "attendance"
-                    ? attendances.filter((p) =>
-                        p.Name?.toLowerCase().includes(
-                          searchQuery.attendance.toLowerCase()
-                        )
-                      )
-                    : model === "department"
-                }
-                pagination
-                paginationComponentOptions={paginationComponentOptions}
-                customStyles={{
-                  headCells: {
-                    style: {
-                      fontSize: "16px",
-                      fontWeight: "700",
-                      textTransform: "uppercase",
-                      background: "#f3f4f6",
-                      padding: "12px 24px",
-                    },
-                  },
-                  cells: {
-                    style: {
-                      fontSize: "14px",
-                      background: "#f3f4f6",
-                      padding: "12px 24px",
-                    },
-                  },
-                  pagination: {
-                    style: {
-                      fontSize: "14px",
-                      background: "#f3f4f6",
-                      padding: "12px 24px",
-                    },
-                  },
-                }}
-              />
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 

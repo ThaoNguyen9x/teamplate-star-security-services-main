@@ -10,9 +10,9 @@ const getAllWorkTypes = async () => {
   }
 };
 
-const getAllAttendances = async () => {
+const getAllTrainingPrograms = async () => {
   try {
-    let response = await axios.get("/attendance/all");
+    let response = await axios.get("/trainingprograms");
     return response.data;
   } catch (error) {
     console.log(error);
@@ -20,9 +20,9 @@ const getAllAttendances = async () => {
   }
 };
 
-const getAllDepartments = async () => {
+const getAllVacationTypes = async () => {
   try {
-    let response = await axios.get("/department/all");
+    let response = await axios.get("/vacationtype/all");
     return response.data;
   } catch (error) {
     console.log(error);
@@ -30,9 +30,19 @@ const getAllDepartments = async () => {
   }
 };
 
-const getAllBranchs = async () => {
+const getAllSanctionTypes = async () => {
   try {
-    let response = await axios.get("/brach/all");
+    let response = await axios.get("/sanctiontype/all");
+    return response.data;
+  } catch (error) {
+    console.log(error);
+    throw error.response?.data || error.message;
+  }
+};
+
+const getAllOvertimeTypes = async () => {
+  try {
+    let response = await axios.get("/overtimetype/all");
     return response.data;
   } catch (error) {
     console.log(error);
@@ -62,30 +72,24 @@ const createWorkType = async (name, coefficient) => {
   }
 };
 
-const createAttendance = async (
-  year,
-  month,
-  day,
-  reportedHours,
-  minutesIn,
-  minutesOut,
-  hoursOut,
-  employeeId,
-  workTypeId
+const createTrainingProgram = async (
+  name,
+  description,
+  objectives,
+  startDate,
+  endDate,
+  instructor
 ) => {
   try {
     const response = await axios.post(
-      "/attendance/add",
+      "/trainingprograms",
       {
-        year,
-        month,
-        day,
-        reportedHours,
-        minutesIn,
-        minutesOut,
-        hoursOut,
-        employeeId,
-        workTypeId,
+        name,
+        description,
+        objectives,
+        startDate,
+        endDate,
+        instructor,
       },
       { headers: { "Content-Type": "application/json" } }
     );
@@ -104,11 +108,11 @@ const createAttendance = async (
   }
 };
 
-const createDepartment = async (name, generalDepartmentId, attendancerId) => {
+const createVacationType = async (name) => {
   try {
     const response = await axios.post(
-      "/department/add",
-      { name, generalDepartmentId, attendancerId },
+      "/vacationtype/add",
+      { name },
       { headers: { "Content-Type": "application/json" } }
     );
 
@@ -126,11 +130,33 @@ const createDepartment = async (name, generalDepartmentId, attendancerId) => {
   }
 };
 
-const createBranch = async (name, departnentId) => {
+const createSanctionType = async (name) => {
   try {
     const response = await axios.post(
-      "/brach/add",
-      { name, departnentId },
+      "/sanctiontype/add",
+      { name },
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    if (!response.data.flag) {
+      throw new Error(response.data.message || "An unknown error occurred");
+    }
+
+    return response.data;
+  } catch (error) {
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "An unknown error occurred";
+    throw { flag: false, message: errorMessage };
+  }
+};
+
+const createOvertimeType = async (name, description) => {
+  try {
+    const response = await axios.post(
+      "/overtimetype/add",
+      { name, description },
       { headers: { "Content-Type": "application/json" } }
     );
 
@@ -164,9 +190,9 @@ const getByIdWorkType = async (id) => {
   }
 };
 
-const getByIdAttendance = async (id) => {
+const getByIdTrainingProgram = async (id) => {
   try {
-    const response = await axios.get(`/attendance/single/${id}`);
+    const response = await axios.get(`/trainingprograms/${id}`);
     if (!response.data.flag) {
       throw new Error(response.data.message || "An unknown error occurred");
     }
@@ -180,9 +206,9 @@ const getByIdAttendance = async (id) => {
   }
 };
 
-const getByIdDepartment = async (id) => {
+const getByIdVacationType = async (id) => {
   try {
-    const response = await axios.get(`/department/single/${id}`);
+    const response = await axios.get(`/vacationtype/single/${id}`);
     if (!response.data.flag) {
       throw new Error(response.data.message || "An unknown error occurred");
     }
@@ -196,9 +222,25 @@ const getByIdDepartment = async (id) => {
   }
 };
 
-const getByIdBranch = async (id) => {
+const getByIdSanctionType = async (id) => {
   try {
-    const response = await axios.get(`/brach/single/${id}`);
+    const response = await axios.get(`/sanctiontype/single/${id}`);
+    if (!response.data.flag) {
+      throw new Error(response.data.message || "An unknown error occurred");
+    }
+    return response.data;
+  } catch (error) {
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "An unknown error occurred";
+    throw { flag: false, message: errorMessage };
+  }
+};
+
+const getByIdOvertimeType = async (id) => {
+  try {
+    const response = await axios.get(`/overtimetype/single/${id}`);
     if (!response.data.flag) {
       throw new Error(response.data.message || "An unknown error occurred");
     }
@@ -234,7 +276,7 @@ const updateWorkType = async (id, name, coefficient) => {
   }
 };
 
-const updateAttendance = async (id, name) => {
+const updateTrainingProgram = async (id, name) => {
   try {
     const response = await axios.post(
       `/attendance/update`,
@@ -256,16 +298,11 @@ const updateAttendance = async (id, name) => {
   }
 };
 
-const updateDepartment = async (
-  id,
-  name,
-  generalDepartmentId,
-  attendancerId
-) => {
+const updateVacationType = async (id, name) => {
   try {
     const response = await axios.post(
-      `/department/update`,
-      { id, name, generalDepartmentId, attendancerId },
+      `/vacationType/update`,
+      { id, name },
       { headers: { "Content-Type": "application/json" } }
     );
 
@@ -283,11 +320,33 @@ const updateDepartment = async (
   }
 };
 
-const updateBranch = async (id, name, departnentId) => {
+const updateSanctionType = async (id, name) => {
   try {
     const response = await axios.post(
-      `/brach/update`,
-      { id, name, departnentId },
+      `/sanctiontype/update`,
+      { id, name },
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    if (!response.data.flag) {
+      throw new Error(response.data.message || "An unknown error occurred");
+    }
+
+    return response.data;
+  } catch (error) {
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "An unknown error occurred";
+    throw { flag: false, message: errorMessage };
+  }
+};
+
+const updateOvertimeType = async (id, name, description) => {
+  try {
+    const response = await axios.post(
+      `/overtimetype/update`,
+      { id, name, description },
       { headers: { "Content-Type": "application/json" } }
     );
 
@@ -321,9 +380,9 @@ const deleteWorkType = async (id) => {
   }
 };
 
-const deleteAttendance = async (id) => {
+const deleteTrainingProgram = async (id) => {
   try {
-    const response = await axios.delete(`/attendance/delete/${id}`);
+    const response = await axios.delete(`/TrainingPrograms/${id}`);
     if (!response.data.flag) {
       throw new Error(response.data.message || "An unknown error occurred");
     }
@@ -337,9 +396,9 @@ const deleteAttendance = async (id) => {
   }
 };
 
-const deleteDepartment = async (id) => {
+const deleteVacationType = async (id) => {
   try {
-    const response = await axios.delete(`/department/delete/${id}`);
+    const response = await axios.delete(`/vacationtype/delete/${id}`);
     if (!response.data.flag) {
       throw new Error(response.data.message || "An unknown error occurred");
     }
@@ -353,9 +412,9 @@ const deleteDepartment = async (id) => {
   }
 };
 
-const deleteBranch = async (id) => {
+const deleteSanctionType = async (id) => {
   try {
-    const response = await axios.delete(`/brach/delete/${id}`);
+    const response = await axios.delete(`/sanctiontype/delete/${id}`);
     if (!response.data.flag) {
       throw new Error(response.data.message || "An unknown error occurred");
     }
@@ -369,30 +428,52 @@ const deleteBranch = async (id) => {
   }
 };
 
-const GeneralService = {
+const deleteOvertimeType = async (id) => {
+  try {
+    const response = await axios.delete(`/overtimetype/delete/${id}`);
+    if (!response.data.flag) {
+      throw new Error(response.data.message || "An unknown error occurred");
+    }
+    return response.data;
+  } catch (error) {
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "An unknown error occurred";
+    throw { flag: false, message: errorMessage };
+  }
+};
+
+const GeneralSanctionType = {
   getAllWorkTypes,
   createWorkType,
   getByIdWorkType,
   updateWorkType,
   deleteWorkType,
 
-  getAllAttendances,
-  createAttendance,
-  getByIdAttendance,
-  updateAttendance,
-  deleteAttendance,
+  getAllTrainingPrograms,
+  createTrainingProgram,
+  getByIdTrainingProgram,
+  updateTrainingProgram,
+  deleteTrainingProgram,
 
-  getAllDepartments,
-  createDepartment,
-  getByIdDepartment,
-  updateDepartment,
-  deleteDepartment,
+  getAllVacationTypes,
+  createVacationType,
+  getByIdVacationType,
+  updateVacationType,
+  deleteVacationType,
 
-  getAllBranchs,
-  createBranch,
-  getByIdBranch,
-  updateBranch,
-  deleteBranch,
+  getAllSanctionTypes,
+  createSanctionType,
+  getByIdSanctionType,
+  updateSanctionType,
+  deleteSanctionType,
+
+  getAllOvertimeTypes,
+  createOvertimeType,
+  getByIdOvertimeType,
+  updateOvertimeType,
+  deleteOvertimeType,
 };
 
-export default GeneralService;
+export default GeneralSanctionType;

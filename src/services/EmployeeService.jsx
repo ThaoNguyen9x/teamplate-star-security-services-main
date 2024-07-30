@@ -3,12 +3,7 @@ import axios from "./axios";
 const getAllEmployees = async () => {
   try {
     let response = await axios.get("/employee/all");
-
-    if (response.data && Array.isArray(response.data.data)) {
-      return response.data;
-    } else {
-      throw new Error("Unexpected response format");
-    }
+    return response.data;
   } catch (error) {
     const errorMessage =
       error.response?.data?.message ||
@@ -113,7 +108,7 @@ const updateEmployee = async (
 ) => {
   try {
     const response = await axios.post(
-      `/employee/update?id=${id}`,
+      `/employee/update/${id}`,
       {
         Name,
         CivilId,

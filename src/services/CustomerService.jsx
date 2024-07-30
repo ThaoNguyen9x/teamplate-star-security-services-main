@@ -13,14 +13,14 @@ const getAllCustomers = async () => {
   }
 };
 
-const createCustomer = async (name, email, phone, file) => {
+const createCustomer = async (CustomerName, Email, Phone, file) => {
   try {
     const response = await axios.post(
       "/customers",
-      { name, email, phone, file },
+      { CustomerName, Email, Phone, file },
       {
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "multipart/form-data",
         },
       }
     );
@@ -97,7 +97,7 @@ const updateCustomer = async (id, name) => {
 
 const deleteCustomer = async (id) => {
   try {
-    const response = await axios.delete(`/authencation/delete/${id}`, {
+    const response = await axios.delete(`/customers/${id}`, {
       id,
     });
 

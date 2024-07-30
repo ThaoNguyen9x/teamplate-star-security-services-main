@@ -39,6 +39,10 @@ import ListAccount from "./pages/admin/account/ListAccount";
 import ListCustomer from "./pages/admin/customer/ListCustomer";
 import ListGeneral from "./pages/admin/general/ListGeneral";
 import CreateGeneral from "./pages/admin/general/CreateGeneral";
+import ListService from "./pages/admin/service/ListService";
+import ListServiceRequests from "./pages/admin/service/ListServiceRequests";
+import ListServiceSchedules from "./pages/admin/service/ListServiceSchedules";
+import ListJob from "./pages/admin/job/ListJob";
 
 // ScrollToTop Component
 const ScrollToTop = () => {
@@ -145,6 +149,11 @@ function App() {
 
           <Route path="general" element={<ListGeneral />} />
           <Route path="general/create" element={<CreateGeneral />} />
+
+          <Route path="services" element={<ListService />} />
+          <Route path="service-requests" element={<ListServiceRequests />} />
+          <Route path="service-schedules" element={<ListServiceSchedules />} />
+          <Route path="job-positions" element={<ListJob />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

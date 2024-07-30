@@ -58,6 +58,14 @@ const EditEmployee = () => {
     }
   };
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -66,7 +74,7 @@ const EditEmployee = () => {
         setValues({
           file: data.photo || null,
           Name: data.name || "",
-          Birthday: data.birthday || "",
+          Birthday: formatDate(data.birthday) || "",
           BranchId: data.branchId || "",
           Address: data.address || "",
           CivilId: data.civilId || "",

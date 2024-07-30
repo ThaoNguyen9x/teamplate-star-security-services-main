@@ -6,7 +6,7 @@ import Footer from "./admin/Footer";
 
 const AdminLayout = () => {
   return (
-    <div className="flex overflow-x-hidden">
+    <div className="flex">
       <Sidebar />
       <div className="flex-[4] p-5">
         <Navbar />

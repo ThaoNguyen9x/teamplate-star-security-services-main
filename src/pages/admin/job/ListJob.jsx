@@ -13,7 +13,7 @@ const paginationComponentOptions = {
   selectAllRowsItemText: "All",
 };
 
-const ListEducation = () => {
+const ListJob = () => {
   const [educations, setEducations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [remove, setRemove] = useState(false);
@@ -318,4 +318,4 @@ const ListEducation = () => {
   );
 };
 
-export default ListEducation;
+export default ListJob;

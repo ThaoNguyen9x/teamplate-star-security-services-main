@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import Loading from "../../../components/Loading";
 import GeneralService from "../../../services/GeneralService";
-import EmployeeService from "../../../services/EmployeeService";
 
 const CreateGeneral = () => {
   const { pathname } = useLocation();
@@ -13,43 +12,13 @@ const CreateGeneral = () => {
   const [values, setValues] = useState({
     name: "",
     coefficient: "",
-    year: "",
-    month: "",
-    day: "",
-    reportedHours: "",
-    minutesIn: "",
-    minutesOut: "",
-    hoursOut: "",
-    employeeId: "",
-    workTypeId: "",
+    description: "",
+    objectives: "",
+    startDate: "",
+    endDate: "",
+    instructor: "",
   });
-  const [workTypes, setWorkTypes] = useState([]);
-  const [attendances, setAttendances] = useState([]);
-  const [employees, setEmployees] = useState([]);
   const [showModal, setShowModal] = useState("");
-
-  useEffect(() => {
-    fetchAllData();
-  }, []);
-
-  const fetchAllData = async () => {
-    setLoading(true);
-    try {
-      const [workTypeData, attendancesData, employeesData] = await Promise.all([
-        GeneralService.getAllWorkTypes(),
-        GeneralService.getAllAttendances(),
-        EmployeeService.getAllEmployees(),
-      ]);
-
-      setWorkTypes(workTypeData.$values || []);
-      setAttendances(attendancesData.$values || []);
-      setEmployees(employeesData.data || []);
-    } catch (error) {
-      toast.error("Failed to fetch data.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleChangeInput = (e) => {
     const { name, value } = e.target;
@@ -65,35 +34,30 @@ const CreateGeneral = () => {
     const {
       name,
       coefficient,
-      year,
-      month,
-      day,
-      reportedHours,
-      minutesIn,
-      minutesOut,
-      hoursOut,
-      employeeId,
-      workTypeId,
+      description,
+      objectives,
+      startDate,
+      endDate,
+      instructor,
     } = values;
     let newErrors = {};
 
     if (showModal === "workType") {
       if (!name) newErrors.name = "Name is required.";
       if (!coefficient) newErrors.coefficient = "Coefficient is required.";
-    } else if (showModal === "attendance") {
-      if (!year) newErrors.year = "Year is required.";
-      if (!month) newErrors.month = "month is required.";
-      if (!day) newErrors.day = "Day is required.";
-      if (!reportedHours)
-        newErrors.reportedHours = "Reported hours is required.";
-      if (!minutesIn) newErrors.minutesIn = "Minutes in is required.";
-      if (!minutesOut) newErrors.minutesOut = "Minutes out is required.";
-      if (!hoursOut) newErrors.hoursOut = "Hours out is required.";
-      if (!employeeId) newErrors.employeeId = "Employee is required.";
-      if (!employeeId) newErrors.employeeId = "Employee is required.";
-    } else if (showModal === "district") {
-      if (!nameDistrict) newErrors.nameDistrict = "District name is required.";
-      if (!attendanceId) newErrors.attendanceId = "Attendance is required.";
+    } else if (showModal === "trainingProgram") {
+      if (!name) newErrors.name = "Name is required.";
+      if (!description) newErrors.description = "Description is required.";
+      if (!startDate) newErrors.startDate = "Start date is required.";
+      if (!endDate) newErrors.endDate = "End date is required.";
+      if (!instructor) newErrors.instructor = "Instructor is required.";
+    } else if (showModal === "vacationType") {
+      if (!name) newErrors.name = "Name is required.";
+    } else if (showModal === "sanctionType") {
+      if (!name) newErrors.name = "Name is required.";
+    } else if (showModal === "overtimeType") {
+      if (!name) newErrors.name = "Name is required.";
+      if (!description) newErrors.description = "Description is required.";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -109,22 +73,25 @@ const CreateGeneral = () => {
       if (showModal === "workType") {
         await GeneralService.createWorkType(name, coefficient);
         toast.success("WorkType created successfully.");
-      } else if (showModal === "attendance") {
-        await GeneralService.createAttendance(
-          year,
-          month,
-          day,
-          reportedHours,
-          minutesIn,
-          minutesOut,
-          hoursOut,
-          employeeId,
-          workTypeId
+      } else if (showModal === "trainingProgram") {
+        await GeneralService.createTrainingProgram(
+          name,
+          description,
+          objectives,
+          startDate,
+          endDate,
+          instructor
         );
-        toast.success("Attendance created successfully.");
-      } else if (showModal === "district") {
-        await GeneralService.createDistrict(nameDistrict, type);
-        toast.success("District created successfully.");
+        toast.success("TrainingProgram created successfully.");
+      } else if (showModal === "vacationType") {
+        await GeneralService.createVacationType(name);
+        toast.success("Vacation Type created successfully.");
+      } else if (showModal === "sanctionType") {
+        await GeneralService.createSanctionType(name);
+        toast.success("Sanction Type created successfully.");
+      } else if (showModal === "overtimeType") {
+        await GeneralService.createOvertimeType(name, description);
+        toast.success("Overtime Type created successfully.");
       }
       setValues({
         value: "",
@@ -156,7 +123,7 @@ const CreateGeneral = () => {
           <div className="font-semibold text-xl capitalize">
             {pathname.split("/").pop()}
           </div>
-          <Link to="/dashboard/geo">
+          <Link to="/dashboard/general">
             <button className="px-3 py-2 bg-blue-950 text-white rounded-md">
               Back to List
             </button>
@@ -180,16 +147,28 @@ const CreateGeneral = () => {
               Create Work Type
             </button>
             <button
-              onClick={() => setShowModal("attendance")}
+              onClick={() => setShowModal("trainingProgram")}
               className="px-3 py-2 bg-blue-950 text-white rounded-md"
             >
-              Create Attendance
+              Create Training Program
             </button>
             <button
-              onClick={() => setShowModal("district")}
+              onClick={() => setShowModal("vacationType")}
               className="px-3 py-2 bg-blue-950 text-white rounded-md"
             >
-              Create District
+              Create Vacation Type
+            </button>
+            <button
+              onClick={() => setShowModal("sanctionType")}
+              className="px-3 py-2 bg-blue-950 text-white rounded-md"
+            >
+              Create Sanction Type
+            </button>
+            <button
+              onClick={() => setShowModal("overtimeType")}
+              className="px-3 py-2 bg-blue-950 text-white rounded-md"
+            >
+              Create Overtime Type
             </button>
           </div>
 
@@ -242,232 +221,184 @@ const CreateGeneral = () => {
                       </label>
                     </>
                   )}
-                  {showModal === "attendance" && (
+                  {showModal === "trainingProgram" && (
                     <>
-                      <label className="col-span-2 xl:col-span-1">
-                        <span className="block font-medium text-primary mb-1">
-                          Year:
-                        </span>
-                        <input
-                          type="number"
-                          className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                          placeholder="Enter attendance name"
-                          name="year"
-                          value={values.year}
-                          onChange={handleChangeInput}
-                        />
-                        {errors.year && (
-                          <span className="text-red-700">{errors.year}</span>
-                        )}
-                      </label>
-                      <label className="col-span-2 xl:col-span-1">
-                        <span className="block font-medium text-primary mb-1">
-                          Month:
-                        </span>
-                        <input
-                          type="number"
-                          className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                          placeholder="Enter attendance name"
-                          name="month"
-                          value={values.month}
-                          onChange={handleChangeInput}
-                        />
-                        {errors.month && (
-                          <span className="text-red-700">{errors.month}</span>
-                        )}
-                      </label>
-                      <label className="col-span-2 xl:col-span-1">
-                        <span className="block font-medium text-primary mb-1">
-                          Day:
-                        </span>
-                        <input
-                          type="number"
-                          className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                          placeholder="Enter attendance name"
-                          name="day"
-                          value={values.day}
-                          onChange={handleChangeInput}
-                        />
-                        {errors.day && (
-                          <span className="text-red-700">{errors.day}</span>
-                        )}
-                      </label>
-                      <label className="col-span-2 xl:col-span-1">
-                        <span className="block font-medium text-primary mb-1">
-                          Reported Hours:
-                        </span>
-                        <input
-                          type="number"
-                          className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                          placeholder="Enter attendance name"
-                          name="reportedHours"
-                          value={values.reportedHours}
-                          onChange={handleChangeInput}
-                        />
-                        {errors.reportedHours && (
-                          <span className="text-red-700">
-                            {errors.reportedHours}
-                          </span>
-                        )}
-                      </label>
-                      <label className="col-span-2 xl:col-span-1">
-                        <span className="block font-medium text-primary mb-1">
-                          Minutes In:
-                        </span>
-                        <input
-                          type="number"
-                          className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                          placeholder="Enter attendance name"
-                          name="minutesIn"
-                          value={values.minutesIn}
-                          onChange={handleChangeInput}
-                        />
-                        {errors.minutesIn && (
-                          <span className="text-red-700">
-                            {errors.minutesIn}
-                          </span>
-                        )}
-                      </label>
-                      <label className="col-span-2 xl:col-span-1">
-                        <span className="block font-medium text-primary mb-1">
-                          Minutes Out:
-                        </span>
-                        <input
-                          type="number"
-                          className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                          placeholder="Enter attendance name"
-                          name="minutesOut"
-                          value={values.minutesOut}
-                          onChange={handleChangeInput}
-                        />
-                        {errors.minutesOut && (
-                          <span className="text-red-700">
-                            {errors.minutesOut}
-                          </span>
-                        )}
-                      </label>
-                      <label className="col-span-2 xl:col-span-1">
-                        <span className="block font-medium text-primary mb-1">
-                          Hours Out:
-                        </span>
-                        <input
-                          type="number"
-                          className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                          placeholder="Enter attendance name"
-                          name="hoursOut"
-                          value={values.hoursOut}
-                          onChange={handleChangeInput}
-                        />
-                        {errors.hoursOut && (
-                          <span className="text-red-700">
-                            {errors.hoursOut}
-                          </span>
-                        )}
-                      </label>
                       <label className="col-span-2">
-                        <span className="block font-medium text-primary mb-1">
-                          Employee:
-                        </span>
-                        <select
-                          name="employeeId"
-                          value={values.employeeId}
-                          onChange={handleChangeInput}
-                          className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                        >
-                          <option value="">Select Employee</option>
-                          {employees.map((employee) => (
-                            <option key={employee.id} value={employee.id}>
-                              {employee.name}
-                            </option>
-                          ))}
-                        </select>
-                        {errors.employeeId && (
-                          <span className="text-red-700">
-                            {errors.employeeId}
-                          </span>
-                        )}
-                      </label>
-                      <label className="col-span-2">
-                        <span className="block font-medium text-primary mb-1">
-                          Work Type:
-                        </span>
-                        <select
-                          name="workTypeId"
-                          value={values.workTypeId}
-                          onChange={handleChangeInput}
-                          className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                        >
-                          <option value="">Select WorkType</option>
-                          {workTypes.map((workType) => (
-                            <option key={workType.Id} value={workType.Id}>
-                              {workType.Name}
-                            </option>
-                          ))}
-                        </select>
-                        {errors.workTypeId && (
-                          <span className="text-red-700">
-                            {errors.workTypeId}
-                          </span>
-                        )}
-                      </label>
-                    </>
-                  )}
-                  {showModal === "district" && (
-                    <>
-                      <label className="block mb-1">
                         <span className="block font-medium text-primary mb-1">
                           Name:
                         </span>
                         <input
                           type="text"
                           className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                          placeholder="Enter attendance name"
-                          name="nameDistrict"
-                          value={values.nameDistrict}
+                          placeholder="Enter name"
+                          name="name"
+                          value={values.name}
                           onChange={handleChangeInput}
                         />
-                        {errors.nameDistrict && (
-                          <span className="text-red-700">
-                            {errors.nameDistrict}
-                          </span>
+                        {errors.name && (
+                          <span className="text-red-700">{errors.name}</span>
                         )}
                       </label>
-                      <label className="block mb-1">
+                      <label className="col-span-2">
                         <span className="block font-medium text-primary mb-1">
-                          District Type:
+                          Objectives:
                         </span>
                         <input
                           type="text"
                           className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                          placeholder="Enter attendance type"
-                          name="type"
-                          value={values.type}
+                          placeholder="Enter trainingProgram name"
+                          name="objectives"
+                          value={values.objectives}
                           onChange={handleChangeInput}
                         />
-                        {errors.type && (
-                          <span className="text-red-700">{errors.type}</span>
+                        {errors.objectives && (
+                          <span className="text-red-700">
+                            {errors.objectives}
+                          </span>
                         )}
                       </label>
-                      <label className="block mb-1">
+                      <label className="col-span-2">
                         <span className="block font-medium text-primary mb-1">
-                          Attendance:
+                          Instructor:
                         </span>
-                        <select
-                          name="attendanceId"
-                          value={values.attendanceId}
-                          onChange={handleChangeInput}
+                        <input
+                          type="text"
                           className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                        >
-                          <option value="">Select Attendance</option>
-                          {attendances.map((attendance) => (
-                            <option key={attendance.Id} value={attendance.Id}>
-                              {attendance.NameCity}
-                            </option>
-                          ))}
-                        </select>
-                        {errors.attendanceId && (
+                          placeholder="Enter trainingProgram name"
+                          name="instructor"
+                          value={values.instructor}
+                          onChange={handleChangeInput}
+                        />
+                        {errors.instructor && (
                           <span className="text-red-700">
-                            {errors.attendanceId}
+                            {errors.instructor}
+                          </span>
+                        )}
+                      </label>
+                      <label className="col-span-2">
+                        <span className="block font-medium text-primary mb-1">
+                          Description:
+                        </span>
+                        <textarea
+                          name="description"
+                          value={values.description}
+                          onChange={handleChangeInput}
+                          placeholder="Enter description"
+                          className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                        ></textarea>
+                        {errors.description && (
+                          <span className="text-red-700">
+                            {errors.description}
+                          </span>
+                        )}
+                      </label>
+                      <label className="col-span-2 xl:col-span-1">
+                        <span className="block font-medium text-primary mb-1">
+                          Start Date:
+                        </span>
+                        <input
+                          type="date"
+                          className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                          placeholder="Enter trainingProgram name"
+                          name="startDate"
+                          value={values.startDate}
+                          onChange={handleChangeInput}
+                        />
+                        {errors.startDate && (
+                          <span className="text-red-700">
+                            {errors.startDate}
+                          </span>
+                        )}
+                      </label>
+                      <label className="col-span-2 xl:col-span-1">
+                        <span className="block font-medium text-primary mb-1">
+                          End Date:
+                        </span>
+                        <input
+                          type="date"
+                          className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                          name="endDate"
+                          value={values.endDate}
+                          onChange={handleChangeInput}
+                        />
+                        {errors.endDate && (
+                          <span className="text-red-700">{errors.endDate}</span>
+                        )}
+                      </label>
+                    </>
+                  )}
+                  {showModal === "vacationType" && (
+                    <>
+                      <label className="col-span-2">
+                        <span className="block font-medium text-primary mb-1">
+                          Name:
+                        </span>
+                        <input
+                          type="text"
+                          className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                          placeholder="Enter trainingProgram name"
+                          name="name"
+                          value={values.name}
+                          onChange={handleChangeInput}
+                        />
+                        {errors.name && (
+                          <span className="text-red-700">{errors.name}</span>
+                        )}
+                      </label>
+                    </>
+                  )}
+                  {showModal === "sanctionType" && (
+                    <>
+                      <label className="col-span-2">
+                        <span className="block font-medium text-primary mb-1">
+                          Name:
+                        </span>
+                        <input
+                          type="text"
+                          className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                          placeholder="Enter trainingProgram name"
+                          name="name"
+                          value={values.name}
+                          onChange={handleChangeInput}
+                        />
+                        {errors.name && (
+                          <span className="text-red-700">{errors.name}</span>
+                        )}
+                      </label>
+                    </>
+                  )}
+                  {showModal === "overtimeType" && (
+                    <>
+                      <label className="col-span-2">
+                        <span className="block font-medium text-primary mb-1">
+                          Name:
+                        </span>
+                        <input
+                          type="text"
+                          className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                          placeholder="Enter name"
+                          name="name"
+                          value={values.name}
+                          onChange={handleChangeInput}
+                        />
+                        {errors.name && (
+                          <span className="text-red-700">{errors.name}</span>
+                        )}
+                      </label>
+                      <label className="col-span-2">
+                        <span className="block font-medium text-primary mb-1">
+                          Description:
+                        </span>
+                        <textarea
+                          name="description"
+                          value={values.description}
+                          onChange={handleChangeInput}
+                          placeholder="Enter description"
+                          className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                        ></textarea>
+                        {errors.description && (
+                          <span className="text-red-700">
+                            {errors.description}
                           </span>
                         )}
                       </label>

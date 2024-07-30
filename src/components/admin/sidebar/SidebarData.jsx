@@ -27,6 +27,26 @@ const SidebarData = ({ toggle }) => {
           icon: <i className="bi bi-person-plus"></i>,
         },
         {
+          title: "Services",
+          path: "/dashboard/services",
+          icon: <i className="bi bi-person-plus"></i>,
+        },
+        {
+          title: "Service Requests",
+          path: "/dashboard/service-requests",
+          icon: <i className="bi bi-person-plus"></i>,
+        },
+        {
+          title: "Service Schedules",
+          path: "/dashboard/service-schedules",
+          icon: <i className="bi bi-person-plus"></i>,
+        },
+        {
+          title: "Job Positions",
+          path: "/dashboard/job-positions",
+          icon: <i className="bi bi-person-plus"></i>,
+        },
+        {
           title: "General",
           path: "/dashboard/general",
           icon: <i className="bi bi-balloon-heart"></i>,

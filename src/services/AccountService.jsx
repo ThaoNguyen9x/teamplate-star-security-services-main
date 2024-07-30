@@ -2,7 +2,7 @@ import axios from "./axios";
 
 const getAllAccounts = async () => {
   try {
-    let response = await axios.get("/authenCation/all");
+    let response = await axios.get("/account/all");
     return response.data;
   } catch (error) {
     throw error.response?.data || error.message;

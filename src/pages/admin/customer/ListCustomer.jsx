@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { toast } from "react-toastify";
+import { no_avatar } from "../../../assets/index";
 import Loading from "../../../components/Loading";
 import Delete from "../../../components/admin/Delete";
 import DataTable from "react-data-table-component";
 import CustomerService from "../../../services/CustomerService";
-import { no_avatar } from "../../../assets";
 
 const paginationComponentOptions = {
   rowsPerPageText: "Rows per page",
@@ -14,27 +14,26 @@ const paginationComponentOptions = {
   selectAllRowsItemText: "All",
 };
 
-const email_REGEX =
+const Email_REGEX =
   /^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$/;
 
 const ListCustomer = () => {
   const [values, setValues] = useState({
-    customerName: "",
-    email: "",
-    phone: "",
+    CustomerName: "",
+    Email: "",
+    Phone: "",
     file: null,
   });
   const [customers, setCustomers] = useState([]);
-  const [photo, setPhoto] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [remove, setRemove] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [editItem, setEditItem] = useState({
-    id: "",
-    customerName: "",
-    email: "",
-    phone: "",
-    file: null,
+    customerID: "",
+    CustomerName: "",
+    Phone: "",
+    file: "",
     model: "customer",
   });
   const [searchQuery, setSearchQuery] = useState({ customer: "" });
@@ -48,33 +47,34 @@ const ListCustomer = () => {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const data = await CustomerService.getAllCustomers();
-      setCustomers(data || []);
+      const [customersData] = await Promise.all([
+        CustomerService.getAllCustomers(),
+      ]);
+
+      setCustomers(customersData.data || []);
     } catch (error) {
-      toast.error(
-        "Failed to fetch data. Please check the console for more details."
-      );
+      toast.error("Failed to fetch data.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleEditClick = useCallback(
-    (id, customerName, email, phone, file) => {
-      setEditItem({ id, customerName, email, phone, file, model: "customer" });
+    (customerID, CustomerName, Phone, file) => {
+      setEditItem({ customerID, CustomerName, Phone, file, model: "customer" });
     },
     []
   );
 
   const handleUpdate = useCallback(async () => {
     setLoading(true);
+    
     try {
-      const { id, customerName, email, phone, file } = editItem;
+      const { customerID, CustomerName, Phone, file } = editItem;
       await CustomerService.updateCustomer(
-        id,
-        customerName,
-        email,
-        phone,
+        customerID,
+        CustomerName,
+        Phone,
         file
       );
       await fetchAllData();
@@ -84,19 +84,15 @@ const ListCustomer = () => {
     } finally {
       setLoading(false);
       setEditItem({
-        id: "",
-        customerName: "",
-        email: "",
-        phone: "",
-        file: null,
-        model: "customer",
+        editItem: null,
       });
     }
   }, [editItem]);
 
-  const handleDeleteClick = useCallback((id) => {
+  const handleDeleteClick = useCallback((customerID, model) => {
     setRemove(true);
-    setCurrentId(id);
+    setCurrentId(customerID);
+    setEditItem((prevState) => ({ ...prevState, model }));
   }, []);
 
   const handleDelete = useCallback(async () => {
@@ -104,7 +100,7 @@ const ListCustomer = () => {
     try {
       await CustomerService.deleteCustomer(currentId);
       setCustomers((prevCustomers) =>
-        prevCustomers.filter((c) => c.id !== currentId)
+        prevCustomers.filter((c) => c.customerID !== currentId)
       );
       toast.success("Deleted successfully.");
       handleCloseModal();
@@ -116,6 +112,20 @@ const ListCustomer = () => {
     }
   }, [currentId]);
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditItem((prev) => ({
+          ...prev,
+          file: reader.result,
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const renderColumns = useCallback(
     (model) => [
       {
@@ -124,15 +134,44 @@ const ListCustomer = () => {
         sortable: true,
       },
       {
-        name: "Name",
-        selector: (row) => row.customerName || "",
+        name: "Image",
+        selector: (row) => row.image || "",
         cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
+          editItem.customerID === row.customerID && editItem.model === model ? (
+            <label>
+              <img
+                src={editItem.file || row.image || no_avatar}
+                alt=""
+                className="w-12 h-12 rounded-full object-cover"
+              />
+              <input
+                type="file"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </label>
+          ) : (
+            <img
+              src={row.image || no_avatar}
+              alt=""
+              className="w-12 h-12 rounded-full object-cover"
+            />
+          ),
+        sortable: true,
+      },
+      {
+        name: "Name",
+        selector: (row) => row.CustomerName || "",
+        cell: (row) =>
+          editItem.customerID === row.customerID && editItem.model === model ? (
             <input
               type="text"
-              value={editItem.customerName}
+              value={editItem.CustomerName || ""}
               onChange={(e) =>
-                setEditItem({ ...editItem, customerName: e.target.value })
+                setEditItem((prev) => ({
+                  ...prev,
+                  customerName: e.target.value,
+                }))
               }
               className="border px-2 py-1 rounded-md outline-none"
             />
@@ -144,31 +183,18 @@ const ListCustomer = () => {
       {
         name: "Email",
         selector: (row) => row.email || "",
-        cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
-            <input
-              type="email"
-              value={editItem.email}
-              onChange={(e) =>
-                setEditItem({ ...editItem, email: e.target.value })
-              }
-              className="border px-2 py-1 rounded-md outline-none"
-            />
-          ) : (
-            row.email || ""
-          ),
         sortable: true,
       },
       {
         name: "Phone",
         selector: (row) => row.phone || "",
         cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
+          editItem.customerID === row.customerID && editItem.model === model ? (
             <input
               type="text"
-              value={editItem.phone}
+              value={editItem.Phone || ""}
               onChange={(e) =>
-                setEditItem({ ...editItem, phone: e.target.value })
+                setEditItem((prev) => ({ ...prev, Phone: e.target.value }))
               }
               className="border px-2 py-1 rounded-md outline-none"
             />
@@ -178,44 +204,11 @@ const ListCustomer = () => {
         sortable: true,
       },
       {
-        name: "Image",
-        selector: (row) => row.image || "",
-        cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
-            <label>
-              <img
-                className="h-[3rem] w-[3rem] object-cover rounded-full"
-                src={
-                  editItem.file
-                    ? URL.createObjectURL(editItem.file)
-                    : editItem.Image
-                    ? editItem.Image
-                    : no_avatar
-                }
-                alt="Customer profile photo"
-              />
-              <input
-                type="file"
-                onChange={(e) =>
-                  setEditItem({ ...editItem, file: e.target.files[0] })
-                }
-                className="hidden"
-              />
-            </label>
-          ) : (
-            <img
-              className="h-[3rem] w-[3rem] object-cover rounded-full"
-              src={row.image ? row.image : no_avatar}
-              alt="Current profile photo"
-            />
-          ),
-        sortable: true,
-      },
-      {
-        customerName: "Actions",
+        name: "Actions",
         cell: (row) => (
           <div className="flex items-center gap-2">
-            {editItem.id === row.id && editItem.model === model ? (
+            {editItem.customerID === row.customerID &&
+            editItem.model === model ? (
               <>
                 <button
                   onClick={handleUpdate}
@@ -226,11 +219,10 @@ const ListCustomer = () => {
                 <button
                   onClick={() =>
                     setEditItem({
-                      id: "",
-                      customerName: "",
-                      email: "",
-                      phone: "",
-                      file: null,
+                      customerID: "",
+                      CustomerName: "",
+                      Phone: "",
+                      file: "",
                       model: "customer",
                     })
                   }
@@ -244,9 +236,8 @@ const ListCustomer = () => {
                 <button
                   onClick={() =>
                     handleEditClick(
-                      row.id,
+                      row.customerID,
                       row.customerName,
-                      row.email,
                       row.phone,
                       row.file
                     )
@@ -256,7 +247,7 @@ const ListCustomer = () => {
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDeleteClick(row.id)}
+                  onClick={() => handleDeleteClick(row.customerID, model)}
                   className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
                 >
                   Delete
@@ -281,41 +272,38 @@ const ListCustomer = () => {
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setValues({
-      value: "",
-    });
+    setValues("");
+    setImagePreview(null);
     setErrors({});
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { customerName, email, phone, file } = values;
+    const { CustomerName, Email, Phone, file } = values;
     let newErrors = {};
 
-    if (!customerName) newErrors.customerName = "Name is required.";
-    if (!email) newErrors.email = "Email is required.";
-    else if (!email_REGEX.test(email))
-      newErrors.email = "Invalid email format.";
-    if (!phone) newErrors.phone = "Phone is required.";
+    if (!CustomerName) newErrors.CustomerName = "Full name is required.";
+    if (!Phone) newErrors.Phone = "Phone is required.";
     if (!file) newErrors.file = "Image is required.";
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      setTimeout(() => setErrors({}), 5000);
-      return;
-    }
+    if (!Email) newErrors.Email = "Email is required.";
+    else if (!Email_REGEX.test(Email))
+      newErrors.Email = "Invalid Email format.";
 
-    setErrors({});
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) return;
+
     setLoading(true);
 
     try {
-      await CustomerService.createCustomer(customerName, email, phone);
+      await CustomerService.createCustomer(CustomerName, Email, Phone, file);
       handleCloseModal();
-      await fetchAllData();
       toast.success("Customer created successfully.");
+      await fetchAllData();
     } catch (error) {
-      toast.error(error.message);
+      toast.error("Failed to create customer.");
     } finally {
       setLoading(false);
     }
@@ -324,8 +312,8 @@ const ListCustomer = () => {
   const handleChangeInput = (e) => {
     const { name, value, files } = e.target;
     if (name === "file") {
-      setValues({ ...values, [name]: files[0] });
-      setPhoto(URL.createObjectURL(files[0]));
+      setValues({ ...values, file: files[0] });
+      setImagePreview(files[0]);
     } else {
       setValues({ ...values, [name]: value });
     }
@@ -359,7 +347,11 @@ const ListCustomer = () => {
             </div>
             <DataTable
               columns={renderColumns("customer")}
-              data={customers}
+              data={customers.filter((c) =>
+                c.customerName
+                  ?.toLowerCase()
+                  .includes(searchQuery.customer.toLowerCase())
+              )}
               pagination
               paginationComponentOptions={paginationComponentOptions}
               customStyles={{
@@ -412,13 +404,13 @@ const ListCustomer = () => {
                 <input
                   type="text"
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                  placeholder="Enter full customerName"
-                  customerName="customerName"
-                  value={values.customerName}
+                  placeholder="Enter name"
+                  name="CustomerName"
+                  value={values.CustomerName}
                   onChange={handleChangeInput}
                 />
-                {errors.customerName && (
-                  <span className="text-red-700">{errors.customerName}</span>
+                {errors.CustomerName && (
+                  <span className="text-red-700">{errors.CustomerName}</span>
                 )}
               </label>
               <label className="block mb-1">
@@ -426,15 +418,15 @@ const ListCustomer = () => {
                   Email:
                 </span>
                 <input
-                  type="email"
+                  type="Email"
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                  placeholder="Enter email"
-                  customerName="email"
-                  value={values.email}
+                  placeholder="Enter Email"
+                  name="Email"
+                  value={values.Email}
                   onChange={handleChangeInput}
                 />
-                {errors.email && (
-                  <span className="text-red-700">{errors.email}</span>
+                {errors.Email && (
+                  <span className="text-red-700">{errors.Email}</span>
                 )}
               </label>
               <label className="block mb-1">
@@ -444,23 +436,27 @@ const ListCustomer = () => {
                 <input
                   type="text"
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                  placeholder="Enter phone"
-                  customerName="phone"
-                  value={values.phone}
+                  placeholder="Enter Phone"
+                  name="Phone"
+                  value={values.Phone}
                   onChange={handleChangeInput}
                 />
-                {errors.phone && (
-                  <span className="text-red-700">{errors.phone}</span>
+                {errors.Phone && (
+                  <span className="text-red-700">{errors.Phone}</span>
                 )}
               </label>
-              <label className="block mb-2">
+              <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
                   Image:
                 </span>
                 <label className="flex items-center justify-center">
                   <img
                     className="h-[4rem] w-[4rem] object-cover rounded-full"
-                    src={image ? URL.createObjectURL(image) : no_avatar}
+                    src={
+                      imagePreview
+                        ? URL.createObjectURL(imagePreview)
+                        : no_avatar
+                    }
                     alt="Current profile photo"
                   />
                   <input
