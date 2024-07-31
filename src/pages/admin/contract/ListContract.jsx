@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import Loading from "../../../components/Loading";
 import Delete from "../../../components/admin/Delete";
 import DataTable from "react-data-table-component";
-import ServicesService from "../../../services/ServicesService";
+import ContractService from "../../../services/ContractService";
 import EmployeeService from "../../../services/EmployeeService";
 
 const paginationComponentOptions = {
@@ -14,30 +14,35 @@ const paginationComponentOptions = {
   selectAllRowsItemText: "All",
 };
 
-const ListServiceSchedules = () => {
+const ListContract = () => {
   const [values, setValues] = useState({
-    name: "",
-    serviceRequestID: "",
-    employeeID: "",
-    scheduledDate: "",
-    location: "",
+    contractNumber: "",
+    startDate: "",
+    endDate: "",
+    signDate: "",
+    content: "",
+    employeeId: "",
+    renewalCount: "",
+    duration: "",
   });
-  const [serviceScheduleSchedules, setServiceSchedules] = useState([]);
+  const [contractServices, setContractServices] = useState([]);
   const [employees, setEmployees] = useState([]);
-  const [serviceRequests, setServiceRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [remove, setRemove] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [editItem, setEditItem] = useState({
     id: "",
-    name: "",
-    serviceRequestID: "",
-    employeeID: "",
-    scheduledDate: "",
-    location: "",
-    model: "serviceSchedule",
+    contractNumber: "",
+    startDate: "",
+    endDate: "",
+    signDate: "",
+    content: "",
+    employeeId: "",
+    renewalCount: "",
+    duration: "",
+    model: "contractService",
   });
-  const [searchQuery, setSearchQuery] = useState({ serviceSchedule: "" });
+  const [searchQuery, setSearchQuery] = useState({ contractService: "" });
   const [showModal, setShowModal] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -48,16 +53,13 @@ const ListServiceSchedules = () => {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const [serviceSchedulesData, employeesData, serviceRequestsData] =
-        await Promise.all([
-          ServicesService.getAllServiceSchedules(),
-          EmployeeService.getAllEmployees(),
-          ServicesService.getAllServiceRequests(),
-        ]);
+      const [contractServicesData, employeesData] = await Promise.all([
+        ContractService.getAllContracts(),
+        EmployeeService.getAllEmployees(),
+      ]);
 
-      setServiceSchedules(serviceSchedulesData || []);
+      setContractServices(contractServicesData.$values || []);
       setEmployees(employeesData || []);
-      setServiceRequests(serviceRequestsData || []);
     } catch (error) {
       toast.error("Failed to fetch data.");
     } finally {
@@ -66,15 +68,28 @@ const ListServiceSchedules = () => {
   };
 
   const handleEditClick = useCallback(
-    (id, name, serviceRequestID, employeeID, scheduledDate, location) => {
+    (
+      Id,
+      contractNumber,
+      startDate,
+      endDate,
+      signDate,
+      content,
+      employeeId,
+      renewalCount,
+      duration
+    ) => {
       setEditItem({
-        id,
-        name,
-        serviceRequestID,
-        employeeID,
-        scheduledDate,
-        location,
-        model: "serviceSchedule",
+        id: Id,
+        contractNumber,
+        startDate,
+        endDate,
+        signDate,
+        content,
+        employeeId,
+        renewalCount,
+        duration,
+        model: "contractService",
       });
     },
     []
@@ -85,19 +100,25 @@ const ListServiceSchedules = () => {
     try {
       const {
         id,
-        name,
-        serviceRequestID,
-        employeeID,
-        scheduledDate,
-        location,
+        contractNumber,
+        startDate,
+        endDate,
+        signDate,
+        content,
+        employeeId,
+        renewalCount,
+        duration,
       } = editItem;
-      await ServicesService.updateServiceSchedule(
+      await ContractService.updateContract(
         id,
-        name,
-        serviceRequestID,
-        employeeID,
-        scheduledDate,
-        location
+        contractNumber,
+        startDate,
+        endDate,
+        signDate,
+        content,
+        employeeId,
+        renewalCount,
+        duration
       );
       await fetchAllData();
       toast.success("Updated successfully.");
@@ -107,13 +128,15 @@ const ListServiceSchedules = () => {
     } finally {
       setLoading(false);
       setEditItem({
-        id: "",
-        name: "",
-        serviceRequestID: "",
-        employeeID: "",
-        scheduledDate: "",
-        location: "",
-        model: "serviceSchedule",
+        contractNumber: "",
+        startDate: "",
+        endDate: "",
+        signDate: "",
+        content: "",
+        employeeId: "",
+        renewalCount: "",
+        duration: "",
+        model: "contractService",
       });
     }
   }, [editItem]);
@@ -128,10 +151,8 @@ const ListServiceSchedules = () => {
     setLoading(true);
 
     try {
-      await ServicesService.deleteServiceSchedule(currentId);
-      setServiceSchedules((prev) =>
-        prev.filter((c) => c.scheduleId !== currentId)
-      );
+      await ContractService.deleteContract(currentId);
+      setContractServices((prev) => prev.filter((c) => c.id !== currentId));
       toast.success("Deleted successfully.");
       await fetchAllData();
       handleCloseModal();
@@ -152,21 +173,7 @@ const ListServiceSchedules = () => {
   };
 
   const getEmployeeName = (id) => {
-    return employees.find((c) => c.id === id)?.name || "N/A";
-  };
-
-  const getServiceRequestsOptions = () => {
-    return serviceRequests.map((c) => (
-      <option key={c.serviceRequestID} value={c.serviceRequestID}>
-        {c.name}
-      </option>
-    ));
-  };
-
-  const getServiceRequestName = (row) => {
-    return (
-      serviceRequests.find((c) => c.id === row.serviceRequestId)?.name || "N/A"
-    );
+    return employees.find((c) => c.employeeID === id)?.name || "N/A";
   };
 
   const formatDate = (dateString) => {
@@ -185,37 +192,37 @@ const ListServiceSchedules = () => {
         sortable: true,
       },
       {
-        name: "Name",
-        selector: (row) => row.name || "",
+        name: "Contract Number",
+        selector: (row) => row.ContractNumber || "",
         cell: (row) =>
-          editItem.id === row.scheduleID && editItem.model === model ? (
+          editItem.id === row.Id && editItem.model === model ? (
             <input
               type="text"
-              value={editItem.name}
+              value={editItem.contractNumber}
               onChange={(e) =>
                 setEditItem((prevState) => ({
                   ...prevState,
-                  name: e.target.value,
+                  contractNumber: e.target.value,
                 }))
               }
               className="border px-2 py-1 rounded-md outline-none"
             />
           ) : (
-            row.name || ""
+            row.ContractNumber || ""
           ),
         sortable: true,
       },
       {
         name: "Employee",
-        selector: (row) => getEmployeeName(row.employeeID),
+        selector: (row) => getEmployeeName(row.employeeId),
         cell: (row) =>
-          editItem.id === row.scheduleID && editItem.model === model ? (
+          editItem.id === row.Id && editItem.model === model ? (
             <select
-              value={editItem.employeeID}
+              value={editItem.employeeId}
               onChange={(e) =>
                 setEditItem((prev) => ({
                   ...prev,
-                  employeeID: e.target.value,
+                  employeeId: e.target.value,
                 }))
               }
               className="border px-3 py-2 rounded-md"
@@ -224,72 +231,133 @@ const ListServiceSchedules = () => {
               {getEmployeesOptions()}
             </select>
           ) : (
-            getEmployeeName(row.employeeID)
+            getEmployeeName(row.employeeId)
           ),
         sortable: true,
       },
       {
-        name: "Service Request",
-        selector: (row) => getServiceRequestName(row),
+        name: "Content",
+        selector: (row) => row.Content,
         cell: (row) =>
-          editItem.id === row.scheduleID && editItem.model === model ? (
-            <select
-              value={editItem.serviceRequestID}
-              onChange={(e) =>
-                setEditItem((prevState) => ({
-                  ...prevState,
-                  serviceRequestID: e.target.value,
-                }))
-              }
-              className="border px-3 py-2 rounded-md"
-            >
-              <option value="">Select</option>
-              {getServiceRequestsOptions()}
-            </select>
-          ) : (
-            getServiceRequestName(row)
-          ),
-        sortable: true,
-      },
-      {
-        name: "Location",
-        selector: (row) => row.location || "",
-        cell: (row) =>
-          editItem.id === row.scheduleID && editItem.model === model ? (
+          editItem.id === row.Id && editItem.model === model ? (
             <input
               type="text"
-              value={editItem.location}
+              value={editItem.content}
               onChange={(e) =>
                 setEditItem((prevState) => ({
                   ...prevState,
-                  location: e.target.value,
+                  content: e.target.value,
                 }))
               }
               className="border px-2 py-1 rounded-md outline-none"
             />
           ) : (
-            row.location || ""
+            row.Content
           ),
         sortable: true,
       },
       {
-        name: "Scheduled Date",
-        selector: (row) => formatDate(row.scheduledDate) || "",
+        name: "Renewal Count",
+        selector: (row) => row.RenewalCount,
         cell: (row) =>
-          editItem.id === row.scheduleID && editItem.model === model ? (
+          editItem.id === row.Id && editItem.model === model ? (
             <input
-              type="date"
-              value={formatDate(editItem.scheduledDate)}
+              type="number"
+              value={editItem.renewalCount}
               onChange={(e) =>
                 setEditItem((prevState) => ({
                   ...prevState,
-                  scheduledDate: e.target.value,
+                  renewalCount: e.target.value,
                 }))
               }
               className="border px-2 py-1 rounded-md outline-none"
             />
           ) : (
-            formatDate(row.scheduledDate) || ""
+            row.RenewalCount
+          ),
+        sortable: true,
+      },
+      {
+        name: "Duration",
+        selector: (row) => row.Duration,
+        cell: (row) =>
+          editItem.id === row.Id && editItem.model === model ? (
+            <input
+              type="number"
+              value={editItem.duration}
+              onChange={(e) =>
+                setEditItem((prevState) => ({
+                  ...prevState,
+                  duration: e.target.value,
+                }))
+              }
+              className="border px-2 py-1 rounded-md outline-none"
+            />
+          ) : (
+            row.Duration
+          ),
+        sortable: true,
+      },
+      {
+        name: "Start Date",
+        selector: (row) => formatDate(row.StartDate) || "",
+        cell: (row) =>
+          editItem.id === row.Id && editItem.model === model ? (
+            <input
+              type="date"
+              value={formatDate(editItem.startDate)}
+              onChange={(e) =>
+                setEditItem((prevState) => ({
+                  ...prevState,
+                  startDate: e.target.value,
+                }))
+              }
+              className="border px-2 py-1 rounded-md outline-none"
+            />
+          ) : (
+            formatDate(row.StartDate) || ""
+          ),
+        sortable: true,
+      },
+      {
+        name: "End Date",
+        selector: (row) => formatDate(row.EndDate) || "",
+        cell: (row) =>
+          editItem.id === row.Id && editItem.model === model ? (
+            <input
+              type="date"
+              value={formatDate(editItem.endDate)}
+              onChange={(e) =>
+                setEditItem((prevState) => ({
+                  ...prevState,
+                  endDate: e.target.value,
+                }))
+              }
+              className="border px-2 py-1 rounded-md outline-none"
+            />
+          ) : (
+            formatDate(row.EndDate) || ""
+          ),
+        sortable: true,
+      },
+      {
+        name: "Sign Date",
+        selector: (row) => formatDate(row.SignDate) || "",
+        cell: (row) =>
+          editItem.id === row.Id && editItem.model === model ? (
+            <input
+              type="date"
+              value={formatDate(editItem.signDate)}
+              onChange={(e) =>
+                setEditItem((prevState) => ({
+                  ...prevState,
+                  signDate: e.target.value,
+                }))
+              }
+              className="border px-2 py-1 rounded-md outline-none"
+            />
+          ) : (
+            formatDate(row.SignDate) || ""
           ),
         sortable: true,
       },
@@ -297,7 +365,7 @@ const ListServiceSchedules = () => {
         name: "Actions",
         cell: (row) => (
           <div className="flex items-center gap-2">
-            {editItem.id === row.scheduleID && editItem.model === model ? (
+            {editItem.id === row.Id && editItem.model === model ? (
               <>
                 <button
                   onClick={handleUpdate}
@@ -309,12 +377,15 @@ const ListServiceSchedules = () => {
                   onClick={() =>
                     setEditItem({
                       id: "",
-                      name: "",
+                      contractNumber: "",
                       employeeID: "",
-                      serviceRequestID: "",
-                      scheduledDate: "",
-                      location: "",
-                      model: "serviceSchedule",
+                      content: "",
+                      renewalCount: "",
+                      duration: "",
+                      startDate: "",
+                      endDate: "",
+                      signDate: "",
+                      model: "contractService",
                     })
                   }
                   className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
@@ -327,12 +398,15 @@ const ListServiceSchedules = () => {
                 <button
                   onClick={() =>
                     handleEditClick(
-                      row.scheduleID,
-                      row.name,
-                      row.serviceRequestID,
-                      row.employeeID,
-                      row.scheduledDate,
-                      row.location
+                      row.Id,
+                      row.ContractNumber,
+                      row.StartDate,
+                      row.EndDate,
+                      row.SignDate,
+                      row.Content,
+                      row.EmployeeId,
+                      row.RenewalCount,
+                      row.Duration
                     )
                   }
                   className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
@@ -340,7 +414,7 @@ const ListServiceSchedules = () => {
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDeleteClick(row.scheduleID, model)}
+                  onClick={() => handleDeleteClick(row.Id, model)}
                   className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
                 >
                   Delete
@@ -372,16 +446,27 @@ const ListServiceSchedules = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { name, serviceRequestID, employeeID, scheduledDate, location } =
-      values;
+    const {
+      contractNumber,
+      startDate,
+      endDate,
+      signDate,
+      content,
+      employeeId,
+      renewalCount,
+      duration,
+    } = values;
+
     let newErrors = {};
 
-    if (!name) newErrors.name = "Name is required.";
-    if (!serviceRequestID)
-      newErrors.serviceRequestID = "Service request is required.";
-    if (!employeeID) newErrors.employeeID = "Employee is required.";
-    if (!scheduledDate) newErrors.scheduledDate = "Scheduled date is required.";
-    if (!location) newErrors.location = "Location is required.";
+    if (!contractNumber) newErrors.contractNumber = "Not empty.";
+    if (!startDate) newErrors.startDate = "Not empty.";
+    if (!endDate) newErrors.endDate = "Not empty.";
+    if (!signDate) newErrors.signDate = "Not empty.";
+    if (!content) newErrors.content = "Not empty.";
+    if (!renewalCount) newErrors.renewalCount = "Not empty.";
+    if (!employeeId) newErrors.employeeId = "Not empty.";
+    if (!duration) newErrors.duration = "Not empty.";
 
     setErrors(newErrors);
 
@@ -390,18 +475,21 @@ const ListServiceSchedules = () => {
     setLoading(true);
 
     try {
-      await ServicesService.createServiceSchedule(
-        name,
-        serviceRequestID,
-        employeeID,
-        scheduledDate,
-        location
+      await ContractService.createContract(
+        contractNumber,
+        startDate,
+        endDate,
+        signDate,
+        content,
+        employeeId,
+        renewalCount,
+        duration
       );
       handleCloseModal();
       toast.success("ServiceSchedule created successfully.");
       await fetchAllData();
     } catch (error) {
-      toast.error("Failed to create serviceSchedule.");
+      toast.error("Failed to create contractService.");
     } finally {
       setLoading(false);
     }
@@ -409,10 +497,7 @@ const ListServiceSchedules = () => {
 
   const handleChangeInput = (e) => {
     const { name, value } = e.target;
-    setValues((prevValues) => ({
-      ...prevValues,
-      [name]: value,
-    }));
+    setValues((prevState) => ({ ...prevState, [name]: value }));
   };
 
   return (
@@ -431,25 +516,20 @@ const ListServiceSchedules = () => {
             Create New
           </button>
         </div>
-
         <div className="grid p-5 bg-gray-100 rounded-md">
-          <div>
+          <div className="container overflow-y-auto">
             <div className="flex items-center justify-end">
               <input
                 type="text"
-                placeholder="Search serviceSchedule"
-                value={searchQuery.serviceSchedule}
-                onChange={handleSearchChange("serviceSchedule")}
+                placeholder="Search contractService"
+                value={searchQuery.contractService}
+                onChange={handleSearchChange("contractService")}
                 className="border border-gray-300 px-3 py-2 rounded-md outline-none mb-3"
               />
             </div>
             <DataTable
-              columns={renderColumns("serviceSchedule")}
-              data={serviceScheduleSchedules.filter((c) =>
-                c.name
-                  ?.toLowerCase()
-                  .includes(searchQuery.serviceSchedule.toLowerCase())
-              )}
+              columns={renderColumns("contractService")}
+              data={contractServices}
               pagination
               paginationComponentOptions={paginationComponentOptions}
               customStyles={{
@@ -493,59 +573,49 @@ const ListServiceSchedules = () => {
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
           <div className="bg-white p-4 rounded-lg w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-5">
-              Create Service Schedule
-            </h2>
-            <form onSubmit={handleSubmit}>
-              <label className="block mb-1">
+            <h2 className="text-xl font-semibold mb-5">Create Contract</h2>
+            <form
+              onSubmit={handleSubmit}
+              className="grid xl:grid-cols-2 grid-cols-1 gap-2"
+            >
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
-                  Name:
+                  Contract Number:
                 </span>
                 <input
                   type="text"
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                   placeholder="Enter name"
-                  name="name"
-                  value={values.name}
+                  name="contractNumber"
+                  value={values.contractNumber}
                   onChange={handleChangeInput}
                 />
-                {errors.name && (
-                  <span className="text-red-700">{errors.name}</span>
+                {errors.contractNumber && (
+                  <span className="text-red-700">{errors.contractNumber}</span>
                 )}
               </label>
-              <label className="block mb-1">
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
-                  Service Request:
+                  Content:
                 </span>
-                <select
-                  name="serviceRequestID"
-                  value={values.serviceRequestID}
+                <textarea
+                  name="content"
+                  value={values.content}
                   onChange={handleChangeInput}
+                  placeholder="Enter content"
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                >
-                  <option value="">Select</option>
-                  {serviceRequests.map((serviceRequest) => (
-                    <option
-                      key={serviceRequest.serviceRequestID}
-                      value={serviceRequest.serviceRequestID}
-                    >
-                      {serviceRequest.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.serviceRequestID && (
-                  <span className="text-red-700">
-                    {errors.serviceRequestID}
-                  </span>
+                ></textarea>
+                {errors.content && (
+                  <span className="text-red-700">{errors.content}</span>
                 )}
               </label>
-              <label className="block mb-1">
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
                   Employee:
                 </span>
                 <select
-                  name="employeeID"
-                  value={values.employeeID}
+                  name="employeeId"
+                  value={values.employeeId}
                   onChange={handleChangeInput}
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                 >
@@ -556,42 +626,91 @@ const ListServiceSchedules = () => {
                     </option>
                   ))}
                 </select>
-                {errors.employeeID && (
-                  <span className="text-red-700">{errors.employeeID}</span>
+                {errors.employeeId && (
+                  <span className="text-red-700">{errors.employeeId}</span>
                 )}
               </label>
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
-                  Location:
+                  Renewal Count:
                 </span>
-                <textarea
-                  name="location"
-                  value={values.location}
-                  onChange={handleChangeInput}
-                  placeholder="Enter location"
+                <input
+                  type="number"
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                ></textarea>
-                {errors.location && (
-                  <span className="text-red-700">{errors.location}</span>
+                  placeholder="Enter name"
+                  name="renewalCount"
+                  value={values.renewalCount}
+                  onChange={handleChangeInput}
+                />
+                {errors.renewalCount && (
+                  <span className="text-red-700">{errors.renewalCount}</span>
                 )}
               </label>
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
-                  Scheduled Date:
+                  Duration:
+                </span>
+                <input
+                  type="number"
+                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                  placeholder="Enter name"
+                  name="duration"
+                  value={values.duration}
+                  onChange={handleChangeInput}
+                />
+                {errors.duration && (
+                  <span className="text-red-700">{errors.duration}</span>
+                )}
+              </label>
+              <label className="block mb-1">
+                <span className="block font-medium text-primary mb-1">
+                  Start Date:
                 </span>
                 <input
                   type="date"
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                   placeholder="Enter Phone"
-                  name="scheduledDate"
-                  value={values.scheduledDate}
+                  name="startDate"
+                  value={values.startDate}
                   onChange={handleChangeInput}
                 />
-                {errors.scheduledDate && (
-                  <span className="text-red-700">{errors.scheduledDate}</span>
+                {errors.startDate && (
+                  <span className="text-red-700">{errors.startDate}</span>
                 )}
               </label>
-              <div className="flex items-center gap-2 mt-4">
+              <label className="block mb-1">
+                <span className="block font-medium text-primary mb-1">
+                  End Date:
+                </span>
+                <input
+                  type="date"
+                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                  placeholder="Enter Phone"
+                  name="endDate"
+                  value={values.endDate}
+                  onChange={handleChangeInput}
+                />
+                {errors.endDate && (
+                  <span className="text-red-700">{errors.endDate}</span>
+                )}
+              </label>
+              <label className="block mb-1">
+                <span className="block font-medium text-primary mb-1">
+                  Sign Date:
+                </span>
+                <input
+                  type="date"
+                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                  placeholder="Enter Phone"
+                  name="signDate"
+                  value={values.signDate}
+                  onChange={handleChangeInput}
+                />
+                {errors.signDate && (
+                  <span className="text-red-700">{errors.signDate}</span>
+                )}
+              </label>
+              <div className="col-span-2 flex items-center gap-2 mt-4">
                 <button
                   type="submit"
                   className="px-4 py-2 bg-blue-950 text-white rounded-md"
@@ -614,4 +733,4 @@ const ListServiceSchedules = () => {
   );
 };
 
-export default ListServiceSchedules;
+export default ListContract;

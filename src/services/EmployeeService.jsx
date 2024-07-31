@@ -2,7 +2,7 @@ import axios from "./axios";
 
 const getAllEmployees = async () => {
   try {
-    let response = await axios.get("/employee/all");
+    let response = await axios.get("/employee/get-all-employee");
     return response.data;
   } catch (error) {
     const errorMessage =

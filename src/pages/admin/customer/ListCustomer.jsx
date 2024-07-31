@@ -5,6 +5,8 @@ import Loading from "../../../components/Loading";
 import Delete from "../../../components/admin/Delete";
 import DataTable from "react-data-table-component";
 import CustomerService from "../../../services/CustomerService";
+import Select from "react-select";
+import EmployeeService from "../../../services/EmployeeService";
 
 const paginationComponentOptions = {
   rowsPerPageText: "Rows per page",
@@ -23,8 +25,10 @@ const ListCustomer = () => {
     Email: "",
     Phone: "",
     file: null,
+    EmployeeSupports: [],
   });
   const [customers, setCustomers] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [remove, setRemove] = useState(false);
@@ -47,11 +51,13 @@ const ListCustomer = () => {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const [customersData] = await Promise.all([
+      const [customersData, employeesData] = await Promise.all([
         CustomerService.getAllCustomers(),
+        EmployeeService.getAllEmployees(),
       ]);
 
       setCustomers(customersData.data || []);
+      setEmployees(employeesData || []);
     } catch (error) {
       toast.error("Failed to fetch data.");
     } finally {
@@ -68,7 +74,7 @@ const ListCustomer = () => {
 
   const handleUpdate = useCallback(async () => {
     setLoading(true);
-    
+
     try {
       const { customerID, CustomerName, Phone, file } = editItem;
       await CustomerService.updateCustomer(
@@ -280,12 +286,15 @@ const ListCustomer = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { CustomerName, Email, Phone, file } = values;
+    const { CustomerName, Email, Phone, file, EmployeeSupports } = values;
+
     let newErrors = {};
 
     if (!CustomerName) newErrors.CustomerName = "Full name is required.";
     if (!Phone) newErrors.Phone = "Phone is required.";
     if (!file) newErrors.file = "Image is required.";
+    if (!EmployeeSupports)
+      newErrors.EmployeeSupports = "Employee Supports is required.";
 
     if (!Email) newErrors.Email = "Email is required.";
     else if (!Email_REGEX.test(Email))
@@ -298,7 +307,13 @@ const ListCustomer = () => {
     setLoading(true);
 
     try {
-      await CustomerService.createCustomer(CustomerName, Email, Phone, file);
+      await CustomerService.createCustomer(
+        CustomerName,
+        Email,
+        Phone,
+        file,
+        EmployeeSupports.map((emp) => emp.value)
+      );
       handleCloseModal();
       toast.success("Customer created successfully.");
       await fetchAllData();
@@ -317,6 +332,19 @@ const ListCustomer = () => {
     } else {
       setValues({ ...values, [name]: value });
     }
+  };
+
+  // Prepare options for react-select
+  const employeeOptions = employees.map((emp) => ({
+    value: emp.id,
+    label: emp.name,
+  }));
+
+  const handleSelectChange = (selectedOptions) => {
+    setValues((prevValues) => ({
+      ...prevValues,
+      EmployeeSupports: selectedOptions,
+    }));
   };
 
   return (
@@ -468,6 +496,24 @@ const ListCustomer = () => {
                 </label>
                 {errors.file && (
                   <span className="text-red-700">{errors.file}</span>
+                )}
+              </label>
+              <label className="block mb-1">
+                <span className="block font-medium text-primary mb-1">
+                  Employee Support:
+                </span>
+                <Select
+                  options={employeeOptions}
+                  isMulti
+                  value={values.EmployeeSupports}
+                  onChange={handleSelectChange}
+                  getOptionLabel={(option) => option.label}
+                  getOptionValue={(option) => option.value}
+                  className="basic-multi-select"
+                  classNamePrefix="select"
+                />
+                {errors.EmployeeIds && (
+                  <span className="text-red-700">{errors.EmployeeIds}</span>
                 )}
               </label>
               <div className="flex items-center gap-2 mt-4">

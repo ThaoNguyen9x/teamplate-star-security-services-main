@@ -29,7 +29,7 @@ const ListEmployee = () => {
     setLoading(true);
     try {
       const employeesData = await EmployeeService.getAllEmployees();
-      setEmployees(employeesData.data || []);
+      setEmployees(employeesData || []);
     } catch (error) {
       toast.error("Failed to fetch data.");
     } finally {
@@ -118,7 +118,7 @@ const ListEmployee = () => {
   };
 
   const filteredEmployees = employees.filter((employee) =>
-    employee.name.toLowerCase().includes(searchQuery.toLowerCase())
+    employee.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (

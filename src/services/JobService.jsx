@@ -1,75 +1,30 @@
 import axios from "./axios";
 
-const getAllCustomers = async () => {
+const getAllJobs = async () => {
   try {
-    let response = await axios.get("/customers");
+    let response = await axios.get("/jobpositions");
     return response.data;
   } catch (error) {
-    const errorMessage =
-      error.response?.data?.message ||
-      error.message ||
-      "An unknown error occurred";
-    throw { flag: false, message: errorMessage };
+    throw error.response?.data || error.message;
   }
 };
 
-const createCustomer = async (CustomerName, Email, Phone, file, EmployeeSupports) => {
+const createJob = async (
+  jobRequirements,
+  jobDescription,
+  applicationDeadline,
+  positionName,
+  status
+) => {
   try {
     const response = await axios.post(
-      "/customers",
-      { CustomerName, Email, Phone, file, EmployeeSupports },
+      "/jobpositions",
       {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
-
-    if (!response.data.flag) {
-      throw new Error(response.data.message || "An unknown error occurred");
-    }
-
-    return response.data;
-  } catch (error) {
-    const errorMessage =
-      error.response?.data?.message ||
-      error.message ||
-      "An unknown error occurred";
-    throw {
-      flag: false,
-      message: errorMessage,
-    };
-  }
-};
-
-const getByIdCustomer = async (id) => {
-  try {
-    const response = await axios.get(`/authencation/single/${id}`);
-
-    if (!response.data.flag) {
-      throw new Error(response.data.message || "An unknown error occurred");
-    }
-
-    return response.data;
-  } catch (error) {
-    const errorMessage =
-      error.response?.data?.message ||
-      error.message ||
-      "An unknown error occurred";
-    throw {
-      flag: false,
-      message: errorMessage,
-    };
-  }
-};
-
-const updateCustomer = async (id, name) => {
-  try {
-    const response = await axios.post(
-      `/authencation/update`,
-      {
-        id,
-        name,
+        jobRequirements,
+        jobDescription,
+        applicationDeadline,
+        positionName,
+        status,
       },
       {
         headers: {
@@ -95,9 +50,73 @@ const updateCustomer = async (id, name) => {
   }
 };
 
-const deleteCustomer = async (id) => {
+const getByIdJob = async (id) => {
   try {
-    const response = await axios.delete(`/customers/${id}`, {
+    const response = await axios.get(`/jobpositions/${id}`);
+
+    if (!response.data.flag) {
+      throw new Error(response.data.message || "An unknown error occurred");
+    }
+
+    return response.data;
+  } catch (error) {
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "An unknown error occurred";
+    throw {
+      flag: false,
+      message: errorMessage,
+    };
+  }
+};
+
+const updateJob = async (
+  id,
+  jobRequirements,
+  jobDescription,
+  applicationDeadline,
+  positionName,
+  status
+) => {
+  try {
+    const response = await axios.put(
+      `/jobpositions/${id}`,
+      {
+        id,
+        jobRequirements,
+        jobDescription,
+        applicationDeadline,
+        positionName,
+        status,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.data.flag) {
+      throw new Error(response.data.message || "An unknown error occurred");
+    }
+
+    return response.data;
+  } catch (error) {
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "An unknown error occurred";
+    throw {
+      flag: false,
+      message: errorMessage,
+    };
+  }
+};
+
+const deleteJob = async (id) => {
+  try {
+    const response = await axios.delete(`/jobpositions/${id}`, {
       id,
     });
 
@@ -118,12 +137,12 @@ const deleteCustomer = async (id) => {
   }
 };
 
-const CustomerService = {
-  getAllCustomers,
-  createCustomer,
-  getByIdCustomer,
-  updateCustomer,
-  deleteCustomer,
+const JobService = {
+  getAllJobs,
+  createJob,
+  getByIdJob,
+  updateJob,
+  deleteJob,
 };
 
-export default CustomerService;
+export default JobService;

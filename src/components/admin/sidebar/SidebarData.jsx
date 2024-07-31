@@ -29,27 +29,42 @@ const SidebarData = ({ toggle }) => {
         {
           title: "Services",
           path: "/dashboard/services",
-          icon: <i className="bi bi-person-plus"></i>,
+          icon: <i className="bi bi-hdd"></i>,
         },
         {
           title: "Service Requests",
           path: "/dashboard/service-requests",
-          icon: <i className="bi bi-person-plus"></i>,
+          icon: <i className="bi bi-arrow-repeat"></i>,
         },
         {
           title: "Service Schedules",
           path: "/dashboard/service-schedules",
-          icon: <i className="bi bi-person-plus"></i>,
+          icon: <i className="bi bi-box-seam"></i>,
+        },
+        {
+          title: "Cash Services",
+          path: "/dashboard/cash-services",
+          icon: <i className="bi bi-wallet"></i>,
+        },
+        {
+          title: "Cash Transactions",
+          path: "/dashboard/cash-transactions",
+          icon: <i className="bi bi-wallet2"></i>,
         },
         {
           title: "Job Positions",
           path: "/dashboard/job-positions",
-          icon: <i className="bi bi-person-plus"></i>,
+          icon: <i className="bi bi-journal"></i>,
+        },
+        {
+          title: "Contract",
+          path: "/dashboard/contract",
+          icon: <i className="bi bi-chevron-contract"></i>
         },
         {
           title: "General",
           path: "/dashboard/general",
-          icon: <i className="bi bi-balloon-heart"></i>,
+          icon: <i className="bi bi-bookmark-heart"></i>,
         },
         {
           title: "Geo",
@@ -97,7 +112,13 @@ const SidebarData = ({ toggle }) => {
       <ul>
         {data.map((menuItem) => (
           <li key={menuItem.title}>
-            <p className="font-medium my-2">{menuItem.title}</p>
+            <p
+              className={`font-medium my-2 text-sm ${
+                toggle ? "" : "text-center"
+              } `}
+            >
+              {menuItem.title}
+            </p>
             {menuItem.list.map((item) => (
               <Link
                 to={item.path}
@@ -107,7 +128,11 @@ const SidebarData = ({ toggle }) => {
                 } flex items-center mx-2 my-2 p-2 gap-5 hover:bg-white hover:text-blue-950 rounded-md`}
               >
                 <div className="text-2xl">{item.icon}</div>
-                <div className={`${toggle ? "" : "hidden"} text-xl`}>
+                <div
+                  className={`${
+                    toggle ? "" : "hidden"
+                  } text-lg whitespace-nowrap`}
+                >
                   {item.title}
                 </div>
               </Link>

@@ -14,19 +14,7 @@ const paginationComponentOptions = {
   selectAllRowsItemText: "All",
 };
 
-const email_REGEX =
-  /^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$/;
-const password_REGEX =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[#$@!%&*?])[A-Za-z\d#$@!%&*?]{8,30}$/;
-
 const ListAccount = () => {
-  const [values, setValues] = useState({
-    fullname: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    employeeId: "",
-  });
   const [accounts, setAccounts] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -35,11 +23,23 @@ const ListAccount = () => {
   const [editItem, setEditItem] = useState({
     id: "",
     fullname: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
     employeeId: "",
     model: "account",
   });
-  const [searchQuery, setSearchQuery] = useState({ account: "" });
+  const [searchQuery, setSearchQuery] = useState({
+    account: "",
+  });
   const [showModal, setShowModal] = useState(false);
+  const [values, setValues] = useState({
+    fullname: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    employeeId: "",
+  });
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -54,12 +54,10 @@ const ListAccount = () => {
         EmployeeService.getAllEmployees(),
       ]);
 
-      setAccounts(accountsData.$values || []);
-      setEmployees(employeesData.data || []);
+      setAccounts(accountsData || []);
+      setEmployees(employeesData || []);
     } catch (error) {
-      toast.error(
-        "Failed to fetch data. Please check the console for more details."
-      );
+      toast.error("Failed to fetch data.");
     } finally {
       setLoading(false);
     }
@@ -78,14 +76,10 @@ const ListAccount = () => {
       toast.success("Updated successfully.");
     } catch (error) {
       toast.error("Failed to update data.");
+      console.error("Update error:", error.message);
     } finally {
       setLoading(false);
-      setEditItem({
-        id: "",
-        fullname: "",
-        employeeId: "",
-        model: "account",
-      });
+      setEditItem({ id: "", fullname: "", model: "account" });
     }
   }, [editItem]);
 
@@ -100,131 +94,138 @@ const ListAccount = () => {
     try {
       await AccountService.deleteAccount(currentId);
       setAccounts((prevAccounts) =>
-        prevAccounts.filter((c) => c.id !== currentId)
+        prevAccounts.filter((c) => c.Id !== currentId)
       );
       toast.success("Deleted successfully.");
-      handleCloseModal();
     } catch (error) {
       toast.error("Failed to delete data.");
+      console.error("Delete error:", error.message);
     } finally {
       setLoading(false);
       setRemove(false);
+      setEditItem({ id: "", fullname: "", model: "account" });
     }
   }, [currentId]);
 
   const getEmployeesOptions = () => {
-    return employees.map((c) => (
-      <option key={c.id} value={c.id}>
-        {c.name}
+    return employees.map((p) => (
+      <option key={p.id} value={p.id}>
+        {p.name}
       </option>
     ));
   };
 
   const getEmployeeName = (row) => {
-    return employees.find((c) => c.id === row.employeeId)?.name || "N/A";
+    return employees.find((c) => c.Id === row.employeeID)?.name || "N/A";
   };
 
   const renderColumns = useCallback(
-    (model) => [
-      {
-        name: "#",
-        selector: (row, index) => index + 1,
-        sortable: true,
-      },
-      {
-        name: "Full Name",
-        selector: (row) => row.fullName || "",
-        cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
-            <input
-              type="text"
-              value={editItem.fullname}
-              onChange={(e) =>
-                setEditItem({ ...editItem, fullname: e.target.value })
-              }
-              className="border px-2 py-1 rounded-md outline-none"
-            />
-          ) : (
-            row.fullName || ""
-          ),
-        sortable: true,
-      },
-      {
-        name: "Email",
-        selector: (row) => row.email || "",
-        sortable: true,
-      },
-      {
-        name: "Employee",
-        selector: (row) => getEmployeeName(row),
-        cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
-            <select
-              value={editItem.employeeId}
-              onChange={(e) =>
-                setEditItem((prevState) => ({
-                  ...prevState,
-                  employeeId: e.target.value,
-                }))
-              }
-              className="border px-3 py-2 rounded-md"
-            >
-              <option value="">Select</option>
-              {getEmployeesOptions()}
-            </select>
-          ) : (
-            getEmployeeName(row)
-          ),
-        sortable: true,
-      },
-      {
-        name: "Actions",
-        cell: (row) => (
-          <div className="flex items-center gap-2">
-            {editItem.id === row.id && editItem.model === model ? (
-              <>
-                <button
-                  onClick={handleUpdate}
-                  className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
-                >
-                  Update
-                </button>
-                <button
-                  onClick={() =>
-                    setEditItem({
-                      id: "",
-                      fullname: "",
-                      employeeId: "",
-                      model: "account",
-                    })
-                  }
-                  className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
-                >
-                  Cancel
-                </button>
-              </>
+    (model) => {
+      const getName = (row) => row.fullName || "";
+      return [
+        {
+          name: "#",
+          selector: (row, index) => index + 1,
+          sortable: true,
+        },
+        {
+          name: "Name",
+          selector: (row) => getName(row),
+          cell: (row) =>
+            editItem.id === row.Id && editItem.model === model ? (
+              <input
+                type="text"
+                value={editItem.fullname}
+                onChange={(e) =>
+                  setEditItem((prevState) => ({
+                    ...prevState,
+                    fullname: e.target.value,
+                  }))
+                }
+                className="border px-2 py-1 rounded-md outline-none"
+              />
             ) : (
-              <>
-                <button
-                  onClick={() =>
-                    handleEditClick(row.id, row.fullName, row.employeeId)
-                  }
-                  className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDeleteClick(row.id, model)}
-                  className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
-                >
-                  Delete
-                </button>
-              </>
-            )}
-          </div>
-        ),
-      },
-    ],
+              getName(row)
+            ),
+          sortable: true,
+        },
+        {
+          name: "Email",
+          selector: (row) => row.email,
+          sortable: true,
+        },
+        {
+          name: "Employee",
+          selector: (row) => getEmployeeName(row),
+          cell: (row) =>
+            editItem.id === row.Id && editItem.model === model ? (
+              <select
+                value={editItem.employeeId}
+                onChange={(e) => {
+                  setEditItem((prevState) => ({
+                    ...prevState,
+                    employeeId: e.target.value,
+                  }));
+                }}
+                className="border px-3 py-2 rounded-md"
+              >
+                <option value="">Select</option>
+                {getEmployeesOptions()}
+              </select>
+            ) : (
+              getEmployeeName(row)
+            ),
+          sortable: true,
+        },
+        {
+          name: "Actions",
+          cell: (row) => (
+            <>
+              {editItem.id === row.Id && editItem.model === model ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleUpdate}
+                    className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
+                  >
+                    Update
+                  </button>
+                  <button
+                    onClick={() =>
+                      setEditItem({
+                        id: "",
+                        fullname: "",
+                        employeeId: "",
+                        model: "account",
+                      })
+                    }
+                    className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() =>
+                      handleEditClick(row.Id, getName(row), row.employeeId)
+                    }
+                    className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteClick(row.Id, model)}
+                    className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
+                  >
+                    Delete
+                  </button>
+                </div>
+              )}
+            </>
+          ),
+        },
+      ];
+    },
     [editItem, handleEditClick, handleUpdate, handleDeleteClick]
   );
 
@@ -236,50 +237,36 @@ const ListAccount = () => {
   };
 
   const handleOpenModal = () => setShowModal(true);
-
   const handleCloseModal = () => {
     setShowModal(false);
     setValues("");
     setErrors({});
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-    const { fullname, email, password, confirmPassword, employeeId } = values;
+    const { email, password, confirmPassword, fullname, employeeId } = values;
+
     let newErrors = {};
 
-    if (!fullname) newErrors.fullname = "Full name is required.";
-
     if (!email) newErrors.email = "Email is required.";
-    else if (!email_REGEX.test(email))
-      newErrors.email = "Invalid email format.";
-
+    if (!fullname) newErrors.fullname = "Full name is required.";
     if (!password) newErrors.password = "Password is required.";
-    else if (!password_REGEX.test(password))
-      newErrors.password =
-        "Password must be 8-30 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.";
-
     if (!confirmPassword)
-      newErrors.confirmPassword = "Confirm password is required.";
-    else if (password !== confirmPassword)
-      newErrors.confirmPassword = "Passwords do not match.";
-
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length > 0) return;
+      newErrors.confirmPassword = "Confirm Password is required.";
+    if (!employeeId) newErrors.employeeId = "Employee is required.";
 
     setLoading(true);
-
     try {
-      const response = await AccountService.createAccount(
-        fullname,
+      await AccountService.createAccount(
         email,
         password,
         confirmPassword,
+        fullname,
         employeeId
       );
-      setAccounts((prevAccounts) => [...prevAccounts, response.data]);
+      await fetchAllData();
       toast.success("Account created successfully.");
       handleCloseModal();
     } catch (error) {
@@ -313,7 +300,7 @@ const ListAccount = () => {
         </div>
 
         <div className="grid p-5 bg-gray-100 rounded-md">
-          <div>
+          <div key="account">
             <div className="flex items-center justify-end">
               <input
                 type="text"
@@ -373,70 +360,78 @@ const ListAccount = () => {
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
           <div className="bg-white p-4 rounded-lg w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-5">Create Account</h2>
+            <h3 className="text-xl font-bold mb-4 text-center">
+              Create Account
+            </h3>
             <form onSubmit={handleSubmit}>
-              <label className="block mb-1">
+              <label className="block">
                 <span className="block font-medium text-primary mb-1">
                   Full Name:
                 </span>
                 <input
                   type="text"
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                  placeholder="Enter full name"
-                  name="fullname"
+                  placeholder="Enter name"
                   value={values.fullname}
+                  name="fullname"
                   onChange={handleChangeInput}
+                  className="block w-full border border-gray-300 rounded-md px-3 py-2 outline-none"
                 />
                 {errors.fullname && (
-                  <span className="text-red-700">{errors.fullname}</span>
+                  <span className="text-red-600 text-sm">
+                    {errors.fullname}
+                  </span>
                 )}
               </label>
-              <label className="block mb-1">
+              <label className="block">
                 <span className="block font-medium text-primary mb-1">
                   Email:
                 </span>
                 <input
-                  type="email"
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                  placeholder="Enter email"
-                  name="email"
+                  type="text"
+                  placeholder="Enter name"
                   value={values.email}
+                  name="email"
                   onChange={handleChangeInput}
+                  className="block w-full border border-gray-300 rounded-md px-3 py-2 outline-none"
                 />
                 {errors.email && (
-                  <span className="text-red-700">{errors.email}</span>
+                  <span className="text-red-600 text-sm">{errors.email}</span>
                 )}
               </label>
-              <label className="block mb-1">
+              <label className="block">
                 <span className="block font-medium text-primary mb-1">
                   Password:
                 </span>
                 <input
-                  type="password"
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                  placeholder="Enter password"
-                  name="password"
+                  type="text"
+                  placeholder="Enter name"
                   value={values.password}
+                  name="password"
                   onChange={handleChangeInput}
+                  className="block w-full border border-gray-300 rounded-md px-3 py-2 outline-none"
                 />
                 {errors.password && (
-                  <span className="text-red-700">{errors.password}</span>
+                  <span className="text-red-600 text-sm">
+                    {errors.password}
+                  </span>
                 )}
               </label>
-              <label className="block mb-1">
+              <label className="block">
                 <span className="block font-medium text-primary mb-1">
                   Confirm Password:
                 </span>
                 <input
-                  type="password"
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                  placeholder="Enter confirm password"
-                  name="confirmPassword"
+                  type="text"
+                  placeholder="Enter name"
                   value={values.confirmPassword}
+                  name="confirmPassword"
                   onChange={handleChangeInput}
+                  className="block w-full border border-gray-300 rounded-md px-3 py-2 outline-none"
                 />
                 {errors.confirmPassword && (
-                  <span className="text-red-700">{errors.confirmPassword}</span>
+                  <span className="text-red-600 text-sm">
+                    {errors.confirmPassword}
+                  </span>
                 )}
               </label>
               <label className="block mb-1">
@@ -449,7 +444,7 @@ const ListAccount = () => {
                   onChange={handleChangeInput}
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                 >
-                  <option value="">Select a employee</option>
+                  <option value="">Select</option>
                   {employees.map((employee) => (
                     <option key={employee.id} value={employee.id}>
                       {employee.name}

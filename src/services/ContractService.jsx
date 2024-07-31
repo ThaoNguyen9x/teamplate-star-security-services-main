@@ -1,75 +1,36 @@
 import axios from "./axios";
 
-const getAllCustomers = async () => {
+const getAllContracts = async () => {
   try {
-    let response = await axios.get("/customers");
+    let response = await axios.get("/contract/all");
     return response.data;
   } catch (error) {
-    const errorMessage =
-      error.response?.data?.message ||
-      error.message ||
-      "An unknown error occurred";
-    throw { flag: false, message: errorMessage };
+    throw error.response?.data || error.message;
   }
 };
 
-const createCustomer = async (CustomerName, Email, Phone, file, EmployeeSupports) => {
+const createContract = async (
+  contractNumber,
+  startDate,
+  endDate,
+  signDate,
+  content,
+  employeeId,
+  renewalCount,
+  duration
+) => {
   try {
     const response = await axios.post(
-      "/customers",
-      { CustomerName, Email, Phone, file, EmployeeSupports },
+      "/contract/add",
       {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
-
-    if (!response.data.flag) {
-      throw new Error(response.data.message || "An unknown error occurred");
-    }
-
-    return response.data;
-  } catch (error) {
-    const errorMessage =
-      error.response?.data?.message ||
-      error.message ||
-      "An unknown error occurred";
-    throw {
-      flag: false,
-      message: errorMessage,
-    };
-  }
-};
-
-const getByIdCustomer = async (id) => {
-  try {
-    const response = await axios.get(`/authencation/single/${id}`);
-
-    if (!response.data.flag) {
-      throw new Error(response.data.message || "An unknown error occurred");
-    }
-
-    return response.data;
-  } catch (error) {
-    const errorMessage =
-      error.response?.data?.message ||
-      error.message ||
-      "An unknown error occurred";
-    throw {
-      flag: false,
-      message: errorMessage,
-    };
-  }
-};
-
-const updateCustomer = async (id, name) => {
-  try {
-    const response = await axios.post(
-      `/authencation/update`,
-      {
-        id,
-        name,
+        contractNumber,
+        startDate,
+        endDate,
+        signDate,
+        content,
+        employeeId,
+        renewalCount,
+        duration,
       },
       {
         headers: {
@@ -95,9 +56,79 @@ const updateCustomer = async (id, name) => {
   }
 };
 
-const deleteCustomer = async (id) => {
+const getByIdContract = async (id) => {
   try {
-    const response = await axios.delete(`/customers/${id}`, {
+    const response = await axios.get(`/contract/single/${id}`);
+
+    if (!response.data.flag) {
+      throw new Error(response.data.message || "An unknown error occurred");
+    }
+
+    return response.data;
+  } catch (error) {
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "An unknown error occurred";
+    throw {
+      flag: false,
+      message: errorMessage,
+    };
+  }
+};
+
+const updateContract = async (
+  id,
+  contractNumber,
+  startDate,
+  endDate,
+  signDate,
+  content,
+  employeeId,
+  renewalCount,
+  duration
+) => {
+  try {
+    const response = await axios.post(
+      `/contract/update`,
+      {
+        id,
+        contractNumber,
+        startDate,
+        endDate,
+        signDate,
+        content,
+        employeeId,
+        renewalCount,
+        duration,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.data.flag) {
+      throw new Error(response.data.message || "An unknown error occurred");
+    }
+
+    return response.data;
+  } catch (error) {
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "An unknown error occurred";
+    throw {
+      flag: false,
+      message: errorMessage,
+    };
+  }
+};
+
+const deleteContract = async (id) => {
+  try {
+    const response = await axios.delete(`/contract/delete/${id}`, {
       id,
     });
 
@@ -118,12 +149,12 @@ const deleteCustomer = async (id) => {
   }
 };
 
-const CustomerService = {
-  getAllCustomers,
-  createCustomer,
-  getByIdCustomer,
-  updateCustomer,
-  deleteCustomer,
+const ContractService = {
+  getAllContracts,
+  createContract,
+  getByIdContract,
+  updateContract,
+  deleteContract,
 };
 
-export default CustomerService;
+export default ContractService;

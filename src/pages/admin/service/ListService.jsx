@@ -21,7 +21,6 @@ const ListService = () => {
     price: "",
   });
   const [services, setServices] = useState([]);
-  const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [remove, setRemove] = useState(false);
   const [currentId, setCurrentId] = useState(null);
@@ -240,7 +239,6 @@ const ListService = () => {
   const handleCloseModal = () => {
     setShowModal(false);
     setValues("");
-    setImagePreview(null);
     setErrors({});
   };
 

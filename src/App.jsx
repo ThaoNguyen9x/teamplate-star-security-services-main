@@ -43,6 +43,9 @@ import ListService from "./pages/admin/service/ListService";
 import ListServiceRequests from "./pages/admin/service/ListServiceRequests";
 import ListServiceSchedules from "./pages/admin/service/ListServiceSchedules";
 import ListJob from "./pages/admin/job/ListJob";
+import ListCashService from "./pages/admin/service/ListCashService";
+import ListCashTransactions from "./pages/admin/service/ListCashTransactions";
+import ListContract from "./pages/admin/contract/ListContract";
 
 // ScrollToTop Component
 const ScrollToTop = () => {
@@ -149,10 +152,13 @@ function App() {
 
           <Route path="general" element={<ListGeneral />} />
           <Route path="general/create" element={<CreateGeneral />} />
+          <Route path="contract" element={<ListContract />} />
 
           <Route path="services" element={<ListService />} />
           <Route path="service-requests" element={<ListServiceRequests />} />
           <Route path="service-schedules" element={<ListServiceSchedules />} />
+          <Route path="cash-services" element={<ListCashService />} />
+          <Route path="cash-transactions" element={<ListCashTransactions />} />
           <Route path="job-positions" element={<ListJob />} />
         </Route>
         <Route path="*" element={<NotFound />} />
