@@ -3,8 +3,9 @@ import { toast } from "react-toastify";
 import Loading from "../../../components/Loading";
 import Delete from "../../../components/admin/Delete";
 import DataTable from "react-data-table-component";
-import ServicesService from "../../../services/ServicesService";
-import CustomerService from "../../../services/CustomerService";
+import WelfareService from "../../../services/WelfareService";
+import EmployeeService from "../../../services/EmployeeService";
+import GeneralSanctionType from "../../../services/GeneralService";
 
 const paginationComponentOptions = {
   rowsPerPageText: "Rows per page",
@@ -14,30 +15,30 @@ const paginationComponentOptions = {
   selectAllRowsItemText: "All",
 };
 
-const ListServiceRequestRequests = () => {
+const ListTrainingHistories = () => {
   const [values, setValues] = useState({
     name: "",
-    customerID: "",
-    serviceType: "",
-    requestDetails: "",
-    status: "",
+    programID: "",
+    employeeID: "",
+    completionStatus: "",
+    completionDate: "",
   });
-  const [serviceRequests, setServiceRequests] = useState([]);
-  const [customers, setCustomers] = useState([]);
-  const [serviceTypes, setServiceTypes] = useState([]);
+  const [trainingHistories, setTrainingHistories] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [trainingPrograms, setTrainingPrograms] = useState([]);
   const [loading, setLoading] = useState(false);
   const [remove, setRemove] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [editItem, setEditItem] = useState({
     id: "",
     name: "",
-    customerID: "",
-    serviceType: "",
-    requestDetails: "",
-    status: "",
-    model: "serviceRequest",
+    programID: "",
+    employeeID: "",
+    completionStatus: "",
+    completionDate: "",
+    model: "trainingHistory",
   });
-  const [searchQuery, setSearchQuery] = useState({ serviceRequest: "" });
+  const [searchQuery, setSearchQuery] = useState({ trainingHistory: "" });
   const [showModal, setShowModal] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -47,17 +48,18 @@ const ListServiceRequestRequests = () => {
 
   const fetchAllData = async () => {
     setLoading(true);
+
     try {
-      const [serviceRequestsData, customersData, serviceTypesData] =
+      const [trainingHistoriesData, employeesData, trainingProgramsData] =
         await Promise.all([
-          ServicesService.getAllServiceRequests(),
-          CustomerService.getAllCustomers(),
-          ServicesService.getAllServices(),
+          WelfareService.getAllTrainingHistories(),
+          EmployeeService.getAllEmployees(),
+          GeneralSanctionType.getAllTrainingPrograms(),
         ]);
 
-      setServiceRequests(serviceRequestsData || []);
-      setCustomers(customersData.data || []);
-      setServiceTypes(serviceTypesData || []);
+      setTrainingHistories(trainingHistoriesData || []);
+      setEmployees(employeesData || []);
+      setTrainingPrograms(trainingProgramsData || []);
     } catch (error) {
       toast.error("Failed to fetch data.");
     } finally {
@@ -66,15 +68,22 @@ const ListServiceRequestRequests = () => {
   };
 
   const handleEditClick = useCallback(
-    (id, name, customerID, serviceType, requestDetails, status) => {
+    (
+      trainingID,
+      name,
+      programID,
+      employeeID,
+      completionStatus,
+      completionDate
+    ) => {
       setEditItem({
-        id,
+        id: trainingID,
         name,
-        customerID,
-        serviceType,
-        requestDetails,
-        status,
-        model: "serviceRequest",
+        programID,
+        employeeID,
+        completionStatus,
+        completionDate,
+        model: "trainingHistory",
       });
     },
     []
@@ -82,26 +91,37 @@ const ListServiceRequestRequests = () => {
 
   const handleUpdate = useCallback(async () => {
     setLoading(true);
-
     try {
-      const { id, name, customerID, serviceType, requestDetails, status } =
-        editItem;
-      await ServicesService.updateServiceRequest(
+      const {
         id,
         name,
-        customerID,
-        serviceType,
-        requestDetails,
-        status
+        programID,
+        employeeID,
+        completionStatus,
+        completionDate,
+      } = editItem;
+      await WelfareService.updateTrainingHistorie(
+        id,
+        name,
+        programID,
+        employeeID,
+        completionStatus,
+        completionDate
       );
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      toast.error("Failed to update data.");
+      toast.error("Failed to update data. Please try again.");
     } finally {
       setLoading(false);
       setEditItem({
-        editItem: null,
+        id: "",
+        name: "",
+        programID: "",
+        employeeID: "",
+        completionStatus: "",
+        completionDate: "",
+        model: "trainingHistory",
       });
     }
   }, [editItem]);
@@ -115,11 +135,9 @@ const ListServiceRequestRequests = () => {
   const handleDelete = useCallback(async () => {
     setLoading(true);
     try {
-      await ServicesService.deleteServiceRequest(currentId);
-      setServiceRequests((prevServiceRequestRequests) =>
-        prevServiceRequestRequests.filter(
-          (c) => c.serviceRequestID !== currentId
-        )
+      await WelfareService.deleteTrainingHistorie(currentId);
+      setTrainingHistories((prev) =>
+        prev.filter((c) => c.trainingID !== currentId)
       );
       toast.success("Deleted successfully.");
       await fetchAllData();
@@ -132,28 +150,38 @@ const ListServiceRequestRequests = () => {
     }
   }, [currentId]);
 
-  const getCustomersOptions = () => {
-    return customers.map((c) => (
-      <option key={c.customerID} value={c.customerID}>
-        {c.customerName}
-      </option>
-    ));
-  };
-
-  const getCustomerName = (row) => {
-    return customers.find((c) => c.id === row.customerId)?.customerName || "N/A";
-  };
-
-  const getServiceTypesOptions = () => {
-    return serviceTypes.map((c) => (
+  const getEmployeesOptions = () => {
+    return employees.map((c) => (
       <option key={c.id} value={c.id}>
         {c.name}
       </option>
     ));
   };
 
-  const getServiceTypeName = (row) => {
-    return serviceTypes.find((c) => c.serviceType === row.id)?.name || "N/A";
+  const getEmployeeName = (id) => {
+    return employees.find((c) => c.id === id)?.name || "N/A";
+  };
+
+  const getTrainingProgramsOptions = () => {
+    return trainingPrograms.map((c) => (
+      <option key={c.programID} value={c.programID}>
+        {c.programName}
+      </option>
+    ));
+  };
+
+  const getTrainingProgramName = (id) => {
+    return (
+      trainingPrograms.find((c) => c.programID === id)?.programName || "N/A"
+    );
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
   const renderColumns = useCallback(
@@ -167,7 +195,7 @@ const ListServiceRequestRequests = () => {
         name: "Name",
         selector: (row) => row.name || "",
         cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
+          editItem.id === row.trainingID && editItem.model === model ? (
             <input
               type="text"
               value={editItem.name}
@@ -185,93 +213,93 @@ const ListServiceRequestRequests = () => {
         sortable: true,
       },
       {
-        name: "Service",
-        selector: (row) => getServiceTypeName(row),
+        name: "Employee",
+        selector: (row) => getEmployeeName(row.employeeID),
         cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
+          editItem.id === row.trainingID && editItem.model === model ? (
             <select
-              value={editItem.serviceType}
+              value={editItem.employeeID}
               onChange={(e) =>
-                setEditItem((prevState) => ({
-                  ...prevState,
-                  serviceType: e.target.value,
+                setEditItem((prev) => ({
+                  ...prev,
+                  employeeID: e.target.value,
                 }))
               }
               className="border px-3 py-2 rounded-md"
             >
               <option value="">Select</option>
-              {getServiceTypesOptions()}
+              {getEmployeesOptions()}
             </select>
           ) : (
-            getServiceTypeName(row)
+            getEmployeeName(row.employeeID)
           ),
         sortable: true,
       },
       {
-        name: "Details",
-        selector: (row) => row.requestDetails || "",
+        name: "Training Program",
+        selector: (row) => getTrainingProgramName(row.programID),
         cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
+          editItem.id === row.trainingID && editItem.model === model ? (
+            <select
+              value={editItem.programID}
+              onChange={(e) =>
+                setEditItem((prev) => ({
+                  ...prev,
+                  programID: e.target.value,
+                }))
+              }
+              className="border px-3 py-2 rounded-md"
+            >
+              <option value="">Select</option>
+              {getTrainingProgramsOptions()}
+            </select>
+          ) : (
+            getTrainingProgramName(row.programID)
+          ),
+        sortable: true,
+      },
+      {
+        name: "Completion Date",
+        selector: (row) => formatDate(row.completionDate) || "",
+        cell: (row) =>
+          editItem.id === row.trainingID && editItem.model === model ? (
             <input
-              type="text"
-              value={editItem.requestDetails}
+              type="date"
+              value={formatDate(editItem.completionDate)}
               onChange={(e) =>
                 setEditItem((prevState) => ({
                   ...prevState,
-                  requestDetails: e.target.value,
+                  completionDate: e.target.value,
                 }))
               }
               className="border px-2 py-1 rounded-md outline-none"
             />
           ) : (
-            row.requestDetails || ""
+            formatDate(row.completionDate) || ""
           ),
         sortable: true,
       },
       {
-        name: "Customer",
-        selector: (row) => getCustomerName(row),
+        name: "Completion Status",
+        selector: (row) => row.completionStatus || "",
         cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
+          editItem.id === row.trainingID && editItem.model === model ? (
             <select
-              value={editItem.customerID}
+              value={editItem.completionStatus}
               onChange={(e) =>
-                setEditItem((prevState) => ({
-                  ...prevState,
-                  customerID: e.target.value,
+                setEditItem((prev) => ({
+                  ...prev,
+                  completionStatus: e.target.value,
                 }))
               }
               className="border px-3 py-2 rounded-md"
             >
-              <option value="">Select</option>
-              {getCustomersOptions()}
+              <option value="Completed">Completed</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Pending">Pending</option>
             </select>
           ) : (
-            getCustomerName(row)
-          ),
-        sortable: true,
-      },
-      {
-        name: "Status",
-        selector: (row) => row.status || "",
-        cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
-            <select
-              value={editItem.status}
-              onChange={(e) =>
-                setEditItem((prevState) => ({
-                  ...prevState,
-                  status: e.target.value,
-                }))
-              }
-              className="border px-2 py-1 rounded-md outline-none"
-            >
-              <option value="">Select Status</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          ) : (
-            row.status || ""
+            row.completionStatus || ""
           ),
         sortable: true,
       },
@@ -279,7 +307,7 @@ const ListServiceRequestRequests = () => {
         name: "Actions",
         cell: (row) => (
           <div className="flex items-center gap-2">
-            {editItem.id === row.id && editItem.model === model ? (
+            {editItem.id === row.trainingID && editItem.model === model ? (
               <>
                 <button
                   onClick={handleUpdate}
@@ -292,11 +320,11 @@ const ListServiceRequestRequests = () => {
                     setEditItem({
                       id: "",
                       name: "",
-                      serviceType: "",
-                      requestDetails: "",
-                      customerID: "",
-                      status: "",
-                      model: "serviceRequest",
+                      programID: "",
+                      employeeID: "",
+                      completionStatus: "",
+                      completionDate: "",
+                      model: "trainingHistory",
                     })
                   }
                   className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
@@ -309,12 +337,12 @@ const ListServiceRequestRequests = () => {
                 <button
                   onClick={() =>
                     handleEditClick(
-                      row.id,
+                      row.trainingID,
                       row.name,
-                      row.customerID,
-                      row.serviceType,
-                      row.requestDetails,
-                      row.status
+                      row.programID,
+                      row.employeeID,
+                      row.completionStatus,
+                      row.completionDate
                     )
                   }
                   className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
@@ -322,7 +350,7 @@ const ListServiceRequestRequests = () => {
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDeleteClick(row.serviceRequestID, model)}
+                  onClick={() => handleDeleteClick(row.trainingID, model)}
                   className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
                 >
                   Delete
@@ -354,15 +382,18 @@ const ListServiceRequestRequests = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { name, customerID, serviceType, requestDetails, status } = values;
+    const { name, programID, employeeID, completionStatus, completionDate } =
+      values;
+
     let newErrors = {};
 
     if (!name) newErrors.name = "Name is required.";
-    if (!serviceType) newErrors.serviceType = "Service type is required.";
-    if (!customerID) newErrors.customerID = "Customer is required.";
-    if (!requestDetails)
-      newErrors.requestDetails = "Request details is required.";
-    if (!status) newErrors.status = "Status is required.";
+    if (!programID) newErrors.programID = "Issue date is required.";
+    if (!employeeID) newErrors.employeeID = "Employee is required.";
+    if (!completionStatus)
+      newErrors.completionStatus = "Issue place is required.";
+    if (!completionDate)
+      newErrors.completionDate = "Health check place is required.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -374,18 +405,20 @@ const ListServiceRequestRequests = () => {
     setLoading(true);
 
     try {
-      await ServicesService.createServiceRequest(
+      await WelfareService.createTrainingHistorie(
         name,
-        customerID,
-        serviceType,
-        requestDetails,
-        status
+        programID,
+        employeeID,
+        completionStatus,
+        completionDate
       );
+
       handleCloseModal();
-      toast.success("ServiceRequest created successfully.");
+      toast.success("Sanction created successfully.");
       await fetchAllData();
     } catch (error) {
-      toast.error("Failed to create serviceRequest.");
+      console.error("Create error:", error);
+      toast.error("Failed to create trainingHistory.");
     } finally {
       setLoading(false);
     }
@@ -405,7 +438,9 @@ const ListServiceRequestRequests = () => {
 
       <div className="flex flex-col gap-5 mt-5">
         <div className="flex items-center justify-between">
-          <div className="font-semibold text-xl capitalize">ServiceRequest</div>
+          <div className="font-semibold text-xl capitalize">
+            Training Histories
+          </div>
           <button
             onClick={handleOpenModal}
             className="px-3 py-2 bg-blue-950 text-white rounded-md"
@@ -419,19 +454,15 @@ const ListServiceRequestRequests = () => {
             <div className="flex items-center justify-end">
               <input
                 type="text"
-                placeholder="Search serviceRequest"
-                value={searchQuery.serviceRequest}
-                onChange={handleSearchChange("serviceRequest")}
+                placeholder="Search trainingHistory"
+                value={searchQuery.trainingHistory}
+                onChange={handleSearchChange("trainingHistory")}
                 className="border border-gray-300 px-3 py-2 rounded-md outline-none mb-3"
               />
             </div>
             <DataTable
-              columns={renderColumns("serviceRequest")}
-              data={serviceRequests.filter((c) =>
-                c.name
-                  ?.toLowerCase()
-                  .includes(searchQuery.serviceRequest.toLowerCase())
-              )}
+              columns={renderColumns("trainingHistory")}
+              data={trainingHistories}
               pagination
               paginationComponentOptions={paginationComponentOptions}
               customStyles={{
@@ -476,7 +507,7 @@ const ListServiceRequestRequests = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
           <div className="bg-white p-4 rounded-lg w-full max-w-md">
             <h2 className="text-xl font-semibold mb-5">
-              Create ServiceRequest
+              Create Training History
             </h2>
             <form onSubmit={handleSubmit}>
               <label className="block mb-1">
@@ -497,86 +528,72 @@ const ListServiceRequestRequests = () => {
               </label>
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
-                  Service Type:
+                  Employee:
                 </span>
                 <select
-                  name="serviceType"
-                  value={values.serviceType}
+                  name="employeeID"
+                  value={values.employeeID}
                   onChange={handleChangeInput}
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                 >
                   <option value="">Select</option>
-                  {serviceTypes.map((serviceType) => (
-                    <option key={serviceType.id} value={serviceType.id}>
-                      {serviceType.name}
+                  {employees.map((employee) => (
+                    <option key={employee.id} value={employee.id}>
+                      {employee.name}
                     </option>
                   ))}
                 </select>
-                {errors.serviceType && (
-                  <span className="text-red-700">{errors.serviceType}</span>
+                {errors.employeeID && (
+                  <span className="text-red-700">{errors.employeeID}</span>
                 )}
               </label>
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
-                  Description:
-                </span>
-                <textarea
-                  name="description"
-                  value={values.description}
-                  onChange={handleChangeInput}
-                  placeholder="Enter description"
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                ></textarea>
-                {errors.description && (
-                  <span className="text-red-700">{errors.description}</span>
-                )}
-              </label>
-              <label className="block mb-1">
-                <span className="block font-medium text-primary mb-1">
-                  Request Details:
-                </span>
-                <textarea
-                  name="requestDetails"
-                  value={values.requestDetails}
-                  onChange={handleChangeInput}
-                  placeholder="Enter requestDetails"
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                ></textarea>
-                {errors.requestDetails && (
-                  <span className="text-red-700">{errors.requestDetails}</span>
-                )}
-              </label>
-              <label className="block mb-1">
-                <span className="block font-medium text-primary mb-1">
-                  Customer:
+                  Program:
                 </span>
                 <select
-                  name="customerID"
-                  value={values.customerID}
+                  name="programID"
+                  value={values.programID}
                   onChange={handleChangeInput}
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                 >
                   <option value="">Select</option>
-                  {customers.map((customer) => (
+                  {trainingPrograms.map((trainingProgram) => (
                     <option
-                      key={customer.customerID}
-                      value={customer.customerID}
+                      key={trainingProgram.programID}
+                      value={trainingProgram.programID}
                     >
-                      {customer.customerName}
+                      {trainingProgram.programName}
                     </option>
                   ))}
                 </select>
-                {errors.customerID && (
-                  <span className="text-red-700">{errors.customerID}</span>
+                {errors.programID && (
+                  <span className="text-red-700">{errors.programID}</span>
                 )}
               </label>
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
-                  Status:
+                  Completion Date:
+                </span>
+                <input
+                  type="date"
+                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                  placeholder="Enter Phone"
+                  name="completionDate"
+                  value={values.completionDate}
+                  onChange={handleChangeInput}
+                />
+                {errors.completionDate && (
+                  <span className="text-red-700">{errors.completionDate}</span>
+                )}
+              </label>
+              <label className="block mb-1">
+                <span className="block font-medium text-primary mb-1">
+                  Completion Status:
                 </span>
                 <select
-                  name="status"
-                  value={values.status}
+                  name="completionStatus"
+                  value={values.completionStatus}
                   onChange={handleChangeInput}
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                 >
@@ -584,8 +601,10 @@ const ListServiceRequestRequests = () => {
                   <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
                 </select>
-                {errors.status && (
-                  <span className="text-red-700">{errors.status}</span>
+                {errors.completionStatus && (
+                  <span className="text-red-700">
+                    {errors.completionStatus}
+                  </span>
                 )}
               </label>
               <div className="flex items-center gap-2 mt-4">
@@ -611,4 +630,4 @@ const ListServiceRequestRequests = () => {
   );
 };
 
-export default ListServiceRequestRequests;
+export default ListTrainingHistories;

@@ -20,6 +20,16 @@ const getAllManages = async () => {
   }
 };
 
+const getAllPositions = async () => {
+  try {
+    let response = await axios.get("/position/all");
+    return response.data;
+  } catch (error) {
+    console.log(error);
+    throw error.response?.data || error.message;
+  }
+};
+
 const getAllDepartments = async () => {
   try {
     let response = await axios.get("/department/all");
@@ -84,11 +94,11 @@ const createManage = async (name) => {
   }
 };
 
-const createDepartment = async (name, generalDepartmentId, managerId) => {
+const createPosition = async (name) => {
   try {
     const response = await axios.post(
-      "/department/add",
-      { name, generalDepartmentId, managerId },
+      "/position/add",
+      { name },
       { headers: { "Content-Type": "application/json" } }
     );
 
@@ -106,11 +116,33 @@ const createDepartment = async (name, generalDepartmentId, managerId) => {
   }
 };
 
-const createBranch = async (name, departnentId) => {
+const createDepartment = async (name, generalDepartmentId) => {
+  try {
+    const response = await axios.post(
+      "/department/add",
+      { name, generalDepartmentId },
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    if (!response.data.flag) {
+      throw new Error(response.data.message || "An unknown error occurred");
+    }
+
+    return response.data;
+  } catch (error) {
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "An unknown error occurred";
+    throw { flag: false, message: errorMessage };
+  }
+};
+
+const createBranch = async (name, email, address, contactNumber) => {
   try {
     const response = await axios.post(
       "/brach/add",
-      { name, departnentId },
+      { name, email, address, contactNumber },
       { headers: { "Content-Type": "application/json" } }
     );
 
@@ -147,6 +179,22 @@ const getByIdGeneralDepartment = async (id) => {
 const getByIdManage = async (id) => {
   try {
     const response = await axios.get(`/manage/single/${id}`);
+    if (!response.data.flag) {
+      throw new Error(response.data.message || "An unknown error occurred");
+    }
+    return response.data;
+  } catch (error) {
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "An unknown error occurred";
+    throw { flag: false, message: errorMessage };
+  }
+};
+
+const getByIdPosition = async (id) => {
+  try {
+    const response = await axios.get(`/position/single/${id}`);
     if (!response.data.flag) {
       throw new Error(response.data.message || "An unknown error occurred");
     }
@@ -236,11 +284,11 @@ const updateManage = async (id, name) => {
   }
 };
 
-const updateDepartment = async (id, name, generalDepartmentId, managerId) => {
+const updatePosition = async (id, name) => {
   try {
     const response = await axios.post(
-      `/department/update`,
-      { id, name, generalDepartmentId, managerId },
+      `/position/update`,
+      { id, name },
       { headers: { "Content-Type": "application/json" } }
     );
 
@@ -258,11 +306,33 @@ const updateDepartment = async (id, name, generalDepartmentId, managerId) => {
   }
 };
 
-const updateBranch = async (id, name, departnentId) => {
+const updateDepartment = async (id, name, generalDepartmentId) => {
+  try {
+    const response = await axios.post(
+      `/department/update`,
+      { id, name, generalDepartmentId },
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    if (!response.data.flag) {
+      throw new Error(response.data.message || "An unknown error occurred");
+    }
+
+    return response.data;
+  } catch (error) {
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "An unknown error occurred";
+    throw { flag: false, message: errorMessage };
+  }
+};
+
+const updateBranch = async (id, name, email, address, contactNumber) => {
   try {
     const response = await axios.post(
       `/brach/update`,
-      { id, name, departnentId },
+      { id, name, email, address, contactNumber },
       { headers: { "Content-Type": "application/json" } }
     );
 
@@ -299,6 +369,22 @@ const deleteGeneralDepartment = async (id) => {
 const deleteManage = async (id) => {
   try {
     const response = await axios.delete(`/manage/delete/${id}`);
+    if (!response.data.flag) {
+      throw new Error(response.data.message || "An unknown error occurred");
+    }
+    return response.data;
+  } catch (error) {
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "An unknown error occurred";
+    throw { flag: false, message: errorMessage };
+  }
+};
+
+const deletePosition = async (id) => {
+  try {
+    const response = await axios.delete(`/position/delete/${id}`);
     if (!response.data.flag) {
       throw new Error(response.data.message || "An unknown error occurred");
     }
@@ -368,6 +454,12 @@ const DepartmentService = {
   getByIdBranch,
   updateBranch,
   deleteBranch,
+
+  getAllPositions,
+  createPosition,
+  getByIdPosition,
+  updatePosition,
+  deletePosition,
 };
 
 export default DepartmentService;

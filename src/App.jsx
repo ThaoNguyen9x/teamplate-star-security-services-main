@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import ClientLayout from "./components/ClientLayout";
 import Home from "./pages/client/Home";
 import About from "./pages/client/About";
@@ -46,6 +51,14 @@ import ListJob from "./pages/admin/job/ListJob";
 import ListCashService from "./pages/admin/service/ListCashService";
 import ListCashTransactions from "./pages/admin/service/ListCashTransactions";
 import ListContract from "./pages/admin/contract/ListContract";
+import ListCandidate from "./pages/admin/job/ListCandidate";
+import ListInsurance from "./pages/admin/welfare/ListInsurance";
+import ListInterview from "./pages/admin/job/ListInterview";
+import ListVacation from "./pages/admin/welfare/ListVacation";
+import ListSanction from "./pages/admin/welfare/ListSanction";
+import ListTrainingHistories from "./pages/admin/welfare/ListTrainingHistories";
+import ListOvertime from "./pages/admin/welfare/ListOvertime";
+import ScheduleInterview from "./pages/client/ScheduleInterview";
 
 // ScrollToTop Component
 const ScrollToTop = () => {
@@ -117,18 +130,22 @@ function App() {
       <ScrollToTop />
 
       <ToastContainer />
-      
+
       <Routes>
         <Route path="/" element={<ClientLayout />}>
           <Route index element={<Home />} />
           <Route path="about-us" element={<About />} />
+          <Route path="schedule-interview" element={<ScheduleInterview />} />
           <Route path="faq" element={<FAQ />} />
           <Route path="our-history" element={<Histroy />} />
           <Route path="our-network" element={<Network />} />
           <Route path="contact-us" element={<Contact />} />
           <Route path="clients" element={<Clients />} />
           <Route path="careers" element={<Careers jobsData={jobsData} />} />
-          <Route path="careers/:slug" element={<JobDetail jobsData={jobsData} />} />
+          <Route
+            path="careers/:slug"
+            element={<JobDetail jobsData={jobsData} />}
+          />
           <Route path="our-business" element={<Services />} />
           <Route path="profile" element={<Profile />} />
           <Route path="our-business/:slug" element={<Detail />} />
@@ -145,8 +162,7 @@ function App() {
           <Route path="departments" element={<ListDepartment />} />
           <Route path="departments/create" element={<CreateDepartment />} />
 
-          <Route path="educations" element={<ListEducation />}
-           />
+          <Route path="educations" element={<ListEducation />} />
           <Route path="accounts" element={<ListAccount />} />
           <Route path="customers" element={<ListCustomer />} />
 
@@ -160,6 +176,13 @@ function App() {
           <Route path="cash-services" element={<ListCashService />} />
           <Route path="cash-transactions" element={<ListCashTransactions />} />
           <Route path="job-positions" element={<ListJob />} />
+          <Route path="candidates" element={<ListCandidate />} />
+          <Route path="insurance" element={<ListInsurance />} />
+          <Route path="interview" element={<ListInterview />} />
+          <Route path="vacation" element={<ListVacation />} />
+          <Route path="sanction" element={<ListSanction />} />
+          <Route path="training-histories" element={<ListTrainingHistories />} />
+          <Route path="over-time" element={<ListOvertime />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

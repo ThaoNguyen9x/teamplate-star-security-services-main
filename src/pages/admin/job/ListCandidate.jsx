@@ -4,6 +4,7 @@ import Loading from "../../../components/Loading";
 import Delete from "../../../components/admin/Delete";
 import DataTable from "react-data-table-component";
 import JobService from "../../../services/JobService";
+import axios from "axios";
 
 const paginationComponentOptions = {
   rowsPerPageText: "Rows per page",
@@ -13,49 +14,40 @@ const paginationComponentOptions = {
   selectAllRowsItemText: "All",
 };
 
-const ListJob = () => {
-  const [jobs, setJobs] = useState([]);
+const ListCandidate = () => {
+  const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [pending, setPending] = useState(true);
   const [remove, setRemove] = useState(false);
   const [currentpositionID, setCurrentpositionID] = useState(null);
   const [editItem, setEditItem] = useState({
     id: "",
-    jobRequirements: "",
-    jobDescription: "",
-    applicationDeadline: "",
-    positionName: "",
+    name: "",
+    email: "",
+    phone: "",
     status: "",
-    model: "job",
+    model: "candidate",
   });
   const [searchQuery, setSearchQuery] = useState({
-    job: "",
+    candidate: "",
   });
   const [showModal, setShowModal] = useState(false);
   const [values, setValues] = useState({
-    jobRequirements: "",
-    jobDescription: "",
-    applicationDeadline: "",
-    positionName: "",
+    name: "",
+    email: "",
+    phone: "",
     status: "",
   });
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     fetchAllData();
-    // Set timeout for pending state
-    const timer = setTimeout(() => {
-      setPending(false);
-    }, 3000); // Set the timeout duration as needed
-
-    return () => clearTimeout(timer); // Cleanup the timer
   }, []);
 
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const jobsData = await JobService.getAllJobs();
-      setJobs(jobsData || []);
+      const candidatesData = await JobService.getAllCandidates();
+      setCandidates(candidatesData || []);
     } catch (error) {
       toast.error("Failed to fetch data.");
     } finally {
@@ -64,22 +56,14 @@ const ListJob = () => {
   };
 
   const handleEditClick = useCallback(
-    (
-      positionID,
-      jobRequirements,
-      positionName,
-      jobDescription,
-      applicationDeadline,
-      status
-    ) => {
+    (candidateID, name, email, phone, status) => {
       setEditItem({
-        id: positionID,
-        jobRequirements,
-        positionName,
-        jobDescription,
-        applicationDeadline,
+        id: candidateID,
+        name,
+        email,
+        phone,
         status,
-        model: "job",
+        model: "candidate",
       });
     },
     []
@@ -89,23 +73,9 @@ const ListJob = () => {
     setLoading(true);
 
     try {
-      const {
-        id,
-        jobRequirements,
-        jobDescription,
-        applicationDeadline,
-        positionName,
-        status,
-      } = editItem;
+      const { id, name, email, phone, status } = editItem;
 
-      await JobService.updateJob(
-        id,
-        jobRequirements,
-        jobDescription,
-        applicationDeadline,
-        positionName,
-        status
-      );
+      await JobService.updateCandidate(id, name, email, phone, status);
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
@@ -119,28 +89,27 @@ const ListJob = () => {
       setLoading(false);
       setEditItem({
         id: "",
-        jobRequirements: "",
-        positionName: "",
-        jobDescription: "",
-        applicationDeadline: "",
+        name: "",
+        email: "",
+        phone: "",
         status: "",
-        model: "job",
+        model: "candidate",
       });
     }
   }, [editItem]);
 
   const handleDeleteClick = useCallback((id, model) => {
     setRemove(true);
-    setCurrentpositionID(id);
+    setCurrentID(id);
     setEditItem((prevState) => ({ ...prevState, model }));
   }, []);
 
   const handleDelete = useCallback(async () => {
     setLoading(true);
     try {
-      await JobService.deleteJob(currentpositionID);
-      setJobs((prevJobs) =>
-        prevJobs.filter((c) => c.positionID !== currentpositionID)
+      await JobService.deleteCandidate(setCurrentID);
+      setCandidates((prevCandidates) =>
+        prevCandidates.filter((c) => c.candidateID !== setCurrentID)
       );
       toast.success("Deleted successfully.");
     } catch (error) {
@@ -151,27 +120,47 @@ const ListJob = () => {
       setRemove(false);
       setEditItem({
         id: "",
-        jobRequirements: "",
-        positionName: "",
-        jobDescription: "",
-        applicationDeadline: "",
+        name: "",
+        email: "",
+        phone: "",
         status: "",
         model: "job",
       });
     }
   }, [currentpositionID]);
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+  const handleSendMailReject = async (candidateID) => {
+    setLoading(true);
+    try {
+      await axios.post(
+        `http://localhost:5000/api/candidates/send-mail-reject/${candidateID}`
+      );
+      toast.success("Mail sent successfully.");
+    } catch (error) {
+      toast.error("Failed to send mail.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendMailApprove = async (id) => {
+    setLoading(true);
+    try {
+      await axios.post(
+        `http://localhost:5000/api/candidates/send-mail-approve/${id}`
+      );
+      toast.success("Mail sent successfully.");
+    } catch (error) {
+      console.log(id);
+      toast.error("Failed to send mail.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderColumns = useCallback(
     (model) => {
-      const getName = (row) => row.positionName || "";
+      const getName = (row) => row.name || "";
 
       return [
         {
@@ -183,14 +172,14 @@ const ListJob = () => {
           name: "Name",
           selector: (row) => getName(row),
           cell: (row) =>
-            editItem.id === row.positionID && editItem.model === model ? (
+            editItem.id === row.candidateID && editItem.model === model ? (
               <input
                 type="text"
-                value={editItem.positionName}
+                value={editItem.name}
                 onChange={(e) =>
                   setEditItem((prevState) => ({
                     ...prevState,
-                    positionName: e.target.value,
+                    name: e.target.value,
                   }))
                 }
                 className="border px-2 py-1 rounded-md outline-none"
@@ -201,65 +190,44 @@ const ListJob = () => {
           sortable: true,
         },
         {
-          name: "Job Requirements",
-          selector: (row) => row.jobRequirements,
+          name: "Email",
+          selector: (row) => row.email,
           cell: (row) =>
-            editItem.id === row.positionID && editItem.model === model ? (
+            editItem.id === row.candidateID && editItem.model === model ? (
               <input
                 type="text"
-                value={editItem.jobRequirements}
+                value={editItem.email}
                 onChange={(e) =>
                   setEditItem((prevState) => ({
                     ...prevState,
-                    jobRequirements: e.target.value,
+                    email: e.target.value,
                   }))
                 }
                 className="border px-2 py-1 rounded-md outline-none"
               />
             ) : (
-              row.jobRequirements
+              row.email
             ),
           sortable: true,
         },
         {
-          name: "Job Description",
-          selector: (row) => row.jobDescription,
+          name: "Phone",
+          selector: (row) => row.phone,
           cell: (row) =>
-            editItem.id === row.positionID && editItem.model === model ? (
+            editItem.id === row.candidateID && editItem.model === model ? (
               <input
                 type="text"
-                value={editItem.jobDescription}
+                value={editItem.phone}
                 onChange={(e) =>
                   setEditItem((prevState) => ({
                     ...prevState,
-                    jobDescription: e.target.value,
+                    phone: e.target.value,
                   }))
                 }
                 className="border px-2 py-1 rounded-md outline-none"
               />
             ) : (
-              row.jobDescription
-            ),
-          sortable: true,
-        },
-        {
-          name: "Application Deadline",
-          selector: (row) => formatDate(row.applicationDeadline),
-          cell: (row) =>
-            editItem.id === row.positionID && editItem.model === model ? (
-              <input
-                type="date"
-                value={formatDate(editItem.applicationDeadline)}
-                onChange={(e) =>
-                  setEditItem((prevState) => ({
-                    ...prevState,
-                    applicationDeadline: e.target.value,
-                  }))
-                }
-                className="border px-2 py-1 rounded-md outline-none"
-              />
-            ) : (
-              formatDate(row.applicationDeadline)
+              row.phone
             ),
           sortable: true,
         },
@@ -267,7 +235,7 @@ const ListJob = () => {
           name: "Status",
           selector: (row) => row.status || "",
           cell: (row) =>
-            editItem.id === row.positionID && editItem.model === model ? (
+            editItem.id === row.candidateID && editItem.model === model ? (
               <select
                 value={editItem.status}
                 onChange={(e) =>
@@ -291,11 +259,11 @@ const ListJob = () => {
           name: "Actions",
           cell: (row) => (
             <>
-              {editItem.id === row.positionID && editItem.model === model ? (
-                <div className="flex items-center gap-2">
+              {editItem.id === row.candidateID && editItem.model === model ? (
+                <div className="flex items-center gap-2 whitespace-nowrap">
                   <button
                     onClick={handleUpdate}
-                    className="whitespace-nowrap px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
+                    className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
                   >
                     Update
                   </button>
@@ -303,39 +271,49 @@ const ListJob = () => {
                     onClick={() =>
                       setEditItem({
                         id: "",
-                        positionName: "",
-                        jobRequirements: "",
-                        jobDescription: "",
-                        applicationDeadline: "",
+                        name: "",
+                        email: "",
+                        phone: "",
                         status: "",
                         model: "job",
                       })
                     }
-                    className="whitespace-nowrap px-3 py-2 border border-red-700 text-red-700 rounded-md"
+                    className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
                   >
                     Cancel
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 whitespace-nowrap">
+                  <button
+                    onClick={() => handleSendMailApprove(row.id)}
+                    className="px-3 py-2 border border-green-700 text-green-700 rounded-md"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleSendMailReject(row.id)}
+                    className="px-3 py-2 border border-white text-white bg-red-700 rounded-md"
+                  >
+                    Reject
+                  </button>
                   <button
                     onClick={() =>
                       handleEditClick(
-                        row.positionID,
+                        row.candidateID,
                         getName(row),
-                        row.jobRequirements,
-                        row.jobDescription,
-                        row.applicationDeadline,
+                        row.email,
+                        row.phone,
                         row.status
                       )
                     }
-                    className="whitespace-nowrap px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
+                    className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
                   >
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDeleteClick(row.positionID, model)}
-                    className="whitespace-nowrap px-3 py-2 border border-red-700 text-red-700 rounded-md"
+                    onClick={() => handleDeleteClick(row.candidateID, model)}
+                    className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
                   >
                     Delete
                   </button>
@@ -374,38 +352,22 @@ const ListJob = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const {
-      jobRequirements,
-      jobDescription,
-      applicationDeadline,
-      positionName,
-      status,
-    } = values;
+    const { name, email, phone, status } = values;
 
     let newErrors = {};
 
-    if (!jobRequirements)
-      newErrors.jobRequirements = "Job Requirements is required.";
-    if (!jobDescription)
-      newErrors.jobDescription = "Job Description is required.";
-    if (!applicationDeadline)
-      newErrors.applicationDeadline = "Application Deadline is required.";
-    if (!positionName) newErrors.positionName = "Position Name is required.";
+    if (!name) newErrors.name = "Name is required.";
+    if (!email) newErrors.email = "Email is required.";
+    if (!phone) newErrors.phone = "Phone is required.";
     if (!status) newErrors.status = "Status is required.";
 
     setLoading(true);
 
     setLoading(true);
     try {
-      await JobService.createJob(
-        jobRequirements,
-        jobDescription,
-        applicationDeadline,
-        positionName,
-        status
-      );
+      await JobService.createCandidate(name, email, phone, status);
       await fetchAllData();
-      toast.success("Job created successfully.");
+      toast.success("Created successfully.");
       handleCloseModal();
     } catch (error) {
       toast.error("Failed to create job.");
@@ -420,7 +382,7 @@ const ListJob = () => {
 
       <div className="flex flex-col gap-5 mt-5">
         <div className="flex items-center justify-between">
-          <div className="font-semibold text-xl capitalize">Job</div>
+          <div className="font-semibold text-xl capitalize">Candidates</div>
           <button
             onClick={handleOpenModal}
             className="px-3 py-2 bg-blue-950 text-white rounded-md"
@@ -430,41 +392,47 @@ const ListJob = () => {
         </div>
 
         <div className="grid p-5 bg-gray-100 rounded-md">
-          <div key="job" className="w-full overflow-x-scroll">
+          <div key="candidate">
             <div className="flex items-center justify-end">
               <input
                 type="text"
-                placeholder="Search job"
-                value={searchQuery.job}
-                onChange={handleSearchChange("job")}
+                placeholder="Search candidate"
+                value={searchQuery.candidate}
+                onChange={handleSearchChange("candidate")}
                 className="border border-gray-300 px-3 py-2 rounded-md outline-none mb-3"
               />
             </div>
             <DataTable
-              columns={renderColumns("job")}
-              data={jobs.filter((c) =>
-                c.positionName
+              columns={renderColumns("candidate")}
+              data={candidates.filter((c) =>
+                c.name
                   ?.toLowerCase()
-                  .includes(searchQuery.job.toLowerCase())
+                  .includes(searchQuery.candidate.toLowerCase())
               )}
               pagination
               paginationComponentOptions={paginationComponentOptions}
-              progressPending={pending}
               customStyles={{
                 headCells: {
                   style: {
-                    textTransform: "capitalize",
+                    fontSize: "16px",
+                    fontWeight: "700",
+                    textTransform: "uppercase",
                     background: "#f3f4f6",
+                    padding: "12px 24px",
                   },
                 },
                 cells: {
                   style: {
+                    fontSize: "14px",
                     background: "#f3f4f6",
+                    padding: "12px 24px",
                   },
                 },
                 pagination: {
                   style: {
+                    fontSize: "14px",
                     background: "#f3f4f6",
+                    padding: "12px 24px",
                   },
                 },
               }}
@@ -484,7 +452,9 @@ const ListJob = () => {
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
           <div className="bg-white p-4 rounded-lg w-full max-w-md">
-            <h3 className="text-xl font-bold mb-4 text-center">Create Job</h3>
+            <h3 className="text-xl font-bold mb-4 text-center">
+              Create Candidate
+            </h3>
             <form onSubmit={handleSubmit}>
               <label className="block">
                 <span className="block font-medium text-primary mb-1">
@@ -493,63 +463,45 @@ const ListJob = () => {
                 <input
                   type="text"
                   placeholder="Enter name"
-                  name="positionName"
-                  value={values.positionName}
+                  name="name"
+                  value={values.name}
                   onChange={handleChangeInput}
                   className="block w-full border border-gray-300 rounded-md px-3 py-2 outline-none"
                 />
-                {errors.positionName && (
-                  <span className="text-red-600 text-sm">
-                    {errors.positionName}
-                  </span>
+                {errors.name && (
+                  <span className="text-red-600 text-sm">{errors.name}</span>
                 )}
               </label>
               <label className="block">
                 <span className="block font-medium text-primary mb-1">
-                  Job Requirements:
-                </span>
-                <textarea
-                  name="jobRequirements"
-                  value={values.jobRequirements}
-                  onChange={handleChangeInput}
-                  placeholder="Enter jobRequirements"
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                ></textarea>
-                {errors.jobRequirements && (
-                  <span className="text-red-700">{errors.jobRequirements}</span>
-                )}
-              </label>
-              <label className="block">
-                <span className="block font-medium text-primary mb-1">
-                  Job Description:
-                </span>
-                <textarea
-                  name="jobDescription"
-                  value={values.jobDescription}
-                  onChange={handleChangeInput}
-                  placeholder="Enter jobDescription"
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                ></textarea>
-                {errors.jobDescription && (
-                  <span className="text-red-700">{errors.jobDescription}</span>
-                )}
-              </label>
-              <label className="block">
-                <span className="block font-medium text-primary mb-1">
-                  Application Deadline:
+                  Email:
                 </span>
                 <input
-                  type="date"
+                  type="text"
                   placeholder="Enter name"
-                  name="applicationDeadline"
-                  value={values.applicationDeadline}
+                  name="email"
+                  value={values.email}
                   onChange={handleChangeInput}
                   className="block w-full border border-gray-300 rounded-md px-3 py-2 outline-none"
                 />
-                {errors.applicationDeadline && (
-                  <span className="text-red-600 text-sm">
-                    {errors.applicationDeadline}
-                  </span>
+                {errors.email && (
+                  <span className="text-red-700">{errors.email}</span>
+                )}
+              </label>
+              <label className="block">
+                <span className="block font-medium text-primary mb-1">
+                  Phone:
+                </span>
+                <input
+                  type="text"
+                  placeholder="Enter name"
+                  name="phone"
+                  value={values.phone}
+                  onChange={handleChangeInput}
+                  className="block w-full border border-gray-300 rounded-md px-3 py-2 outline-none"
+                />
+                {errors.phone && (
+                  <span className="text-red-700">{errors.phone}</span>
                 )}
               </label>
               <label className="block mb-1">
@@ -593,4 +545,4 @@ const ListJob = () => {
   );
 };
 
-export default ListJob;
+export default ListCandidate;

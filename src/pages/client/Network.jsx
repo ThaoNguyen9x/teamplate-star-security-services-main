@@ -1,9 +1,11 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import Breadcrumbs from "../../components/client/Breadcrumbs";
 import Wrapper from "../../components/client/Wrapper";
 
 import { branchesData } from "../../../data";
+import DepartmentService from "../../services/DepartmentService";
+import { toast } from "react-toastify";
 
 const generateMapLink = (address) => {
   const baseUrl = "https://maps.google.com/maps";
@@ -12,6 +14,29 @@ const generateMapLink = (address) => {
 };
 
 const Network = () => {
+  const [branches, setBranches] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchAllData();
+  }, []);
+
+  const fetchAllData = async () => {
+    setLoading(true);
+
+    try {
+      const [branchData] = await Promise.all([
+        DepartmentService.getAllBranchs(),
+      ]);
+
+      setBranches(branchData.$values || []);
+    } catch (error) {
+      toast.error("Failed to fetch data.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <Breadcrumbs />
@@ -34,39 +59,44 @@ const Network = () => {
             </p>
           </div>
         </div>
-
         <div className="grid grid-cols-1 gap-5 my-16">
-          {branchesData.map((branch, index) => (
-            <div
-              key={index}
-              className="p-5 border rounded shadow-md flex flex-col xl:flex-row gap-5"
-            >
-              <div className="w-full xl:w-1/2 flex flex-col gap-2">
-                <h3 className="text-xl font-semibold">{branch.region}</h3>
-                <div className="">
-                  <strong>Address:</strong> {branch.details.address}
+          {branches.length > 0 ? (
+            <>
+              {branches.map((branch, index) => (
+                <div
+                  key={index}
+                  className="p-5 border rounded shadow-md flex flex-col xl:flex-row gap-5"
+                >
+                  <div className="w-full xl:w-1/2 flex flex-col gap-2">
+                    <h3 className="text-xl font-semibold">{branch.Name}</h3>
+                    <div className="">
+                      <strong>Address:</strong> {branch.Address}
+                    </div>
+                    <div className="">
+                      <strong>Email:</strong> {branch.Email}
+                    </div>
+                    <div className="">
+                      <strong>Contact Number:</strong> {branch.ContactNumber}
+                    </div>
+                  </div>
+                  <div className="w-full">
+                    <iframe
+                      width="100%"
+                      height="300"
+                      src={generateMapLink(branch.Address)}
+                      title={`Map of ${branch.Name}`}
+                    ></iframe>
+                  </div>
                 </div>
-                <div className="">
-                  <strong>Phone:</strong> {branch.details.contact}
-                </div>
-                <div className="">
-                  <strong>Fax:</strong> {branch.details.fax}
-                </div>
-                <div className="">
-                  <strong>Contact Person:</strong>{" "}
-                  {branch.details.contactPerson}
-                </div>
-              </div>
-              <div className="w-full">
-                <iframe
-                  width="100%"
-                  height="300"
-                  src={generateMapLink(branch.details.address)}
-                  title={`Map of ${branch.region}`}
-                ></iframe>
-              </div>
-            </div>
-          ))}
+              ))}
+            </>
+          ) : (
+            !loading && (
+              <p className="text-center text-gray-500">
+                No branches available.
+              </p>
+            )
+          )}
         </div>
       </Wrapper>
     </>

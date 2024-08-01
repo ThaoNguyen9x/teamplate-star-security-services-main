@@ -394,7 +394,7 @@ const ListCashService = () => {
         </div>
 
         <div className="grid p-5 bg-gray-100 rounded-md">
-          <div className="container  mx-auto overflow-y-auto">
+          <div className="w-full overflow-x-scroll">
             <div className="flex items-center justify-end">
               <input
                 type="text"

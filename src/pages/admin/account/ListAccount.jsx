@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import Loading from "../../../components/Loading";
 import Delete from "../../../components/admin/Delete";
@@ -29,9 +29,11 @@ const ListAccount = () => {
     employeeId: "",
     model: "account",
   });
+
   const [searchQuery, setSearchQuery] = useState({
     account: "",
   });
+
   const [showModal, setShowModal] = useState(false);
   const [values, setValues] = useState({
     fullname: "",
@@ -119,114 +121,113 @@ const ListAccount = () => {
     return employees.find((c) => c.Id === row.employeeID)?.name || "N/A";
   };
 
-  const renderColumns = useCallback(
-    (model) => {
-      const getName = (row) => row.fullName || "";
-      return [
-        {
-          name: "#",
-          selector: (row, index) => index + 1,
-          sortable: true,
-        },
-        {
-          name: "Name",
-          selector: (row) => getName(row),
-          cell: (row) =>
-            editItem.id === row.Id && editItem.model === model ? (
-              <input
-                type="text"
-                value={editItem.fullname}
-                onChange={(e) =>
-                  setEditItem((prevState) => ({
-                    ...prevState,
-                    fullname: e.target.value,
-                  }))
-                }
-                className="border px-2 py-1 rounded-md outline-none"
-              />
-            ) : (
-              getName(row)
-            ),
-          sortable: true,
-        },
-        {
-          name: "Email",
-          selector: (row) => row.email,
-          sortable: true,
-        },
-        {
-          name: "Employee",
-          selector: (row) => getEmployeeName(row),
-          cell: (row) =>
-            editItem.id === row.Id && editItem.model === model ? (
-              <select
-                value={editItem.employeeId}
-                onChange={(e) => {
-                  setEditItem((prevState) => ({
-                    ...prevState,
-                    employeeId: e.target.value,
-                  }));
-                }}
-                className="border px-3 py-2 rounded-md"
-              >
-                <option value="">Select</option>
-                {getEmployeesOptions()}
-              </select>
-            ) : (
-              getEmployeeName(row)
-            ),
-          sortable: true,
-        },
-        {
-          name: "Actions",
-          cell: (row) => (
-            <>
-              {editItem.id === row.Id && editItem.model === model ? (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleUpdate}
-                    className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
-                  >
-                    Update
-                  </button>
-                  <button
-                    onClick={() =>
-                      setEditItem({
-                        id: "",
-                        fullname: "",
-                        employeeId: "",
-                        model: "account",
-                      })
-                    }
-                    className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() =>
-                      handleEditClick(row.Id, getName(row), row.employeeId)
-                    }
-                    className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteClick(row.Id, model)}
-                    className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
-                  >
-                    Delete
-                  </button>
-                </div>
-              )}
-            </>
+  const getName = (row) => row.fullName || "";
+
+  const columns = useMemo(
+    () => [
+      {
+        name: "#",
+        selector: (row, index) => index + 1,
+        sortable: true,
+      },
+      {
+        name: "Name",
+        selector: (row) => getName(row),
+        cell: (row) =>
+          editItem.id === row.Id && editItem.model === "account" ? (
+            <input
+              type="text"
+              value={editItem.fullname}
+              onChange={(e) =>
+                setEditItem((prevState) => ({
+                  ...prevState,
+                  fullname: e.target.value,
+                }))
+              }
+              className="border px-2 py-1 rounded-md outline-none"
+            />
+          ) : (
+            getName(row)
           ),
-        },
-      ];
-    },
-    [editItem, handleEditClick, handleUpdate, handleDeleteClick]
+        sortable: true,
+      },
+      {
+        name: "Email",
+        selector: (row) => row.email,
+        sortable: true,
+      },
+      {
+        name: "Employee",
+        selector: (row) => getEmployeeName(row),
+        cell: (row) =>
+          editItem.id === row.Id && editItem.model === "account" ? (
+            <select
+              value={editItem.employeeId}
+              onChange={(e) => {
+                setEditItem((prevState) => ({
+                  ...prevState,
+                  employeeId: e.target.value,
+                }));
+              }}
+              className="border px-3 py-2 rounded-md"
+            >
+              <option value="">Select</option>
+              {getEmployeesOptions()}
+            </select>
+          ) : (
+            getEmployeeName(row)
+          ),
+        sortable: true,
+      },
+      {
+        name: "Actions",
+        cell: (row) => (
+          <>
+            {editItem.id === row.Id && editItem.model === "account" ? (
+              <div className="flex items-center gap-2 whitespace-nowrap">
+                <button
+                  onClick={handleUpdate}
+                  className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
+                >
+                  Update
+                </button>
+                <button
+                  onClick={() =>
+                    setEditItem({
+                      id: "",
+                      fullname: "",
+                      employeeId: "",
+                      model: "account",
+                    })
+                  }
+                  className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() =>
+                    handleEditClick(row.Id, getName(row), row.employeeId)
+                  }
+                  className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDeleteClick(row.Id)}
+                  className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
+                >
+                  Delete
+                </button>
+              </div>
+            )}
+          </>
+        ),
+      },
+    ],
+    [editItem, handleEditClick, handleUpdate, handleDeleteClick, employees]
   );
 
   const handleSearchChange = (model) => (event) => {
@@ -257,7 +258,15 @@ const ListAccount = () => {
       newErrors.confirmPassword = "Confirm Password is required.";
     if (!employeeId) newErrors.employeeId = "Employee is required.";
 
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setTimeout(() => setErrors({}), 5000);
+      return;
+    }
+
+    setErrors({});
     setLoading(true);
+
     try {
       await AccountService.createAccount(
         email,
@@ -311,7 +320,7 @@ const ListAccount = () => {
               />
             </div>
             <DataTable
-              columns={renderColumns("account")}
+              columns={columns}
               data={accounts.filter((c) =>
                 c.fullName
                   ?.toLowerCase()

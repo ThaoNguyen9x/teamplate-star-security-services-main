@@ -3,8 +3,8 @@ import { toast } from "react-toastify";
 import Loading from "../../../components/Loading";
 import Delete from "../../../components/admin/Delete";
 import DataTable from "react-data-table-component";
-import ServicesService from "../../../services/ServicesService";
-import CustomerService from "../../../services/CustomerService";
+import WelfareService from "../../../services/WelfareService";
+import EmployeeService from "../../../services/EmployeeService";
 
 const paginationComponentOptions = {
   rowsPerPageText: "Rows per page",
@@ -14,30 +14,29 @@ const paginationComponentOptions = {
   selectAllRowsItemText: "All",
 };
 
-const ListServiceRequestRequests = () => {
+const ListInsurance = () => {
   const [values, setValues] = useState({
-    name: "",
-    customerID: "",
-    serviceType: "",
-    requestDetails: "",
-    status: "",
+    insuranceNumber: "",
+    issueDate: "",
+    issuePlace: "",
+    healthCheckPlace: "",
+    employeeId: "",
   });
-  const [serviceRequests, setServiceRequests] = useState([]);
-  const [customers, setCustomers] = useState([]);
-  const [serviceTypes, setServiceTypes] = useState([]);
+  const [insurances, setInsurances] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [remove, setRemove] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [editItem, setEditItem] = useState({
     id: "",
-    name: "",
-    customerID: "",
-    serviceType: "",
-    requestDetails: "",
-    status: "",
-    model: "serviceRequest",
+    insuranceNumber: "",
+    issueDate: "",
+    issuePlace: "",
+    healthCheckPlace: "",
+    employeeId: "",
+    model: "insurance",
   });
-  const [searchQuery, setSearchQuery] = useState({ serviceRequest: "" });
+  const [searchQuery, setSearchQuery] = useState({ insurance: "" });
   const [showModal, setShowModal] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -47,17 +46,15 @@ const ListServiceRequestRequests = () => {
 
   const fetchAllData = async () => {
     setLoading(true);
-    try {
-      const [serviceRequestsData, customersData, serviceTypesData] =
-        await Promise.all([
-          ServicesService.getAllServiceRequests(),
-          CustomerService.getAllCustomers(),
-          ServicesService.getAllServices(),
-        ]);
 
-      setServiceRequests(serviceRequestsData || []);
-      setCustomers(customersData.data || []);
-      setServiceTypes(serviceTypesData || []);
+    try {
+      const [insurancesData, employeesData] = await Promise.all([
+        WelfareService.getAllInsurances(),
+        EmployeeService.getAllEmployees(),
+      ]);
+
+      setInsurances(insurancesData.$values || []);
+      setEmployees(employeesData || []);
     } catch (error) {
       toast.error("Failed to fetch data.");
     } finally {
@@ -66,15 +63,22 @@ const ListServiceRequestRequests = () => {
   };
 
   const handleEditClick = useCallback(
-    (id, name, customerID, serviceType, requestDetails, status) => {
+    (
+      id,
+      insuranceNumber,
+      issueDate,
+      issuePlace,
+      healthCheckPlace,
+      employeeId
+    ) => {
       setEditItem({
         id,
-        name,
-        customerID,
-        serviceType,
-        requestDetails,
-        status,
-        model: "serviceRequest",
+        insuranceNumber,
+        issueDate,
+        issuePlace,
+        healthCheckPlace,
+        employeeId,
+        model: "insurance",
       });
     },
     []
@@ -82,26 +86,38 @@ const ListServiceRequestRequests = () => {
 
   const handleUpdate = useCallback(async () => {
     setLoading(true);
-
     try {
-      const { id, name, customerID, serviceType, requestDetails, status } =
-        editItem;
-      await ServicesService.updateServiceRequest(
+      const {
         id,
-        name,
-        customerID,
-        serviceType,
-        requestDetails,
-        status
+        insuranceNumber,
+        issueDate,
+        issuePlace,
+        healthCheckPlace,
+        employeeId,
+      } = editItem;
+      await WelfareService.updateInsurance(
+        id,
+        insuranceNumber,
+        issueDate,
+        issuePlace,
+        healthCheckPlace,
+        employeeId
       );
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      toast.error("Failed to update data.");
+      console.error("Update error:", error);
+      toast.error("Failed to update data. Please try again.");
     } finally {
       setLoading(false);
       setEditItem({
-        editItem: null,
+        id: "",
+        insuranceNumber: "",
+        issueDate: "",
+        issuePlace: "",
+        healthCheckPlace: "",
+        employeeId: "",
+        model: "insurance",
       });
     }
   }, [editItem]);
@@ -114,13 +130,10 @@ const ListServiceRequestRequests = () => {
 
   const handleDelete = useCallback(async () => {
     setLoading(true);
+
     try {
-      await ServicesService.deleteServiceRequest(currentId);
-      setServiceRequests((prevServiceRequestRequests) =>
-        prevServiceRequestRequests.filter(
-          (c) => c.serviceRequestID !== currentId
-        )
-      );
+      await WelfareService.deleteInsurance(currentId);
+      setInsurances((prev) => prev.filter((c) => c.Id !== currentId));
       toast.success("Deleted successfully.");
       await fetchAllData();
       handleCloseModal();
@@ -132,28 +145,24 @@ const ListServiceRequestRequests = () => {
     }
   }, [currentId]);
 
-  const getCustomersOptions = () => {
-    return customers.map((c) => (
-      <option key={c.customerID} value={c.customerID}>
-        {c.customerName}
-      </option>
-    ));
-  };
-
-  const getCustomerName = (row) => {
-    return customers.find((c) => c.id === row.customerId)?.customerName || "N/A";
-  };
-
-  const getServiceTypesOptions = () => {
-    return serviceTypes.map((c) => (
+  const getEmployeesOptions = () => {
+    return employees.map((c) => (
       <option key={c.id} value={c.id}>
         {c.name}
       </option>
     ));
   };
 
-  const getServiceTypeName = (row) => {
-    return serviceTypes.find((c) => c.serviceType === row.id)?.name || "N/A";
+  const getEmployeeName = (id) => {
+    return employees.find((c) => c.Id === id)?.name || "N/A";
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
   const renderColumns = useCallback(
@@ -165,113 +174,108 @@ const ListServiceRequestRequests = () => {
       },
       {
         name: "Name",
-        selector: (row) => row.name || "",
+        selector: (row) => row.InsuranceNumber || "",
         cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
+          editItem.id === row.Id && editItem.model === model ? (
             <input
               type="text"
-              value={editItem.name}
+              value={editItem.insuranceNumber}
               onChange={(e) =>
                 setEditItem((prevState) => ({
                   ...prevState,
-                  name: e.target.value,
+                  insuranceNumber: e.target.value,
                 }))
               }
               className="border px-2 py-1 rounded-md outline-none"
             />
           ) : (
-            row.name || ""
+            row.InsuranceNumber || ""
           ),
         sortable: true,
       },
       {
-        name: "Service",
-        selector: (row) => getServiceTypeName(row),
+        name: "Employee",
+        selector: (row) => getEmployeeName(row.employeeID),
         cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
+          editItem.id === row.Id && editItem.model === model ? (
             <select
-              value={editItem.serviceType}
+              value={editItem.employeeId}
               onChange={(e) =>
-                setEditItem((prevState) => ({
-                  ...prevState,
-                  serviceType: e.target.value,
+                setEditItem((prev) => ({
+                  ...prev,
+                  employeeId: e.target.value,
                 }))
               }
               className="border px-3 py-2 rounded-md"
             >
               <option value="">Select</option>
-              {getServiceTypesOptions()}
+              {getEmployeesOptions()}
             </select>
           ) : (
-            getServiceTypeName(row)
+            getEmployeeName(row.employeeID)
           ),
         sortable: true,
       },
       {
-        name: "Details",
-        selector: (row) => row.requestDetails || "",
+        name: "Issue Place",
+        selector: (row) => row.IssuePlace || "",
         cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
+          editItem.id === row.Id && editItem.model === model ? (
             <input
               type="text"
-              value={editItem.requestDetails}
+              value={editItem.issuePlace}
               onChange={(e) =>
                 setEditItem((prevState) => ({
                   ...prevState,
-                  requestDetails: e.target.value,
+                  issuePlace: e.target.value,
                 }))
               }
               className="border px-2 py-1 rounded-md outline-none"
             />
           ) : (
-            row.requestDetails || ""
+            row.IssuePlace || ""
           ),
         sortable: true,
       },
       {
-        name: "Customer",
-        selector: (row) => getCustomerName(row),
+        name: "HealthCheck Place",
+        selector: (row) => row.HealthCheckPlace || "",
         cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
-            <select
-              value={editItem.customerID}
+          editItem.id === row.Id && editItem.model === model ? (
+            <input
+              type="text"
+              value={editItem.healthCheckPlace}
               onChange={(e) =>
                 setEditItem((prevState) => ({
                   ...prevState,
-                  customerID: e.target.value,
-                }))
-              }
-              className="border px-3 py-2 rounded-md"
-            >
-              <option value="">Select</option>
-              {getCustomersOptions()}
-            </select>
-          ) : (
-            getCustomerName(row)
-          ),
-        sortable: true,
-      },
-      {
-        name: "Status",
-        selector: (row) => row.status || "",
-        cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
-            <select
-              value={editItem.status}
-              onChange={(e) =>
-                setEditItem((prevState) => ({
-                  ...prevState,
-                  status: e.target.value,
+                  healthCheckPlace: e.target.value,
                 }))
               }
               className="border px-2 py-1 rounded-md outline-none"
-            >
-              <option value="">Select Status</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
+            />
           ) : (
-            row.status || ""
+            row.HealthCheckPlace || ""
+          ),
+        sortable: true,
+      },
+      {
+        name: "Issue Date",
+        selector: (row) => formatDate(row.IssueDate) || "",
+        cell: (row) =>
+          editItem.id === row.Id && editItem.model === model ? (
+            <input
+              type="date"
+              value={formatDate(editItem.issueDate)}
+              onChange={(e) =>
+                setEditItem((prevState) => ({
+                  ...prevState,
+                  issueDate: e.target.value,
+                }))
+              }
+              className="border px-2 py-1 rounded-md outline-none"
+            />
+          ) : (
+            formatDate(row.IssueDate) || ""
           ),
         sortable: true,
       },
@@ -279,7 +283,7 @@ const ListServiceRequestRequests = () => {
         name: "Actions",
         cell: (row) => (
           <div className="flex items-center gap-2">
-            {editItem.id === row.id && editItem.model === model ? (
+            {editItem.id === row.Id && editItem.model === model ? (
               <>
                 <button
                   onClick={handleUpdate}
@@ -291,12 +295,12 @@ const ListServiceRequestRequests = () => {
                   onClick={() =>
                     setEditItem({
                       id: "",
-                      name: "",
-                      serviceType: "",
-                      requestDetails: "",
-                      customerID: "",
-                      status: "",
-                      model: "serviceRequest",
+                      insuranceNumber: "",
+                      issueDate: "",
+                      issuePlace: "",
+                      healthCheckPlace: "",
+                      employeeId: "",
+                      model: "insurance",
                     })
                   }
                   className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
@@ -309,12 +313,12 @@ const ListServiceRequestRequests = () => {
                 <button
                   onClick={() =>
                     handleEditClick(
-                      row.id,
-                      row.name,
-                      row.customerID,
-                      row.serviceType,
-                      row.requestDetails,
-                      row.status
+                      row.Id,
+                      row.InsuranceNumber,
+                      row.IssueDate,
+                      row.IssuePlace,
+                      row.HealthCheckPlace,
+                      row.EmployeeId
                     )
                   }
                   className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
@@ -322,7 +326,7 @@ const ListServiceRequestRequests = () => {
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDeleteClick(row.serviceRequestID, model)}
+                  onClick={() => handleDeleteClick(row.Id, model)}
                   className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
                 >
                   Delete
@@ -354,15 +358,22 @@ const ListServiceRequestRequests = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { name, customerID, serviceType, requestDetails, status } = values;
+    const {
+      insuranceNumber,
+      issueDate,
+      issuePlace,
+      healthCheckPlace,
+      employeeId,
+    } = values;
+
     let newErrors = {};
 
-    if (!name) newErrors.name = "Name is required.";
-    if (!serviceType) newErrors.serviceType = "Service type is required.";
-    if (!customerID) newErrors.customerID = "Customer is required.";
-    if (!requestDetails)
-      newErrors.requestDetails = "Request details is required.";
-    if (!status) newErrors.status = "Status is required.";
+    if (!insuranceNumber) newErrors.insuranceNumber = "Name is required.";
+    if (!issueDate) newErrors.issueDate = "Issue date is required.";
+    if (!employeeId) newErrors.employeeId = "Employee is required.";
+    if (!issuePlace) newErrors.issuePlace = "Issue place is required.";
+    if (!healthCheckPlace)
+      newErrors.healthCheckPlace = "Health check place is required.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -374,18 +385,20 @@ const ListServiceRequestRequests = () => {
     setLoading(true);
 
     try {
-      await ServicesService.createServiceRequest(
-        name,
-        customerID,
-        serviceType,
-        requestDetails,
-        status
+      await WelfareService.createInsurance(
+        insuranceNumber,
+        issueDate,
+        issuePlace,
+        healthCheckPlace,
+        employeeId
       );
+
       handleCloseModal();
-      toast.success("ServiceRequest created successfully.");
+      toast.success("Insurance created successfully.");
       await fetchAllData();
     } catch (error) {
-      toast.error("Failed to create serviceRequest.");
+      console.error("Create error:", error);
+      toast.error("Failed to create insurance.");
     } finally {
       setLoading(false);
     }
@@ -405,7 +418,7 @@ const ListServiceRequestRequests = () => {
 
       <div className="flex flex-col gap-5 mt-5">
         <div className="flex items-center justify-between">
-          <div className="font-semibold text-xl capitalize">ServiceRequest</div>
+          <div className="font-semibold text-xl capitalize">Insurance</div>
           <button
             onClick={handleOpenModal}
             className="px-3 py-2 bg-blue-950 text-white rounded-md"
@@ -419,19 +432,15 @@ const ListServiceRequestRequests = () => {
             <div className="flex items-center justify-end">
               <input
                 type="text"
-                placeholder="Search serviceRequest"
-                value={searchQuery.serviceRequest}
-                onChange={handleSearchChange("serviceRequest")}
+                placeholder="Search insurance"
+                value={searchQuery.insurance}
+                onChange={handleSearchChange("insurance")}
                 className="border border-gray-300 px-3 py-2 rounded-md outline-none mb-3"
               />
             </div>
             <DataTable
-              columns={renderColumns("serviceRequest")}
-              data={serviceRequests.filter((c) =>
-                c.name
-                  ?.toLowerCase()
-                  .includes(searchQuery.serviceRequest.toLowerCase())
-              )}
+              columns={renderColumns("insurance")}
+              data={insurances}
               pagination
               paginationComponentOptions={paginationComponentOptions}
               customStyles={{
@@ -475,9 +484,7 @@ const ListServiceRequestRequests = () => {
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
           <div className="bg-white p-4 rounded-lg w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-5">
-              Create ServiceRequest
-            </h2>
+            <h2 className="text-xl font-semibold mb-5">Create Insurance</h2>
             <form onSubmit={handleSubmit}>
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
@@ -487,105 +494,83 @@ const ListServiceRequestRequests = () => {
                   type="text"
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                   placeholder="Enter name"
-                  name="name"
-                  value={values.name}
+                  name="insuranceNumber"
+                  value={values.insuranceNumber}
                   onChange={handleChangeInput}
                 />
-                {errors.name && (
-                  <span className="text-red-700">{errors.name}</span>
+                {errors.insuranceNumber && (
+                  <span className="text-red-700">{errors.insuranceNumber}</span>
                 )}
               </label>
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
-                  Service Type:
+                  Issue Place:
+                </span>
+                <input
+                  type="text"
+                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                  placeholder="Enter name"
+                  name="issuePlace"
+                  value={values.issuePlace}
+                  onChange={handleChangeInput}
+                />
+                {errors.issuePlace && (
+                  <span className="text-red-700">{errors.issuePlace}</span>
+                )}
+              </label>
+              <label className="block mb-1">
+                <span className="block font-medium text-primary mb-1">
+                  Health Check Place:
+                </span>
+                <input
+                  type="text"
+                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                  placeholder="Enter name"
+                  name="healthCheckPlace"
+                  value={values.healthCheckPlace}
+                  onChange={handleChangeInput}
+                />
+                {errors.healthCheckPlace && (
+                  <span className="text-red-700">
+                    {errors.healthCheckPlace}
+                  </span>
+                )}
+              </label>
+              <label className="block mb-1">
+                <span className="block font-medium text-primary mb-1">
+                  Employee:
                 </span>
                 <select
-                  name="serviceType"
-                  value={values.serviceType}
+                  name="employeeId"
+                  value={values.employeeId}
                   onChange={handleChangeInput}
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                 >
                   <option value="">Select</option>
-                  {serviceTypes.map((serviceType) => (
-                    <option key={serviceType.id} value={serviceType.id}>
-                      {serviceType.name}
+                  {employees.map((employee) => (
+                    <option key={employee.id} value={employee.id}>
+                      {employee.name}
                     </option>
                   ))}
                 </select>
-                {errors.serviceType && (
-                  <span className="text-red-700">{errors.serviceType}</span>
+                {errors.employeeId && (
+                  <span className="text-red-700">{errors.employeeId}</span>
                 )}
               </label>
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
-                  Description:
+                  Issue Date:
                 </span>
-                <textarea
-                  name="description"
-                  value={values.description}
-                  onChange={handleChangeInput}
-                  placeholder="Enter description"
+                <input
+                  type="date"
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                ></textarea>
-                {errors.description && (
-                  <span className="text-red-700">{errors.description}</span>
-                )}
-              </label>
-              <label className="block mb-1">
-                <span className="block font-medium text-primary mb-1">
-                  Request Details:
-                </span>
-                <textarea
-                  name="requestDetails"
-                  value={values.requestDetails}
+                  placeholder="Enter Phone"
+                  name="issueDate"
+                  value={values.issueDate}
                   onChange={handleChangeInput}
-                  placeholder="Enter requestDetails"
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                ></textarea>
-                {errors.requestDetails && (
-                  <span className="text-red-700">{errors.requestDetails}</span>
-                )}
-              </label>
-              <label className="block mb-1">
-                <span className="block font-medium text-primary mb-1">
-                  Customer:
-                </span>
-                <select
-                  name="customerID"
-                  value={values.customerID}
-                  onChange={handleChangeInput}
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                >
-                  <option value="">Select</option>
-                  {customers.map((customer) => (
-                    <option
-                      key={customer.customerID}
-                      value={customer.customerID}
-                    >
-                      {customer.customerName}
-                    </option>
-                  ))}
-                </select>
-                {errors.customerID && (
-                  <span className="text-red-700">{errors.customerID}</span>
-                )}
-              </label>
-              <label className="block mb-1">
-                <span className="block font-medium text-primary mb-1">
-                  Status:
-                </span>
-                <select
-                  name="status"
-                  value={values.status}
-                  onChange={handleChangeInput}
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                >
-                  <option value="">Select</option>
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
-                {errors.status && (
-                  <span className="text-red-700">{errors.status}</span>
+                />
+                {errors.issueDate && (
+                  <span className="text-red-700">{errors.issueDate}</span>
                 )}
               </label>
               <div className="flex items-center gap-2 mt-4">
@@ -611,4 +596,4 @@ const ListServiceRequestRequests = () => {
   );
 };
 
-export default ListServiceRequestRequests;
+export default ListInsurance;

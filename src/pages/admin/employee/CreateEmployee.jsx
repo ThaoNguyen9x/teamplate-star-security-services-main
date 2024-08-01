@@ -41,6 +41,8 @@ const CreateEmployee = () => {
 
   const [generalDepartments, setGeneralDepartments] = useState([]);
   const [manages, setManages] = useState([]);
+  const [positions, setPositions] = useState([]);
+  const [listManagers, setListManagers] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [branchs, setBranchs] = useState([]);
   const [educations, setEducations] = useState([]);
@@ -60,7 +62,7 @@ const CreateEmployee = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    
     const {
       Name,
       CivilId,
@@ -79,18 +81,17 @@ const CreateEmployee = () => {
       IsDirector,
       IsHeadOfDepartment,
       ManagerId,
+      PositionId,
       file,
     } = values;
-
+  
     let newErrors = {};
-
+  
     // Validate inputs
     if (!Name) newErrors.Name = "Name is required.";
-
     if (!CivilId) newErrors.CivilId = "Civil Id is required.";
     else if (!civilId_REGEX.test(CivilId))
       newErrors.CivilId = "Invalid Civil Id format.";
-
     if (!Gender) newErrors.Gender = "Gender is required.";
     if (!file) newErrors.file = "Image is required.";
     if (!Birthday) newErrors.Birthday = "Birthday is required.";
@@ -98,31 +99,29 @@ const CreateEmployee = () => {
     if (!JobName) newErrors.JobName = "Job name is required.";
     if (!Address) newErrors.Address = "Address is required.";
     if (!IsDirector) newErrors.IsDirector = "Director is required.";
-    if (!IsHeadOfDepartment) newErrors.IsHeadOfDepartment = "Head of department is required.";
-
+    if (!IsHeadOfDepartment)
+      newErrors.IsHeadOfDepartment = "Head of department is required.";
     if (!PhoneNumber) newErrors.PhoneNumber = "Phone number is required.";
     else if (!phone_REGEX.test(PhoneNumber))
       newErrors.PhoneNumber = "Invalid phone format.";
-
     if (!BranchId) newErrors.BranchId = "Branch is required.";
+    if (!PositionId) newErrors.PositionId = "Position is required.";
     if (!EducationId) newErrors.EducationId = "Education is required.";
     if (!CountryId) newErrors.CountryId = "Country is required.";
     if (!ProvinceId) newErrors.ProvinceId = "Province is required.";
     if (!DistrictId) newErrors.DistrictId = "District is required.";
-    if (!ManagerId) newErrors.ManagerId = "Manager is required.";
-
+  
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       setTimeout(() => setErrors({}), 5000);
       return;
     }
-
+  
     setErrors({});
     setLoading(true);
-
+  
     try {
-      // Handle photo file upload separately if needed
-      await EmployeeService.createEmployee(
+      const employeeData = {
         Name,
         CivilId,
         Gender,
@@ -140,22 +139,43 @@ const CreateEmployee = () => {
         IsDirector,
         IsHeadOfDepartment,
         ManagerId,
-        file
-      );
+        PositionId,
+        file,
+      };
+  
+      await EmployeeService.createEmployee(employeeData);
       setValues({
-        value: "",
+        Name: "",
+        CivilId: "",
+        Gender: "",
+        Birthday: "",
+        FileName: "",
+        JobName: "",
+        Address: "",
+        PhoneNumber: "",
+        BranchId: "",
+        Other: "",
+        EducationId: "",
+        CountryId: "",
+        ProvinceId: "",
+        DistrictId: "",
+        IsDirector: "",
+        IsHeadOfDepartment: "",
+        ManagerId: "",
+        PositionId: "",
+        file: null,
       });
       toast.success("Create employee successfully.");
       navigate("/dashboard/employees");
     } catch (error) {
       setErrors({
-        apiError: error.message,
+        apiError: error.response?.data?.message || error.message,
       });
       setTimeout(() => setErrors({}), 5000);
     } finally {
       setLoading(false);
     }
-  };
+  };  
 
   useEffect(() => {
     fetchAllData();
@@ -167,31 +187,37 @@ const CreateEmployee = () => {
       const [
         generalDepartmentsData,
         managesData,
+        positionsData,
         departmentsData,
         branchData,
         educationData,
         countryData,
         provinceData,
         districtData,
+        listManagersData,
       ] = await Promise.all([
         DepartmentService.getAllGeneralDepartments(),
         DepartmentService.getAllManages(),
+        DepartmentService.getAllPositions(),
         DepartmentService.getAllDepartments(),
         DepartmentService.getAllBranchs(),
         EducationService.getAllEducations(),
         GeoService.getAllCountries(),
         GeoService.getAllProvinces(),
         GeoService.getAllDistricts(),
+        EmployeeService.getAllEmployeesNotStaff(),
       ]);
 
       setGeneralDepartments(generalDepartmentsData.$values || []);
       setManages(managesData.$values || []);
+      setPositions(positionsData.$values || []);
       setDepartments(departmentsData.$values || []);
       setBranchs(branchData.$values || []);
       setEducations(educationData.$values || []);
       setCountries(countryData.$values || []);
       setProvinces(provinceData.$values || []);
       setDistricts(districtData.$values || []);
+      setListManagers(listManagersData || []);
     } catch (error) {
       toast.error("Failed to fetch data.");
     } finally {
@@ -291,11 +317,19 @@ const CreateEmployee = () => {
       ],
     },
     {
+      label: "Position",
+      name: "PositionId",
+      options: [
+        { value: "", text: "Select Position" },
+        ...positions.map((m) => ({ value: m.Id, text: m.Name })),
+      ],
+    },
+    {
       label: "Manager",
       name: "ManagerId",
       options: [
         { value: "", text: "Select Manager" },
-        ...manages.map((m) => ({ value: m.Id, text: m.Name })),
+        ...listManagers.map((m) => ({ value: m.id, text: m.name })),
       ],
     },
     {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import Loading from "../../../components/Loading";
 import Delete from "../../../components/admin/Delete";
@@ -50,6 +50,10 @@ const ListContract = () => {
     fetchAllData();
   }, []);
 
+  useEffect(() => {
+    fetchAllData();
+  }, []);
+
   const fetchAllData = async () => {
     setLoading(true);
     try {
@@ -57,7 +61,6 @@ const ListContract = () => {
         ContractService.getAllContracts(),
         EmployeeService.getAllEmployees(),
       ]);
-
       setContractServices(contractServicesData.$values || []);
       setEmployees(employeesData || []);
     } catch (error) {
@@ -123,7 +126,6 @@ const ListContract = () => {
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      console.error("Update error:", error);
       toast.error("Failed to update data. Please try again.");
     } finally {
       setLoading(false);
@@ -149,7 +151,6 @@ const ListContract = () => {
 
   const handleDelete = useCallback(async () => {
     setLoading(true);
-
     try {
       await ContractService.deleteContract(currentId);
       setContractServices((prev) => prev.filter((c) => c.id !== currentId));
@@ -164,17 +165,15 @@ const ListContract = () => {
     }
   }, [currentId]);
 
-  const getEmployeesOptions = () => {
-    return employees.map((c) => (
+  const getEmployeesOptions = () =>
+    employees.map((c) => (
       <option key={c.id} value={c.id}>
         {c.name}
       </option>
     ));
-  };
 
-  const getEmployeeName = (id) => {
-    return employees.find((c) => c.employeeID === id)?.name || "N/A";
-  };
+  const getEmployeeName = (id) =>
+    employees.find((c) => c.employeeID === id)?.name || "N/A";
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -184,8 +183,8 @@ const ListContract = () => {
     return `${year}-${month}-${day}`;
   };
 
-  const renderColumns = useCallback(
-    (model) => [
+  const columns = useMemo(
+    () => [
       {
         name: "#",
         selector: (row, index) => index + 1,
@@ -195,7 +194,7 @@ const ListContract = () => {
         name: "Contract Number",
         selector: (row) => row.ContractNumber || "",
         cell: (row) =>
-          editItem.id === row.Id && editItem.model === model ? (
+          editItem.id === row.Id && editItem.model === "contractService" ? (
             <input
               type="text"
               value={editItem.contractNumber}
@@ -216,14 +215,11 @@ const ListContract = () => {
         name: "Employee",
         selector: (row) => getEmployeeName(row.employeeId),
         cell: (row) =>
-          editItem.id === row.Id && editItem.model === model ? (
+          editItem.id === row.Id && editItem.model === "contractService" ? (
             <select
               value={editItem.employeeId}
               onChange={(e) =>
-                setEditItem((prev) => ({
-                  ...prev,
-                  employeeId: e.target.value,
-                }))
+                setEditItem((prev) => ({ ...prev, employeeId: e.target.value }))
               }
               className="border px-3 py-2 rounded-md"
             >
@@ -239,7 +235,7 @@ const ListContract = () => {
         name: "Content",
         selector: (row) => row.Content,
         cell: (row) =>
-          editItem.id === row.Id && editItem.model === model ? (
+          editItem.id === row.Id && editItem.model === "contractService" ? (
             <input
               type="text"
               value={editItem.content}
@@ -260,7 +256,7 @@ const ListContract = () => {
         name: "Renewal Count",
         selector: (row) => row.RenewalCount,
         cell: (row) =>
-          editItem.id === row.Id && editItem.model === model ? (
+          editItem.id === row.Id && editItem.model === "contractService" ? (
             <input
               type="number"
               value={editItem.renewalCount}
@@ -281,9 +277,9 @@ const ListContract = () => {
         name: "Duration",
         selector: (row) => row.Duration,
         cell: (row) =>
-          editItem.id === row.Id && editItem.model === model ? (
+          editItem.id === row.Id && editItem.model === "contractService" ? (
             <input
-              type="number"
+              type="text"
               value={editItem.duration}
               onChange={(e) =>
                 setEditItem((prevState) => ({
@@ -300,9 +296,9 @@ const ListContract = () => {
       },
       {
         name: "Start Date",
-        selector: (row) => formatDate(row.StartDate) || "",
+        selector: (row) => formatDate(row.StartDate),
         cell: (row) =>
-          editItem.id === row.Id && editItem.model === model ? (
+          editItem.id === row.Id && editItem.model === "contractService" ? (
             <input
               type="date"
               value={formatDate(editItem.startDate)}
@@ -315,15 +311,15 @@ const ListContract = () => {
               className="border px-2 py-1 rounded-md outline-none"
             />
           ) : (
-            formatDate(row.StartDate) || ""
+            formatDate(row.StartDate)
           ),
         sortable: true,
       },
       {
         name: "End Date",
-        selector: (row) => formatDate(row.EndDate) || "",
+        selector: (row) => formatDate(row.EndDate),
         cell: (row) =>
-          editItem.id === row.Id && editItem.model === model ? (
+          editItem.id === row.Id && editItem.model === "contractService" ? (
             <input
               type="date"
               value={formatDate(editItem.endDate)}
@@ -336,15 +332,15 @@ const ListContract = () => {
               className="border px-2 py-1 rounded-md outline-none"
             />
           ) : (
-            formatDate(row.EndDate) || ""
+            formatDate(row.EndDate)
           ),
         sortable: true,
       },
       {
         name: "Sign Date",
-        selector: (row) => formatDate(row.SignDate) || "",
+        selector: (row) => formatDate(row.SignDate),
         cell: (row) =>
-          editItem.id === row.Id && editItem.model === model ? (
+          editItem.id === row.Id && editItem.model === "contractService" ? (
             <input
               type="date"
               value={formatDate(editItem.signDate)}
@@ -357,7 +353,7 @@ const ListContract = () => {
               className="border px-2 py-1 rounded-md outline-none"
             />
           ) : (
-            formatDate(row.SignDate) || ""
+            formatDate(row.SignDate)
           ),
         sortable: true,
       },
@@ -365,30 +361,19 @@ const ListContract = () => {
         name: "Actions",
         cell: (row) => (
           <div className="flex items-center gap-2">
-            {editItem.id === row.Id && editItem.model === model ? (
+            {editItem.id === row.Id ? (
               <>
                 <button
                   onClick={handleUpdate}
-                  className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
+                  className="whitespace-nowrap px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
                 >
                   Update
                 </button>
                 <button
                   onClick={() =>
-                    setEditItem({
-                      id: "",
-                      contractNumber: "",
-                      employeeID: "",
-                      content: "",
-                      renewalCount: "",
-                      duration: "",
-                      startDate: "",
-                      endDate: "",
-                      signDate: "",
-                      model: "contractService",
-                    })
+                    setEditItem({ ...editItem, id: "", model: "" })
                   }
-                  className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
+                  className="whitespace-nowrap px-3 py-2 border border-red-700 text-red-700 rounded-md"
                 >
                   Cancel
                 </button>
@@ -409,13 +394,13 @@ const ListContract = () => {
                       row.Duration
                     )
                   }
-                  className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
+                  className="whitespace-nowrap px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
                 >
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDeleteClick(row.Id, model)}
-                  className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
+                  onClick={() => handleDeleteClick(row.Id, "contractService")}
+                  className="whitespace-nowrap px-3 py-2 border border-red-700 text-red-700 rounded-md"
                 >
                   Delete
                 </button>
@@ -425,7 +410,7 @@ const ListContract = () => {
         ),
       },
     ],
-    [editItem, handleEditClick, handleUpdate, handleDeleteClick]
+    [editItem, employees, handleUpdate, handleDeleteClick]
   );
 
   const handleSearchChange = (model) => (event) => {
@@ -468,10 +453,13 @@ const ListContract = () => {
     if (!employeeId) newErrors.employeeId = "Not empty.";
     if (!duration) newErrors.duration = "Not empty.";
 
-    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setTimeout(() => setErrors({}), 5000);
+      return;
+    }
 
-    if (Object.keys(newErrors).length > 0) return;
-
+    setErrors({});
     setLoading(true);
 
     try {
@@ -506,9 +494,7 @@ const ListContract = () => {
 
       <div className="flex flex-col gap-5 mt-5">
         <div className="flex items-center justify-between">
-          <div className="font-semibold text-xl capitalize">
-            ServiceSchedule
-          </div>
+          <div className="font-semibold text-xl capitalize">Contract</div>
           <button
             onClick={handleOpenModal}
             className="px-3 py-2 bg-blue-950 text-white rounded-md"
@@ -517,7 +503,7 @@ const ListContract = () => {
           </button>
         </div>
         <div className="grid p-5 bg-gray-100 rounded-md">
-          <div className="container overflow-y-auto">
+          <div className="w-full overflow-x-scroll">
             <div className="flex items-center justify-end">
               <input
                 type="text"
@@ -528,32 +514,24 @@ const ListContract = () => {
               />
             </div>
             <DataTable
-              columns={renderColumns("contractService")}
+              columns={columns}
               data={contractServices}
               pagination
               paginationComponentOptions={paginationComponentOptions}
               customStyles={{
                 headCells: {
                   style: {
-                    fontSize: "16px",
-                    fontWeight: "700",
-                    textTransform: "uppercase",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 cells: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 pagination: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
               }}

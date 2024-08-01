@@ -7,6 +7,7 @@ import DataTable from "react-data-table-component";
 import CustomerService from "../../../services/CustomerService";
 import Select from "react-select";
 import EmployeeService from "../../../services/EmployeeService";
+import axios from "axios";
 
 const paginationComponentOptions = {
   rowsPerPageText: "Rows per page",
@@ -56,7 +57,7 @@ const ListCustomer = () => {
         EmployeeService.getAllEmployees(),
       ]);
 
-      setCustomers(customersData.data || []);
+      setCustomers(customersData || []);
       setEmployees(employeesData || []);
     } catch (error) {
       toast.error("Failed to fetch data.");
@@ -118,6 +119,20 @@ const ListCustomer = () => {
     }
   }, [currentId]);
 
+  const handleSendMail = async (customerID) => {
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        `http://localhost:5000/api/customers/send-mail/${customerID}`,
+      );
+      toast.success("Mail sent successfully.");
+    } catch (error) {
+      toast.error("Failed to send mail.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -134,11 +149,7 @@ const ListCustomer = () => {
 
   const renderColumns = useCallback(
     (model) => [
-      {
-        name: "#",
-        selector: (row, index) => index + 1,
-        sortable: true,
-      },
+      { name: "#", selector: (_, index) => index + 1, sortable: true },
       {
         name: "Image",
         selector: (row) => row.image || "",
@@ -212,7 +223,7 @@ const ListCustomer = () => {
       {
         name: "Actions",
         cell: (row) => (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 whitespace-nowrap">
             {editItem.customerID === row.customerID &&
             editItem.model === model ? (
               <>
@@ -239,6 +250,12 @@ const ListCustomer = () => {
               </>
             ) : (
               <>
+                <button
+                  onClick={() => handleSendMail(row.customerID)}
+                  className="px-3 py-2 border border-green-700 text-green-700 rounded-md"
+                >
+                  Feedback
+                </button>
                 <button
                   onClick={() =>
                     handleEditClick(
@@ -300,10 +317,13 @@ const ListCustomer = () => {
     else if (!Email_REGEX.test(Email))
       newErrors.Email = "Invalid Email format.";
 
-    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setTimeout(() => setErrors({}), 5000);
+      return;
+    }
 
-    if (Object.keys(newErrors).length > 0) return;
-
+    setErrors({});
     setLoading(true);
 
     try {
@@ -334,7 +354,6 @@ const ListCustomer = () => {
     }
   };
 
-  // Prepare options for react-select
   const employeeOptions = employees.map((emp) => ({
     value: emp.id,
     label: emp.name,

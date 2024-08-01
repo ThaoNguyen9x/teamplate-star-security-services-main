@@ -13,6 +13,19 @@ const getAllEmployees = async () => {
   }
 };
 
+const getAllEmployeesNotStaff = async () => {
+  try {
+    let response = await axios.get("/employee/get-all-not-staff");
+    return response.data;
+  } catch (error) {
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "An unknown error occurred";
+    throw { flag: false, message: errorMessage };
+  }
+};
+
 const createEmployee = async (
   Name,
   CivilId,
@@ -23,6 +36,7 @@ const createEmployee = async (
   Address,
   PhoneNumber,
   BranchId,
+  PositionId,
   Other,
   EducationId,
   CountryId,
@@ -45,6 +59,7 @@ const createEmployee = async (
         JobName,
         Address,
         PhoneNumber,
+        PositionId,
         BranchId,
         Other,
         EducationId,
@@ -78,8 +93,8 @@ const createEmployee = async (
 
 const getById = async (id) => {
   try {
-    const response = await axios.get(`/employee/single/${id}`);
-    return response.data.data;
+    const response = await axios.get(`/employee/${id}`);
+    return response.data;
   } catch (error) {
     throw error.response?.data || error.message;
   }
@@ -104,12 +119,14 @@ const updateEmployee = async (
   IsDirector,
   IsHeadOfDepartment,
   ManagerId,
+  PositionId,
   file
 ) => {
   try {
     const response = await axios.post(
-      `/employee/update/${id}`,
+      `/employee/upload`,
       {
+        id,
         Name,
         CivilId,
         Gender,
@@ -127,6 +144,7 @@ const updateEmployee = async (
         IsDirector,
         IsHeadOfDepartment,
         ManagerId,
+        PositionId,
         file,
       },
       {
@@ -165,6 +183,7 @@ const deleteEmployee = async (id) => {
 
 const EmployeeService = {
   getAllEmployees,
+  getAllEmployeesNotStaff,
   createEmployee,
   getById,
   updateEmployee,

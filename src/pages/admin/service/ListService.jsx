@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { toast } from "react-toastify";
-import { no_avatar } from "../../../assets/index";
 import Loading from "../../../components/Loading";
 import Delete from "../../../components/admin/Delete";
 import DataTable from "react-data-table-component";
@@ -252,10 +251,13 @@ const ListService = () => {
     if (!price) newErrors.price = "Price is required.";
     if (!description) newErrors.description = "Description is required.";
 
-    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setTimeout(() => setErrors({}), 5000);
+      return;
+    }
 
-    if (Object.keys(newErrors).length > 0) return;
-
+    setErrors({});
     setLoading(true);
 
     try {

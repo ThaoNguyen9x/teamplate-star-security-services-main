@@ -383,10 +383,13 @@ const ListServiceSchedules = () => {
     if (!scheduledDate) newErrors.scheduledDate = "Scheduled date is required.";
     if (!location) newErrors.location = "Location is required.";
 
-    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setTimeout(() => setErrors({}), 5000);
+      return;
+    }
 
-    if (Object.keys(newErrors).length > 0) return;
-
+    setErrors({});
     setLoading(true);
 
     try {

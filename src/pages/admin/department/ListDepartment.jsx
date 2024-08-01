@@ -16,7 +16,7 @@ const paginationComponentOptions = {
 
 const ListDepartment = () => {
   const [generalDepartments, setGeneralDepartments] = useState([]);
-  const [manages, setManages] = useState([]);
+  const [positions, setPositions] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [branchs, setBranchs] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -25,17 +25,19 @@ const ListDepartment = () => {
   const [editItem, setEditItem] = useState({
     id: "",
     name: "",
+    email: "",
+    address: "",
+    contactNumber: "",
     generalDepartmentId: "",
-    managerId: "",
-    departnentId: "",
+    departmentId: "",
     model: "",
   });
 
   const [searchQuery, setSearchQuery] = useState({
     generalDepartment: "",
-    manage: "",
     department: "",
     branch: "",
+    position: "",
   });
 
   useEffect(() => {
@@ -45,16 +47,20 @@ const ListDepartment = () => {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const [generalDepartmentsData, managesData, departmentsData, branchData] =
-        await Promise.all([
-          DepartmentService.getAllGeneralDepartments(),
-          DepartmentService.getAllManages(),
-          DepartmentService.getAllDepartments(),
-          DepartmentService.getAllBranchs(),
-        ]);
+      const [
+        generalDepartmentsData,
+        positionsData,
+        departmentsData,
+        branchData,
+      ] = await Promise.all([
+        DepartmentService.getAllGeneralDepartments(),
+        DepartmentService.getAllPositions(),
+        DepartmentService.getAllDepartments(),
+        DepartmentService.getAllBranchs(),
+      ]);
 
       setGeneralDepartments(generalDepartmentsData.$values || []);
-      setManages(managesData.$values || []);
+      setPositions(positionsData.$values || []);
       setDepartments(departmentsData.$values || []);
       setBranchs(branchData.$values || []);
     } catch (error) {
@@ -65,13 +71,24 @@ const ListDepartment = () => {
   };
 
   const handleEditClick = useCallback(
-    (id, name, generalDepartmentId, managerId, departnentId, model) => {
+    (
+      id,
+      name,
+      generalDepartmentId,
+      departmentId,
+      email,
+      address,
+      contactNumber,
+      model
+    ) => {
       setEditItem({
         id,
         name,
         generalDepartmentId,
-        managerId,
-        departnentId,
+        departmentId,
+        email,
+        address,
+        contactNumber,
         model,
       });
     },
@@ -81,28 +98,37 @@ const ListDepartment = () => {
   const handleUpdate = useCallback(async () => {
     setLoading(true);
     try {
-      const { id, name, generalDepartmentId, managerId, departnentId, model } =
-        editItem;
+      const {
+        id,
+        name,
+        generalDepartmentId,
+        departmentId,
+        email,
+        address,
+        contactNumber,
+        model,
+      } = editItem;
 
       if (model === "generalDepartment") {
         await DepartmentService.updateGeneralDepartment(id, name);
-      } else if (model === "manage") {
-        await DepartmentService.updateManage(id, name);
+      } else if (model === "position") {
+        await DepartmentService.updatePosition(id, name);
       } else if (model === "department") {
-        await DepartmentService.updateDepartment(
+        await DepartmentService.updateDepartment(id, name, generalDepartmentId);
+      } else if (model === "branch") {
+        await DepartmentService.updateBranch(
           id,
           name,
-          generalDepartmentId,
-          managerId
+          email,
+          address,
+          contactNumber
         );
-      } else if (model === "branch") {
-        await DepartmentService.updateBranch(id, name, departnentId);
       }
 
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      toast.error("Failed to updated data.");
+      toast.error("Failed to update data.");
       console.error(
         "Update error:",
         error.response ? error.response.data : error.message
@@ -110,7 +136,14 @@ const ListDepartment = () => {
     } finally {
       setLoading(false);
       setEditItem({
-        value: "",
+        id: "",
+        name: "",
+        generalDepartmentId: "",
+        departmentId: "",
+        email: "",
+        address: "",
+        contactNumber: "",
+        model: "",
       });
     }
   }, [editItem]);
@@ -132,10 +165,10 @@ const ListDepartment = () => {
         setGeneralDepartments((prevGeneralDepartments) =>
           prevGeneralDepartments.filter((c) => c.Id !== currentId)
         );
-      } else if (model === "manage") {
-        await DepartmentService.deleteManage(currentId);
-        setManages((prevManages) =>
-          prevManages.filter((p) => p.Id !== currentId)
+      } else if (model === "position") {
+        await DepartmentService.deletePosition(currentId);
+        setPositions((prevPositions) =>
+          prevPositions.filter((p) => p.Id !== currentId)
         );
       } else if (model === "department") {
         await DepartmentService.deleteDepartment(currentId);
@@ -144,14 +177,14 @@ const ListDepartment = () => {
         );
       } else if (model === "branch") {
         await DepartmentService.deleteBranch(currentId);
-        setBranchs((prevBrachs) =>
-          prevBrachs.filter((d) => d.Id !== currentId)
+        setBranches((prevBranches) =>
+          prevBranches.filter((d) => d.Id !== currentId)
         );
       }
       await fetchAllData();
       toast.success("Deleted successfully.");
     } catch (error) {
-      toast.error("Failed to deleted data.");
+      toast.error("Failed to delete data.");
       console.error(
         "Delete error:",
         error.response ? error.response.data : error.message
@@ -160,7 +193,14 @@ const ListDepartment = () => {
       setLoading(false);
       setRemove(false);
       setEditItem({
-        values: "",
+        id: "",
+        name: "",
+        generalDepartmentId: "",
+        departmentId: "",
+        email: "",
+        address: "",
+        contactNumber: "",
+        model: "",
       });
     }
   }, [editItem, currentId]);
@@ -171,7 +211,7 @@ const ListDepartment = () => {
         switch (model) {
           case "generalDepartment":
             return row.Name;
-          case "manage":
+          case "position":
             return row.Name;
           case "department":
             return row.Name;
@@ -190,21 +230,6 @@ const ListDepartment = () => {
         ));
       };
 
-      const getManagesOptions = () => {
-        return manages.map((p) => (
-          <option key={p.Id} value={p.Id}>
-            {p.Name}
-          </option>
-        ));
-      };
-
-      const getDepartmentsOptions = () => {
-        return departments.map((p) => (
-          <option key={p.Id} value={p.Id}>
-            {p.Name}
-          </option>
-        ));
-      };
 
       const getGeneralDepartmentName = (row) => {
         return (
@@ -213,15 +238,6 @@ const ListDepartment = () => {
         );
       };
 
-      const getManageName = (row) => {
-        return manages.find((c) => c.Id === row.ManagerId)?.Name || "N/A";
-      };
-
-      const getDepartmentName = (row) => {
-        return (
-          departments.find((c) => c.Id === row.DepartnentId)?.Name || "N/A"
-        );
-      };
 
       return [
         {
@@ -275,57 +291,74 @@ const ListDepartment = () => {
                   ),
                 sortable: true,
               },
-              {
-                name: "Manage",
-                selector: (row) => getManageName(row),
-                cell: (row) =>
-                  editItem.id === row.Id && editItem.model === model ? (
-                    <select
-                      value={editItem.managerId}
-                      onChange={(e) => {
-                        setEditItem((prevState) => ({
-                          ...prevState,
-                          managerId: e.target.value,
-                        }));
-                      }}
-                      className="border px-3 py-2 rounded-md"
-                    >
-                      <option value="">Select</option>
-                      {getManagesOptions()}
-                    </select>
-                  ) : (
-                    getManageName(row)
-                  ),
-                sortable: true,
-              },
             ]
           : []),
         ...(model === "branch"
           ? [
-              {
-                name: "Department",
-                selector: (row) => getDepartmentName(row),
-                cell: (row) =>
-                  editItem.id === row.Id && editItem.model === model ? (
-                    <select
-                      value={editItem.departnentId}
-                      onChange={(e) =>
-                        setEditItem((prevState) => ({
-                          ...prevState,
-                          departnentId: e.target.value,
-                        }))
-                      }
-                      className="border px-3 py-1 rounded-md outline-none"
-                    >
-                      <option value="">Select Department</option>
-                      {getDepartmentsOptions()}
-                    </select>
-                  ) : (
-                    getDepartmentName(row)
-                  ),
-                sortable: true,
-              },
-            ]
+            {
+              name: "Email",
+              selector: (row) => row.Email || "",
+              cell: (row) =>
+                editItem.id === row.Id && editItem.model === model ? (
+                  <input
+                    type="text"
+                    value={editItem.email}
+                    onChange={(e) =>
+                      setEditItem((prevState) => ({
+                        ...prevState,
+                        email: e.target.value,
+                      }))
+                    }
+                    className="border px-2 py-1 rounded-md outline-none"
+                  />
+                ) : (
+                  row.Email || ""
+                ),
+              sortable: true,
+            },
+            {
+              name: "Address",
+              selector: (row) => row.Address || "",
+              cell: (row) =>
+                editItem.id === row.Id && editItem.model === model ? (
+                  <input
+                    type="text"
+                    value={editItem.address}
+                    onChange={(e) =>
+                      setEditItem((prevState) => ({
+                        ...prevState,
+                        address: e.target.value,
+                      }))
+                    }
+                    className="border px-2 py-1 rounded-md outline-none"
+                  />
+                ) : (
+                  row.Address || ""
+                ),
+              sortable: true,
+            },
+            {
+              name: "Contact Number",
+              selector: (row) => row.ContactNumber || "",
+              cell: (row) =>
+                editItem.id === row.Id && editItem.model === model ? (
+                  <input
+                    type="text"
+                    value={editItem.contactNumber}
+                    onChange={(e) =>
+                      setEditItem((prevState) => ({
+                        ...prevState,
+                        contactNumber: e.target.value,
+                      }))
+                    }
+                    className="border px-2 py-1 rounded-md outline-none"
+                  />
+                ) : (
+                  row.ContactNumber || ""
+                ),
+              sortable: true,
+            },
+          ]
           : []),
         {
           name: "Actions",
@@ -342,12 +375,14 @@ const ListDepartment = () => {
                   <button
                     onClick={() =>
                       setEditItem({
-                        id: null,
-                        name: "",
-                        generalDepartmentId: "",
-                        managerId: "",
-                        departnentId: "",
-                        model: "",
+                        id: "",
+                      name: "",
+                      generalDepartmentId: "",
+                      departmentId: "",
+                      email: "",
+                      address: "",
+                      contactNumber: "",
+                      model: "",
                       })
                     }
                     className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
@@ -361,10 +396,12 @@ const ListDepartment = () => {
                     onClick={() =>
                       handleEditClick(
                         row.Id,
-                        getName(row),
+                        row.Name,
                         row.GeneralDepartmentId,
-                        row.ManagerId,
-                        row.DepartnentId,
+                        row.DepartmentId,
+                        row.Email,
+                        row.Address,
+                        row.ContactNumber,
                         model
                       )
                     }
@@ -388,7 +425,7 @@ const ListDepartment = () => {
     [
       editItem,
       generalDepartments,
-      manages,
+      positions,
       departments,
       handleEditClick,
       handleUpdate,
@@ -418,7 +455,7 @@ const ListDepartment = () => {
         </div>
 
         <div className="grid p-5 bg-gray-100 rounded-md">
-          {["generalDepartment", "manage", "department", "branch"].map(
+          {["generalDepartment", "position", "department", "branch"].map(
             (model) => (
               <div key={model}>
                 <div className="flex items-center justify-between">
@@ -431,8 +468,8 @@ const ListDepartment = () => {
                     placeholder={`Search ${
                       model === "generalDepartment"
                         ? "generalDepartments"
-                        : model === "manage"
-                        ? "manages"
+                        : model === "position"
+                        ? "positions"
                         : model === "departments"
                         ? "departments"
                         : "branchs"
@@ -451,10 +488,10 @@ const ListDepartment = () => {
                             searchQuery.generalDepartment.toLowerCase()
                           )
                         )
-                      : model === "manage"
-                      ? manages.filter((p) =>
+                      : model === "position"
+                      ? positions.filter((p) =>
                           p.Name.toLowerCase().includes(
-                            searchQuery.manage.toLowerCase()
+                            searchQuery.position.toLowerCase()
                           )
                         )
                       : model === "department"
@@ -474,25 +511,18 @@ const ListDepartment = () => {
                   customStyles={{
                     headCells: {
                       style: {
-                        fontSize: "16px",
-                        fontWeight: "700",
                         textTransform: "uppercase",
                         background: "#f3f4f6",
-                        padding: "12px 24px",
                       },
                     },
                     cells: {
                       style: {
-                        fontSize: "14px",
                         background: "#f3f4f6",
-                        padding: "12px 24px",
                       },
                     },
                     pagination: {
                       style: {
-                        fontSize: "14px",
                         background: "#f3f4f6",
-                        padding: "12px 24px",
                       },
                     },
                   }}

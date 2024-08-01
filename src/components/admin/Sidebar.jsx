@@ -7,9 +7,9 @@ const Sidebar = () => {
 
   return (
     <div
-      className={`sticky flex ${
+      className={`relative ${
         toggle ? "w-64" : "w-20"
-      }  min-h-[100vh] px-3 bg-blue-950 text-white transition-all duration-200`}
+      } h-screen overflow-y-scroll no-scrollbar px-3 bg-blue-950 text-white transition-all duration-200`}
     >
       <div
         onClick={() => setToggle(!toggle)}

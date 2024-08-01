@@ -14,7 +14,6 @@ const civilId_REGEX = /^[a-zA-Z0-9]{8,12}$/;
 
 const EditEmployee = () => {
   const { id } = useParams();
-  const [image, setImage] = useState(null);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -36,11 +35,14 @@ const EditEmployee = () => {
     IsDirector: "",
     IsHeadOfDepartment: "",
     ManagerId: "",
+    PositionId: "",
     file: null,
   });
 
+  const [image, setImage] = useState(null);
   const [generalDepartments, setGeneralDepartments] = useState([]);
-  const [manages, setManages] = useState([]);
+  const [positions, setPositions] = useState([]);
+  const [listManagers, setListManagers] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [branchs, setBranchs] = useState([]);
   const [educations, setEducations] = useState([]);
@@ -91,6 +93,7 @@ const EditEmployee = () => {
               : "",
           JobName: data.jobName || "",
           ManagerId: data.managerId || "",
+          PositionId: data.positionId || "",
           Other: data.other || "",
           PhoneNumber: data.phoneNumber || "",
           ProvinceId: data.provinceId || "",
@@ -131,6 +134,7 @@ const EditEmployee = () => {
       IsDirector,
       IsHeadOfDepartment,
       ManagerId,
+      PositionId,
       file,
     } = values;
 
@@ -161,7 +165,7 @@ const EditEmployee = () => {
     if (!CountryId) newErrors.CountryId = "Country is required.";
     if (!ProvinceId) newErrors.ProvinceId = "Province is required.";
     if (!DistrictId) newErrors.DistrictId = "District is required.";
-    if (!ManagerId) newErrors.ManagerId = "Manager is required.";
+    if (!PositionId) newErrors.PositionId = "Position is required.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -192,6 +196,7 @@ const EditEmployee = () => {
         IsDirector,
         IsHeadOfDepartment,
         ManagerId,
+        PositionId,
         file
       );
 
@@ -203,6 +208,7 @@ const EditEmployee = () => {
       toast.success("Employee updated successfully.");
       navigate("/dashboard/employees");
     } catch (error) {
+      console.log(error);
       setErrors({ apiError: error.message });
     } finally {
       setLoading(false);
@@ -218,32 +224,35 @@ const EditEmployee = () => {
     try {
       const [
         generalDepartmentsData,
-        managesData,
+        positionsData,
         departmentsData,
         branchData,
         educationData,
         countryData,
         provinceData,
         districtData,
+        listManagersData,
       ] = await Promise.all([
         DepartmentService.getAllGeneralDepartments(),
-        DepartmentService.getAllManages(),
+        DepartmentService.getAllPositions(),
         DepartmentService.getAllDepartments(),
         DepartmentService.getAllBranchs(),
         EducationService.getAllEducations(),
         GeoService.getAllCountries(),
         GeoService.getAllProvinces(),
         GeoService.getAllDistricts(),
+        EmployeeService.getAllEmployeesNotStaff(),
       ]);
 
       setGeneralDepartments(generalDepartmentsData.$values || []);
-      setManages(managesData.$values || []);
+      setPositions(positionsData.$values || []);
       setDepartments(departmentsData.$values || []);
       setBranchs(branchData.$values || []);
       setEducations(educationData.$values || []);
       setCountries(countryData.$values || []);
       setProvinces(provinceData.$values || []);
       setDistricts(districtData.$values || []);
+      setListManagers(listManagersData || []);
     } catch (error) {
       toast.error("Failed to fetch data.");
     } finally {
@@ -253,43 +262,13 @@ const EditEmployee = () => {
 
   const inputFields = [
     { label: "Name", type: "text", value: "Name", placeholder: "Enter name" },
-    {
-      label: "Civil Id",
-      type: "text",
-      value: "CivilId",
-      placeholder: "Enter civil id",
-    },
+    { label: "Civil Id", type: "text", value: "CivilId", placeholder: "Enter civil id" },
     { label: "Birthday", type: "date", value: "Birthday" },
-    {
-      label: "File Name",
-      type: "text",
-      value: "FileName",
-      placeholder: "Enter file name",
-    },
-    {
-      label: "Job Name",
-      type: "text",
-      value: "JobName",
-      placeholder: "Enter job name",
-    },
-    {
-      label: "Phone Number",
-      type: "text",
-      value: "PhoneNumber",
-      placeholder: "Enter phone number",
-    },
-    {
-      label: "Address",
-      type: "text",
-      value: "Address",
-      placeholder: "Enter address",
-    },
-    {
-      label: "Other",
-      type: "text",
-      value: "Other",
-      placeholder: "Enter other details",
-    },
+    { label: "File Name", type: "text", value: "FileName", placeholder: "Enter file name" },
+    { label: "Job Name", type: "text", value: "JobName", placeholder: "Enter job name" },
+    { label: "Phone Number", type: "text", value: "PhoneNumber", placeholder: "Enter phone number" },
+    { label: "Address", type: "text", value: "Address", placeholder: "Enter address" },
+    { label: "Other", type: "text", value: "Other", placeholder: "Enter other details" },
   ];
 
   const selectFields = [
@@ -331,7 +310,7 @@ const EditEmployee = () => {
       name: "ProvinceId",
       options: [
         { value: "", text: "Select Province" },
-        ...provinces.map((p) => ({ value: p.Id, text: p.NameCity })),
+        ...provinces.map((p) => ({ value: p.Id, text: p.Type })),
       ],
     },
     {
@@ -339,7 +318,7 @@ const EditEmployee = () => {
       name: "DistrictId",
       options: [
         { value: "", text: "Select District" },
-        ...districts.map((d) => ({ value: d.Id, text: d.NameDistrict })),
+        ...districts.map((d) => ({ value: d.Id, text: d.Id })), // đang lỗi
       ],
     },
     {
@@ -347,7 +326,15 @@ const EditEmployee = () => {
       name: "ManagerId",
       options: [
         { value: "", text: "Select Manager" },
-        ...manages.map((m) => ({ value: m.Id, text: m.Name })),
+        ...listManagers.map((m) => ({ value: m.id, text: m.name })),
+      ],
+    },
+    {
+      label: "Position",
+      name: "PositionId",
+      options: [
+        { value: "", text: "Select Position" },
+        ...positions.map((m) => ({ value: m.Id, text: m.Name })),
       ],
     },
     {
@@ -417,7 +404,7 @@ const EditEmployee = () => {
             </div>
             <div className="sm:col-span-8">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4">
-                {inputFields.map((item, index) => (
+              {inputFields.map((item, index) => (
                   <label
                     className={`${
                       item.full ? "xl:col-span-2 col-span-1" : "col-span-1"
@@ -442,8 +429,8 @@ const EditEmployee = () => {
                 ))}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4">
-                {selectFields.map((item, index) => (
-                  <label className="block" key={index}>
+              {selectFields.map((item, index) => (
+                    <label className="block" key={index}>
                     <span className="block font-medium text-primary">
                       {item.label}:
                     </span>
@@ -470,7 +457,7 @@ const EditEmployee = () => {
                 type="submit"
                 className="px-3 py-2 bg-blue-950 text-white rounded-md"
               >
-                Create
+                Update
               </button>
             </div>
           </form>

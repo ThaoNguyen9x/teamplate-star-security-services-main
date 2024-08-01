@@ -5,6 +5,8 @@ import Loading from "../../../components/Loading";
 import Delete from "../../../components/admin/Delete";
 import EmployeeService from "../../../services/EmployeeService";
 import DataTable from "react-data-table-component";
+import { no_avatar } from "../../../assets/index";
+import DepartmentService from "../../../services/DepartmentService";
 
 const paginationComponentOptions = {
   rowsPerPageText: "Rows per page",
@@ -16,6 +18,7 @@ const paginationComponentOptions = {
 
 const ListEmployee = () => {
   const [employees, setEmployees] = useState([]);
+  const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [remove, setRemove] = useState(false);
   const [currentId, setCurrentId] = useState(null);
@@ -28,8 +31,13 @@ const ListEmployee = () => {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const employeesData = await EmployeeService.getAllEmployees();
+      const [employeesData, positionsData] = await Promise.all([
+        EmployeeService.getAllEmployees(),
+        DepartmentService.getAllPositions(),
+      ]);
+
       setEmployees(employeesData || []);
+      setPositions(positionsData.$values || []);
     } catch (error) {
       toast.error("Failed to fetch data.");
     } finally {
@@ -71,7 +79,7 @@ const ListEmployee = () => {
         name: "Image",
         cell: (row) => (
           <img
-            src={row.photo}
+            src={row.photo ? row.photo : no_avatar}
             alt={row.name}
             className="w-12 h-12 rounded-full object-cover"
           />
@@ -80,6 +88,16 @@ const ListEmployee = () => {
       {
         name: "Name",
         selector: (row) => row.name || "",
+        sortable: true,
+      },
+      {
+        name: "Position",
+        selector: (row) => {
+          const position = positions.find(
+            (c) => c.Id === row.positionId
+          );
+          return position ? position.Name : "N/A";
+        },
         sortable: true,
       },
       {
@@ -95,7 +113,7 @@ const ListEmployee = () => {
       {
         name: "Actions",
         cell: (row) => (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 whitespace-nowrap">
             <Link to={`/dashboard/employees/edit/${row.id}`}>
               <button className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md">
                 Edit
@@ -111,7 +129,7 @@ const ListEmployee = () => {
         ),
       },
     ];
-  }, [handleDeleteClick]);
+  }, [positions]);
 
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value);

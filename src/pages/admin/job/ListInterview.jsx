@@ -1,10 +1,9 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import Loading from "../../../components/Loading";
 import Delete from "../../../components/admin/Delete";
 import DataTable from "react-data-table-component";
-import ServicesService from "../../../services/ServicesService";
-import CustomerService from "../../../services/CustomerService";
+import JobService from "../../../services/JobService";
 
 const paginationComponentOptions = {
   rowsPerPageText: "Rows per page",
@@ -14,30 +13,31 @@ const paginationComponentOptions = {
   selectAllRowsItemText: "All",
 };
 
-const ListServiceRequestRequests = () => {
+const ListInterview = () => {
   const [values, setValues] = useState({
     name: "",
-    customerID: "",
-    serviceType: "",
-    requestDetails: "",
-    status: "",
+    candidateID: "",
+    interviewDate: "",
+    interviewLocation: "",
+    interviewResult: "",
+    comments: "",
   });
-  const [serviceRequests, setServiceRequests] = useState([]);
-  const [customers, setCustomers] = useState([]);
-  const [serviceTypes, setServiceTypes] = useState([]);
+  const [interviews, setInterviews] = useState([]);
+  const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(false);
   const [remove, setRemove] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [editItem, setEditItem] = useState({
     id: "",
     name: "",
-    customerID: "",
-    serviceType: "",
-    requestDetails: "",
-    status: "",
-    model: "serviceRequest",
+    candidateID: "",
+    interviewDate: "",
+    interviewLocation: "",
+    interviewResult: "",
+    comments: "",
+    model: "interview",
   });
-  const [searchQuery, setSearchQuery] = useState({ serviceRequest: "" });
+  const [searchQuery, setSearchQuery] = useState({ interview: "" });
   const [showModal, setShowModal] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -47,34 +47,47 @@ const ListServiceRequestRequests = () => {
 
   const fetchAllData = async () => {
     setLoading(true);
+  
     try {
-      const [serviceRequestsData, customersData, serviceTypesData] =
-        await Promise.all([
-          ServicesService.getAllServiceRequests(),
-          CustomerService.getAllCustomers(),
-          ServicesService.getAllServices(),
-        ]);
-
-      setServiceRequests(serviceRequestsData || []);
-      setCustomers(customersData.data || []);
-      setServiceTypes(serviceTypesData || []);
+      console.log("Fetching data...");
+      const [interviewsData, candidatesData] = await Promise.all([
+        JobService.getAllInterviews(),
+        JobService.getAllCandidates(),
+      ]);
+  
+      console.log("Interviews data:", interviewsData);
+      console.log("Candidates data:", candidatesData);
+  
+      setInterviews(interviewsData || []);
+      setCandidates(candidatesData || []);
     } catch (error) {
+      console.error("Error fetching data:", error);
       toast.error("Failed to fetch data.");
     } finally {
       setLoading(false);
     }
   };
+  
 
   const handleEditClick = useCallback(
-    (id, name, customerID, serviceType, requestDetails, status) => {
+    (
+      interviewID,
+      name,
+      candidateID,
+      interviewDate,
+      interviewLocation,
+      interviewResult,
+      comments
+    ) => {
       setEditItem({
-        id,
+        id: interviewID,
         name,
-        customerID,
-        serviceType,
-        requestDetails,
-        status,
-        model: "serviceRequest",
+        candidateID,
+        interviewDate,
+        interviewLocation,
+        interviewResult,
+        comments,
+        model: "interview",
       });
     },
     []
@@ -84,24 +97,40 @@ const ListServiceRequestRequests = () => {
     setLoading(true);
 
     try {
-      const { id, name, customerID, serviceType, requestDetails, status } =
-        editItem;
-      await ServicesService.updateServiceRequest(
+      const {
         id,
         name,
-        customerID,
-        serviceType,
-        requestDetails,
-        status
+        candidateID,
+        interviewDate,
+        interviewLocation,
+        interviewResult,
+        comments,
+      } = editItem;
+      await JobService.updateInterview(
+        id,
+        name,
+        candidateID,
+        interviewDate,
+        interviewLocation,
+        interviewResult,
+        comments
       );
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      toast.error("Failed to update data.");
+      console.error("Update error:", error);
+      toast.error("Failed to update data. Please try again.");
     } finally {
       setLoading(false);
       setEditItem({
-        editItem: null,
+        id: "",
+        name: "",
+        candidateID: "",
+        interviewDate: "",
+        interviewLocation: "",
+        interviewResult: "",
+        comments: "",
+        model: "interview",
       });
     }
   }, [editItem]);
@@ -114,13 +143,10 @@ const ListServiceRequestRequests = () => {
 
   const handleDelete = useCallback(async () => {
     setLoading(true);
+
     try {
-      await ServicesService.deleteServiceRequest(currentId);
-      setServiceRequests((prevServiceRequestRequests) =>
-        prevServiceRequestRequests.filter(
-          (c) => c.serviceRequestID !== currentId
-        )
-      );
+      await JobService.deleteInterview(currentId);
+      setInterviews((prev) => prev.filter((c) => c.interviewID !== currentId));
       toast.success("Deleted successfully.");
       await fetchAllData();
       handleCloseModal();
@@ -132,32 +158,31 @@ const ListServiceRequestRequests = () => {
     }
   }, [currentId]);
 
-  const getCustomersOptions = () => {
-    return customers.map((c) => (
-      <option key={c.customerID} value={c.customerID}>
-        {c.customerName}
-      </option>
-    ));
-  };
-
-  const getCustomerName = (row) => {
-    return customers.find((c) => c.id === row.customerId)?.customerName || "N/A";
-  };
-
-  const getServiceTypesOptions = () => {
-    return serviceTypes.map((c) => (
+  const getCandidatesOptions = useMemo(() => {
+    return candidates.map((c) => (
       <option key={c.id} value={c.id}>
         {c.name}
       </option>
     ));
+  }, [candidates]);
+
+  const getCandidateName = useCallback(
+    (id) => {
+      return candidates.find((c) => c.id === id)?.name || "N/A";
+    },
+    [candidates]
+  );
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
-  const getServiceTypeName = (row) => {
-    return serviceTypes.find((c) => c.serviceType === row.id)?.name || "N/A";
-  };
-
-  const renderColumns = useCallback(
-    (model) => [
+  const columns = useMemo(
+    () => [
       {
         name: "#",
         selector: (row, index) => index + 1,
@@ -167,7 +192,7 @@ const ListServiceRequestRequests = () => {
         name: "Name",
         selector: (row) => row.name || "",
         cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
+          editItem.id === row.interviewID && editItem.model === "interview" ? (
             <input
               type="text"
               value={editItem.name}
@@ -185,101 +210,117 @@ const ListServiceRequestRequests = () => {
         sortable: true,
       },
       {
-        name: "Service",
-        selector: (row) => getServiceTypeName(row),
+        name: "Candidate",
+        selector: (row) => getCandidateName(row.candidateID),
         cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
+          editItem?.id === row.interviewID ? (
             <select
-              value={editItem.serviceType}
+              value={editItem.candidateID}
               onChange={(e) =>
-                setEditItem((prevState) => ({
-                  ...prevState,
-                  serviceType: e.target.value,
+                setEditItem((prev) => ({
+                  ...prev,
+                  candidateID: e.target.value,
                 }))
               }
               className="border px-3 py-2 rounded-md"
             >
               <option value="">Select</option>
-              {getServiceTypesOptions()}
+              {getCandidatesOptions}
             </select>
           ) : (
-            getServiceTypeName(row)
+            getCandidateName(row.candidateID)
           ),
         sortable: true,
       },
       {
-        name: "Details",
-        selector: (row) => row.requestDetails || "",
+        name: "Interview Location",
+        selector: (row) => row.interviewLocation || "",
         cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
+          editItem.id === row.interviewID && editItem.model === "interview" ? (
             <input
               type="text"
-              value={editItem.requestDetails}
+              value={editItem.interviewLocation}
               onChange={(e) =>
                 setEditItem((prevState) => ({
                   ...prevState,
-                  requestDetails: e.target.value,
+                  interviewLocation: e.target.value,
                 }))
               }
               className="border px-2 py-1 rounded-md outline-none"
             />
           ) : (
-            row.requestDetails || ""
+            row.interviewLocation || ""
           ),
         sortable: true,
       },
       {
-        name: "Customer",
-        selector: (row) => getCustomerName(row),
+        name: "Comments",
+        selector: (row) => row.comments || "",
         cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
-            <select
-              value={editItem.customerID}
+          editItem.id === row.interviewID && editItem.model === "interview" ? (
+            <input
+              type="text"
+              value={editItem.comments}
               onChange={(e) =>
                 setEditItem((prevState) => ({
                   ...prevState,
-                  customerID: e.target.value,
-                }))
-              }
-              className="border px-3 py-2 rounded-md"
-            >
-              <option value="">Select</option>
-              {getCustomersOptions()}
-            </select>
-          ) : (
-            getCustomerName(row)
-          ),
-        sortable: true,
-      },
-      {
-        name: "Status",
-        selector: (row) => row.status || "",
-        cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
-            <select
-              value={editItem.status}
-              onChange={(e) =>
-                setEditItem((prevState) => ({
-                  ...prevState,
-                  status: e.target.value,
+                  comments: e.target.value,
                 }))
               }
               className="border px-2 py-1 rounded-md outline-none"
-            >
-              <option value="">Select Status</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
+            />
           ) : (
-            row.status || ""
+            row.comments || ""
+          ),
+        sortable: true,
+      },
+      {
+        name: "Interview Date",
+        selector: (row) => formatDate(row.interviewDate) || "",
+        cell: (row) =>
+          editItem.id === row.interviewID && editItem.model === "interview" ? (
+            <input
+              type="date"
+              value={formatDate(editItem.interviewDate)}
+              onChange={(e) =>
+                setEditItem((prevState) => ({
+                  ...prevState,
+                  interviewDate: e.target.value,
+                }))
+              }
+              className="border px-2 py-1 rounded-md outline-none"
+            />
+          ) : (
+            formatDate(row.interviewDate) || ""
+          ),
+        sortable: true,
+      },
+      {
+        name: "Interview Result",
+        selector: (row) => row.interviewResult || "",
+        cell: (row) =>
+          editItem.id === row.interviewID && editItem.model === "interview" ? (
+            <input
+              type="text"
+              value={editItem.interviewResult}
+              onChange={(e) =>
+                setEditItem((prevState) => ({
+                  ...prevState,
+                  interviewResult: e.target.value,
+                }))
+              }
+              className="border px-2 py-1 rounded-md outline-none"
+            />
+          ) : (
+            row.interviewResult || ""
           ),
         sortable: true,
       },
       {
         name: "Actions",
         cell: (row) => (
-          <div className="flex items-center gap-2">
-            {editItem.id === row.id && editItem.model === model ? (
+          <div className="flex items-center gap-2 whitespace-nowrap">
+            {editItem.id === row.interviewID ? (
               <>
                 <button
                   onClick={handleUpdate}
@@ -290,13 +331,9 @@ const ListServiceRequestRequests = () => {
                 <button
                   onClick={() =>
                     setEditItem({
+                      ...editItem,
                       id: "",
-                      name: "",
-                      serviceType: "",
-                      requestDetails: "",
-                      customerID: "",
-                      status: "",
-                      model: "serviceRequest",
+                      model: "",
                     })
                   }
                   className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
@@ -309,12 +346,13 @@ const ListServiceRequestRequests = () => {
                 <button
                   onClick={() =>
                     handleEditClick(
-                      row.id,
+                      row.interviewID,
                       row.name,
-                      row.customerID,
-                      row.serviceType,
-                      row.requestDetails,
-                      row.status
+                      row.candidateID,
+                      row.interviewDate,
+                      row.interviewLocation,
+                      row.interviewResult,
+                      row.comments
                     )
                   }
                   className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
@@ -322,7 +360,9 @@ const ListServiceRequestRequests = () => {
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDeleteClick(row.serviceRequestID, model)}
+                  onClick={() =>
+                    handleDeleteClick(row.interviewID, "interview")
+                  }
                   className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
                 >
                   Delete
@@ -333,7 +373,14 @@ const ListServiceRequestRequests = () => {
         ),
       },
     ],
-    [editItem, handleEditClick, handleUpdate, handleDeleteClick]
+    [
+      candidates,
+      editItem,
+      getCandidatesOptions,
+      getCandidateName,
+      handleUpdate,
+      handleDeleteClick,
+    ]
   );
 
   const handleSearchChange = (model) => (event) => {
@@ -354,15 +401,24 @@ const ListServiceRequestRequests = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { name, customerID, serviceType, requestDetails, status } = values;
+    const {
+      name,
+      candidateID,
+      interviewDate,
+      interviewLocation,
+      interviewResult,
+      comments,
+    } = values;
+
     let newErrors = {};
 
     if (!name) newErrors.name = "Name is required.";
-    if (!serviceType) newErrors.serviceType = "Service type is required.";
-    if (!customerID) newErrors.customerID = "Customer is required.";
-    if (!requestDetails)
-      newErrors.requestDetails = "Request details is required.";
-    if (!status) newErrors.status = "Status is required.";
+    if (!candidateID) newErrors.candidateID = "Issue date is required.";
+    if (!interviewResult) newErrors.interviewResult = "Employee is required.";
+    if (!interviewDate) newErrors.interviewDate = "Issue place is required.";
+    if (!interviewLocation)
+      newErrors.interviewLocation = "Health check place is required.";
+    if (!comments) newErrors.comments = "Health check place is required.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -374,18 +430,21 @@ const ListServiceRequestRequests = () => {
     setLoading(true);
 
     try {
-      await ServicesService.createServiceRequest(
+      await JobService.createInterview(
         name,
-        customerID,
-        serviceType,
-        requestDetails,
-        status
+        candidateID,
+        interviewDate,
+        interviewLocation,
+        interviewResult,
+        comments
       );
+
       handleCloseModal();
-      toast.success("ServiceRequest created successfully.");
+      toast.success("Insurance created successfully.");
       await fetchAllData();
     } catch (error) {
-      toast.error("Failed to create serviceRequest.");
+      console.error("Create error:", error);
+      toast.error("Failed to create interview.");
     } finally {
       setLoading(false);
     }
@@ -405,7 +464,7 @@ const ListServiceRequestRequests = () => {
 
       <div className="flex flex-col gap-5 mt-5">
         <div className="flex items-center justify-between">
-          <div className="font-semibold text-xl capitalize">ServiceRequest</div>
+          <div className="font-semibold text-xl capitalize">Interview</div>
           <button
             onClick={handleOpenModal}
             className="px-3 py-2 bg-blue-950 text-white rounded-md"
@@ -415,23 +474,19 @@ const ListServiceRequestRequests = () => {
         </div>
 
         <div className="grid p-5 bg-gray-100 rounded-md">
-          <div>
+          <div className="w-full overflow-x-scroll">
             <div className="flex items-center justify-end">
               <input
                 type="text"
-                placeholder="Search serviceRequest"
-                value={searchQuery.serviceRequest}
-                onChange={handleSearchChange("serviceRequest")}
+                placeholder="Search interview"
+                value={searchQuery.interview}
+                onChange={handleSearchChange("interview")}
                 className="border border-gray-300 px-3 py-2 rounded-md outline-none mb-3"
               />
             </div>
             <DataTable
-              columns={renderColumns("serviceRequest")}
-              data={serviceRequests.filter((c) =>
-                c.name
-                  ?.toLowerCase()
-                  .includes(searchQuery.serviceRequest.toLowerCase())
-              )}
+              columns={columns}
+              data={interviews}
               pagination
               paginationComponentOptions={paginationComponentOptions}
               customStyles={{
@@ -475,9 +530,7 @@ const ListServiceRequestRequests = () => {
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
           <div className="bg-white p-4 rounded-lg w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-5">
-              Create ServiceRequest
-            </h2>
+            <h2 className="text-xl font-semibold mb-5">Create Interview</h2>
             <form onSubmit={handleSubmit}>
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
@@ -497,95 +550,89 @@ const ListServiceRequestRequests = () => {
               </label>
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
-                  Service Type:
+                  Interview Result:
+                </span>
+                <input
+                  type="text"
+                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                  placeholder="Enter name"
+                  name="interviewResult"
+                  value={values.interviewResult}
+                  onChange={handleChangeInput}
+                />
+                {errors.interviewResult && (
+                  <span className="text-red-700">{errors.interviewResult}</span>
+                )}
+              </label>
+              <label className="block mb-1">
+                <span className="block font-medium text-primary mb-1">
+                  Comments:
+                </span>
+                <input
+                  type="text"
+                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                  placeholder="Enter name"
+                  name="comments"
+                  value={values.comments}
+                  onChange={handleChangeInput}
+                />
+                {errors.comments && (
+                  <span className="text-red-700">{errors.comments}</span>
+                )}
+              </label>
+              <label className="block mb-1">
+                <span className="block font-medium text-primary mb-1">
+                  Interview Location:
+                </span>
+                <input
+                  type="text"
+                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                  placeholder="Enter name"
+                  name="interviewLocation"
+                  value={values.interviewLocation}
+                  onChange={handleChangeInput}
+                />
+                {errors.interviewLocation && (
+                  <span className="text-red-700">
+                    {errors.interviewLocation}
+                  </span>
+                )}
+              </label>
+              <label className="block mb-1">
+                <span className="block font-medium text-primary mb-1">
+                  Candidate:
                 </span>
                 <select
-                  name="serviceType"
-                  value={values.serviceType}
+                  name="candidateID"
+                  value={values.candidateID}
                   onChange={handleChangeInput}
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                 >
                   <option value="">Select</option>
-                  {serviceTypes.map((serviceType) => (
-                    <option key={serviceType.id} value={serviceType.id}>
-                      {serviceType.name}
+                  {candidates.map((candidate) => (
+                    <option key={candidate.id} value={candidate.id}>
+                      {candidate.name}
                     </option>
                   ))}
                 </select>
-                {errors.serviceType && (
-                  <span className="text-red-700">{errors.serviceType}</span>
+                {errors.candidateID && (
+                  <span className="text-red-700">{errors.candidateID}</span>
                 )}
               </label>
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
-                  Description:
+                  Interview Date:
                 </span>
-                <textarea
-                  name="description"
-                  value={values.description}
-                  onChange={handleChangeInput}
-                  placeholder="Enter description"
+                <input
+                  type="date"
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                ></textarea>
-                {errors.description && (
-                  <span className="text-red-700">{errors.description}</span>
-                )}
-              </label>
-              <label className="block mb-1">
-                <span className="block font-medium text-primary mb-1">
-                  Request Details:
-                </span>
-                <textarea
-                  name="requestDetails"
-                  value={values.requestDetails}
+                  placeholder="Enter Phone"
+                  name="interviewDate"
+                  value={values.interviewDate}
                   onChange={handleChangeInput}
-                  placeholder="Enter requestDetails"
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                ></textarea>
-                {errors.requestDetails && (
-                  <span className="text-red-700">{errors.requestDetails}</span>
-                )}
-              </label>
-              <label className="block mb-1">
-                <span className="block font-medium text-primary mb-1">
-                  Customer:
-                </span>
-                <select
-                  name="customerID"
-                  value={values.customerID}
-                  onChange={handleChangeInput}
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                >
-                  <option value="">Select</option>
-                  {customers.map((customer) => (
-                    <option
-                      key={customer.customerID}
-                      value={customer.customerID}
-                    >
-                      {customer.customerName}
-                    </option>
-                  ))}
-                </select>
-                {errors.customerID && (
-                  <span className="text-red-700">{errors.customerID}</span>
-                )}
-              </label>
-              <label className="block mb-1">
-                <span className="block font-medium text-primary mb-1">
-                  Status:
-                </span>
-                <select
-                  name="status"
-                  value={values.status}
-                  onChange={handleChangeInput}
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                >
-                  <option value="">Select</option>
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
-                {errors.status && (
-                  <span className="text-red-700">{errors.status}</span>
+                />
+                {errors.interviewDate && (
+                  <span className="text-red-700">{errors.interviewDate}</span>
                 )}
               </label>
               <div className="flex items-center gap-2 mt-4">
@@ -611,4 +658,4 @@ const ListServiceRequestRequests = () => {
   );
 };
 
-export default ListServiceRequestRequests;
+export default ListInterview;

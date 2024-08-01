@@ -62,6 +62,41 @@ const SidebarData = ({ toggle }) => {
           icon: <i className="bi bi-chevron-contract"></i>
         },
         {
+          title: "Candidates",
+          path: "/dashboard/candidates",
+          icon: <i className="bi bi-upc-scan"></i>
+        },
+        {
+          title: "Interview",
+          path: "/dashboard/interview",
+          icon: <i className="bi bi-upc-scan"></i>
+        },
+        {
+          title: "Sanction",
+          path: "/dashboard/sanction",
+          icon: <i className="bi bi-upc-scan"></i>
+        },
+        {
+          title: "Training Histories",
+          path: "/dashboard/training-histories",
+          icon: <i className="bi bi-upc-scan"></i>
+        },
+        // {
+        //   title: "Overtime",
+        //   path: "/dashboard/over-time",
+        //   icon: <i className="bi bi-upc-scan"></i>
+        // },
+        {
+          title: "Vacation",
+          path: "/dashboard/vacation",
+          icon: <i className="bi bi-upc-scan"></i>
+        },
+        {
+          title: "Insurance",
+          path: "/dashboard/insurance",
+          icon: <i className="bi bi-upc-scan"></i>
+        },
+        {
           title: "General",
           path: "/dashboard/general",
           icon: <i className="bi bi-bookmark-heart"></i>,

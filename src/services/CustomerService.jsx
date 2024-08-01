@@ -13,7 +13,13 @@ const getAllCustomers = async () => {
   }
 };
 
-const createCustomer = async (CustomerName, Email, Phone, file, EmployeeSupports) => {
+const createCustomer = async (
+  CustomerName,
+  Email,
+  Phone,
+  file,
+  EmployeeSupports
+) => {
   try {
     const response = await axios.post(
       "/customers",

@@ -11,12 +11,13 @@ const CreateDepartment = () => {
   const [errors, setErrors] = useState({});
   const [values, setValues] = useState({
     name: "",
+    email: "",
+    address: "",
+    contactNumber: "",
     generalDepartmentId: "",
-    managerId: "",
     departnentId: "",
   });
   const [generalDepartments, setGeneralDepartments] = useState([]);
-  const [manages, setManages] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [showModal, setShowModal] = useState("");
 
@@ -35,15 +36,12 @@ const CreateDepartment = () => {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const [generalDepartmentsData, managesData, departmentsData] =
-        await Promise.all([
-          DepartmentService.getAllGeneralDepartments(),
-          DepartmentService.getAllManages(),
-          DepartmentService.getAllDepartments(),
-        ]);
+      const [generalDepartmentsData, departmentsData] = await Promise.all([
+        DepartmentService.getAllGeneralDepartments(),
+        DepartmentService.getAllDepartments(),
+      ]);
 
       setGeneralDepartments(generalDepartmentsData.$values || []);
-      setManages(managesData.$values || []);
       setDepartments(departmentsData.$values || []);
     } catch (error) {
       toast.error("Failed to fetch data.");
@@ -55,18 +53,27 @@ const CreateDepartment = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { name, generalDepartmentId, managerId, departnentId } = values;
+    const {
+      name,
+      generalDepartmentId,
+      email,
+      address,
+      contactNumber,
+      departnentId,
+    } = values;
     let newErrors = {};
 
     if (!name) newErrors.name = "Name is required.";
     if (showModal === "department") {
       if (!generalDepartmentId)
         newErrors.generalDepartmentId = "General department is required.";
-      if (!managerId) newErrors.managerId = "Manager is required.";
     }
     if (showModal === "branch") {
-      if (!departnentId) newErrors.departnentId = "Department is required.";
+      if (!email) newErrors.email = "Email is required.";
+      if (!address) newErrors.address = "Address is required.";
+      if (!contactNumber) newErrors.contactNumber = "Contact number is required.";
     }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       setTimeout(() => setErrors({}), 5000);
@@ -80,19 +87,20 @@ const CreateDepartment = () => {
       if (showModal === "generalDepartment") {
         await DepartmentService.createGeneralDepartment(name);
         toast.success("General department created successfully.");
-      } else if (showModal === "manage") {
-        await DepartmentService.createManage(name);
-        toast.success("Manager created successfully.");
+      } else if (showModal === "position") {
+        await DepartmentService.createPosition(name);
+        toast.success("Position created successfully.");
       } else if (showModal === "department") {
-        await DepartmentService.createDepartment(
-          name,
-          generalDepartmentId,
-          managerId
-        );
-        
+        await DepartmentService.createDepartment(name, generalDepartmentId);
+
         toast.success("Department created successfully.");
       } else if (showModal === "branch") {
-        await DepartmentService.createBranch(name, departnentId);
+        await DepartmentService.createBranch(
+          name,
+          email,
+          address,
+          contactNumber
+        );
         toast.success("Branch created successfully.");
       }
       setValues({
@@ -149,10 +157,10 @@ const CreateDepartment = () => {
               Create General Department
             </button>
             <button
-              onClick={() => setShowModal("manage")}
+              onClick={() => setShowModal("position")}
               className="px-3 py-2 bg-blue-950 text-white rounded-md"
             >
-              Create Manager
+              Create Position
             </button>
             <button
               onClick={() => setShowModal("department")}
@@ -195,7 +203,7 @@ const CreateDepartment = () => {
                       )}
                     </label>
                   )}
-                  {showModal === "manage" && (
+                  {showModal === "position" && (
                     <label className="block">
                       <span className="block font-medium text-primary mb-1">
                         Name:
@@ -254,29 +262,6 @@ const CreateDepartment = () => {
                           </span>
                         )}
                       </label>
-                      <label className="block mb-1">
-                        <span className="block font-medium text-primary mb-1">
-                          Manager:
-                        </span>
-                        <select
-                          name="managerId"
-                          value={values.managerId}
-                          onChange={handleChangeInput}
-                          className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                        >
-                          <option value="">Select a manager</option>
-                          {manages.map((manager) => (
-                            <option key={manager.Id} value={manager.Id}>
-                              {manager.Name}
-                            </option>
-                          ))}
-                        </select>
-                        {errors.managerId && (
-                          <span className="text-red-700">
-                            {errors.managerId}
-                          </span>
-                        )}
-                      </label>
                     </>
                   )}
                   {showModal === "branch" && (
@@ -299,24 +284,51 @@ const CreateDepartment = () => {
                       </label>
                       <label className="block mb-1">
                         <span className="block font-medium text-primary mb-1">
-                          Department:
+                          Email:
                         </span>
-                        <select
-                          name="departnentId"
-                          value={values.departnentId}
-                          onChange={handleChangeInput}
+                        <input
+                          type="email"
                           className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                        >
-                          <option value="">Select a department</option>
-                          {departments.map((department) => (
-                            <option key={department.Id} value={department.Id}>
-                              {department.Name}
-                            </option>
-                          ))}
-                        </select>
-                        {errors.departnentId && (
+                          placeholder="Enter email"
+                          name="email"
+                          value={values.email}
+                          onChange={handleChangeInput}
+                        />
+                        {errors.email && (
+                          <span className="text-red-700">{errors.email}</span>
+                        )}
+                      </label>
+                      <label className="block mb-1">
+                        <span className="block font-medium text-primary mb-1">
+                          Address:
+                        </span>
+                        <input
+                          type="text"
+                          className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                          placeholder="Enter address"
+                          name="address"
+                          value={values.address}
+                          onChange={handleChangeInput}
+                        />
+                        {errors.address && (
+                          <span className="text-red-700">{errors.address}</span>
+                        )}
+                      </label>
+                      <label className="block mb-1">
+                        <span className="block font-medium text-primary mb-1">
+                          Contact Number:
+                        </span>
+                        <input
+                          type="text"
+                          className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                          placeholder="Enter contact number"
+                          name="contactNumber"
+                          value={values.contactNumber}
+                          onChange={handleChangeInput}
+                        />
+                        {errors.contactNumber && (
                           <span className="text-red-700">
-                            {errors.departnentId}
+                            {errors.contactNumber}
                           </span>
                         )}
                       </label>

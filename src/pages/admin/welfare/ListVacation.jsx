@@ -3,8 +3,9 @@ import { toast } from "react-toastify";
 import Loading from "../../../components/Loading";
 import Delete from "../../../components/admin/Delete";
 import DataTable from "react-data-table-component";
-import ServicesService from "../../../services/ServicesService";
+import WelfareService from "../../../services/WelfareService";
 import EmployeeService from "../../../services/EmployeeService";
+import GeneralSanctionType from "../../../services/GeneralService";
 
 const paginationComponentOptions = {
   rowsPerPageText: "Rows per page",
@@ -14,30 +15,30 @@ const paginationComponentOptions = {
   selectAllRowsItemText: "All",
 };
 
-const ListCashTransactions = () => {
+const ListVacation = () => {
   const [values, setValues] = useState({
-    amount: "",
-    transactionDate: "",
-    status: "",
-    employeeID: "",
-    cashServiceID: "",
+    startDate: "",
+    endDate: "",
+    numberOfDays: "",
+    vacationTypeId: "",
+    employeeId: "",
   });
-  const [cashTransaction, setCashTransactions] = useState([]);
+  const [vacations, setVacations] = useState([]);
   const [employees, setEmployees] = useState([]);
-  const [cashServices, setCashServices] = useState([]);
+  const [vacationTypes, setVacationTypes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [remove, setRemove] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [editItem, setEditItem] = useState({
     id: "",
-    amount: "",
-    transactionDate: "",
-    status: "",
-    employeeID: "",
-    cashServiceID: "",
-    model: "cashTransaction",
+    startDate: "",
+    endDate: "",
+    numberOfDays: "",
+    vacationTypeId: "",
+    employeeId: "",
+    model: "vacation",
   });
-  const [searchQuery, setSearchQuery] = useState({ cashTransaction: "" });
+  const [searchQuery, setSearchQuery] = useState({ vacation: "" });
   const [showModal, setShowModal] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -49,15 +50,15 @@ const ListCashTransactions = () => {
     setLoading(true);
 
     try {
-      const [cashTransactionsData, cashServicesData, employeesData] =
+      const [vacationsData, vacationTypesData, employeesData] =
         await Promise.all([
-          ServicesService.getAllCashTransactions(),
-          ServicesService.getAllCashServicess(),
+          WelfareService.getAllVacations(),
+          GeneralSanctionType.getAllVacationTypes(),
           EmployeeService.getAllEmployees(),
         ]);
 
-      setCashTransactions(cashTransactionsData || []);
-      setCashServices(cashServicesData || []);
+      setVacations(vacationsData.$values || []);
+      setVacationTypes(vacationTypesData.$values || []);
       setEmployees(employeesData || []);
     } catch (error) {
       toast.error("Failed to fetch data.");
@@ -67,22 +68,15 @@ const ListCashTransactions = () => {
   };
 
   const handleEditClick = useCallback(
-    (
-      transactionID,
-      cashServiceID,
-      employeeID,
-      amount,
-      transactionDate,
-      status
-    ) => {
+    (id, employeeId, vacationTypeId, numberOfDays, startDtae, endDate) => {
       setEditItem({
-        id: transactionID,
-        cashServiceID,
-        amount,
-        transactionDate,
-        status,
-        employeeID,
-        model: "cashTransaction",
+        id,
+        employeeId,
+        vacationTypeId,
+        numberOfDays,
+        startDtae,
+        endDate,
+        model: "vacation",
       });
     },
     []
@@ -91,15 +85,14 @@ const ListCashTransactions = () => {
   const handleUpdate = useCallback(async () => {
     setLoading(true);
     try {
-      const { id, amount, transactionDate, status, employeeID, cashServiceID } =
+      const { id, startDtae, numberOfDays, vacationTypeId, employeeId } =
         editItem;
-      await ServicesService.updateCashTransaction(
+      await WelfareService.updateVacation(
         id,
-        amount,
-        transactionDate,
-        status,
-        employeeID,
-        cashServiceID
+        startDtae,
+        numberOfDays,
+        vacationTypeId,
+        employeeId
       );
       await fetchAllData();
       toast.success("Updated successfully.");
@@ -110,12 +103,11 @@ const ListCashTransactions = () => {
       setLoading(false);
       setEditItem({
         id: "",
-        amount: "",
-        transactionDate: "",
-        status: "",
-        employeeID: "",
-        cashServiceID: "",
-        model: "cashTransaction",
+        startDtae: "",
+        numberOfDays: "",
+        vacationTypeId: "",
+        employeeId: "",
+        model: "vacation",
       });
     }
   }, [editItem]);
@@ -130,10 +122,8 @@ const ListCashTransactions = () => {
     setLoading(true);
 
     try {
-      await ServicesService.deleteCashTransaction(currentId);
-      setCashTransactions((prev) =>
-        prev.filter((c) => c.transactionID !== currentId)
-      );
+      await WelfareService.deleteVacation(currentId);
+      setVacations((prev) => prev.filter((c) => c.Id !== currentId));
       toast.success("Deleted successfully.");
       await fetchAllData();
       handleCloseModal();
@@ -157,16 +147,16 @@ const ListCashTransactions = () => {
     return employees.find((c) => c.id === id)?.name || "N/A";
   };
 
-  const getCashServicesOptions = () => {
-    return cashServices.map((c) => (
-      <option key={c.cashServiceID} value={c.cashServiceID}>
-        {c.name}
+  const getVacationTypesOptions = () => {
+    return vacationTypes.map((c) => (
+      <option key={c.Id} value={c.Id}>
+        {c.Name}
       </option>
     ));
   };
 
-  const getCashServiceName = (row) => {
-    return cashServices.find((c) => c.id === row.CashServiceID)?.name || "N/A";
+  const getVacationTypeName = (id) => {
+    return vacationTypes.find((c) => c.Id === id)?.Name || "N/A";
   };
 
   const formatDate = (dateString) => {
@@ -185,39 +175,16 @@ const ListCashTransactions = () => {
         sortable: true,
       },
       {
-        name: "Cash Service",
-        selector: (row) => getCashServiceName(row.cashServiceID),
-        cell: (row) =>
-          editItem.id === row.transactionID && editItem.model === model ? (
-            <select
-              value={editItem.cashServiceID}
-              onChange={(e) =>
-                setEditItem((prevState) => ({
-                  ...prevState,
-                  cashServiceID: e.target.value,
-                }))
-              }
-              className="border px-3 py-2 rounded-md"
-            >
-              <option value="">Select</option>
-              {getCashServicesOptions()}
-            </select>
-          ) : (
-            getCashServiceName(row.cashServiceID)
-          ),
-        sortable: true,
-      },
-      {
         name: "Employee",
-        selector: (row) => getEmployeeName(row.employeeID),
+        selector: (row) => getEmployeeName(row.EmployeeId),
         cell: (row) =>
-          editItem.id === row.transactionID && editItem.model === model ? (
+          editItem.id === row.Id && editItem.model === model ? (
             <select
-              value={editItem.employeeID}
+              value={editItem.employeeId}
               onChange={(e) =>
                 setEditItem((prev) => ({
                   ...prev,
-                  employeeID: e.target.value,
+                  employeeId: e.target.value,
                 }))
               }
               className="border px-3 py-2 rounded-md"
@@ -226,81 +193,85 @@ const ListCashTransactions = () => {
               {getEmployeesOptions()}
             </select>
           ) : (
-            getEmployeeName(row.employeeID)
+            getEmployeeName(row.EmployeeId)
           ),
         sortable: true,
       },
       {
-        name: "Amount",
-        selector: (row) => row.amount || "",
+        name: "Vacation Type",
+        selector: (row) => getVacationTypeName(row.VacationTypeId),
         cell: (row) =>
-          editItem.id === row.transactionID && editItem.model === model ? (
-            <input
-              type="number"
-              value={editItem.amount}
-              onChange={(e) =>
-                setEditItem((prevState) => ({
-                  ...prevState,
-                  amount: e.target.value,
-                }))
-              }
-              className="border px-2 py-1 rounded-md outline-none"
-            />
-          ) : (
-            row.amount || ""
-          ),
-        sortable: true,
-      },
-      {
-        name: "Transaction Date",
-        selector: (row) => formatDate(row.transactionDate) || "",
-        cell: (row) =>
-          editItem.id === row.transactionID && editItem.model === model ? (
-            <input
-              type="date"
-              value={formatDate(editItem.transactionDate)}
-              onChange={(e) =>
-                setEditItem((prevState) => ({
-                  ...prevState,
-                  transactionDate: e.target.value,
-                }))
-              }
-              className="border px-2 py-1 rounded-md outline-none"
-            />
-          ) : (
-            formatDate(row.transactionDate) || ""
-          ),
-        sortable: true,
-      },
-      {
-        name: "Status",
-        selector: (row) => row.status || "",
-        cell: (row) =>
-          editItem.id === row.transactionID && editItem.model === model ? (
+          editItem.id === row.Id && editItem.model === model ? (
             <select
-              value={editItem.status}
+              value={editItem.vacationTypeId}
               onChange={(e) =>
-                setEditItem((prevState) => ({
-                  ...prevState,
-                  status: e.target.value,
+                setEditItem((prev) => ({
+                  ...prev,
+                  vacationTypeId: e.target.value,
                 }))
               }
-              className="border px-2 py-1 rounded-md outline-none"
+              className="border px-3 py-2 rounded-md"
             >
               <option value="">Select</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
+              {getVacationTypesOptions()}
             </select>
           ) : (
-            row.status || ""
+            getVacationTypeName(row.VacationTypeId)
           ),
+        sortable: true,
+      },
+      {
+        name: "Number Of Days",
+        selector: (row) => row.NumberOfDays || "",
+        cell: (row) =>
+          editItem.id === row.Id && editItem.model === model ? (
+            <input
+              type="number"
+              value={editItem.numberOfDays}
+              onChange={(e) =>
+                setEditItem((prevState) => ({
+                  ...prevState,
+                  numberOfDays: e.target.value,
+                }))
+              }
+              className="border px-2 py-1 rounded-md outline-none"
+            />
+          ) : (
+            row.NumberOfDays || ""
+          ),
+        sortable: true,
+      },
+      {
+        name: "Start Date",
+        selector: (row) => formatDate(row.StartDtae) || "",
+        cell: (row) =>
+          editItem.id === row.Id && editItem.model === model ? (
+            <input
+              type="date"
+              value={formatDate(editItem.startDtae)}
+              onChange={(e) =>
+                setEditItem((prevState) => ({
+                  ...prevState,
+                  startDtae: e.target.value,
+                }))
+              }
+              className="border px-2 py-1 rounded-md outline-none"
+            />
+          ) : (
+            formatDate(row.StartDtae) || ""
+          ),
+        sortable: true,
+      },
+      {
+        name: "End Date",
+        selector: (row) => formatDate(row.EndDate),
         sortable: true,
       },
       {
         name: "Actions",
         cell: (row) => (
           <div className="flex items-center gap-2">
-            {editItem.id === row.transactionID && editItem.model === model ? (
+            {editItem.id === row.Id && editItem.model === model ? (
               <>
                 <button
                   onClick={handleUpdate}
@@ -312,12 +283,12 @@ const ListCashTransactions = () => {
                   onClick={() =>
                     setEditItem({
                       id: "",
-                      cashServiceID: "",
-                      employeeID: "",
-                      amount: "",
-                      transactionDate: "",
-                      status: "",
-                      model: "cashTransaction",
+                      employeeId: "",
+                      vacationTypeId: "",
+                      numberOfDays: "",
+                      startDate: "",
+                      endDate: "",
+                      model: "vacation",
                     })
                   }
                   className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
@@ -330,12 +301,12 @@ const ListCashTransactions = () => {
                 <button
                   onClick={() =>
                     handleEditClick(
-                      row.transactionID,
-                      row.cashServiceID,
-                      row.employeeID,
-                      row.amount,
-                      row.transactionDate,
-                      row.status
+                      row.Id,
+                      row.EmployeeId,
+                      row.VacationTypeId,
+                      row.NumberOfDays,
+                      row.StartDtae,
+                      row.EndDate
                     )
                   }
                   className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
@@ -343,7 +314,7 @@ const ListCashTransactions = () => {
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDeleteClick(row.transactionID, model)}
+                  onClick={() => handleDeleteClick(row.Id, model)}
                   className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
                 >
                   Delete
@@ -375,16 +346,14 @@ const ListCashTransactions = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { name, serviceRequestID, employeeID, scheduledDate, location } =
-      values;
+    const { startDtae, numberOfDays, vacationTypeId, employeeId } = values;
+
     let newErrors = {};
 
-    if (!name) newErrors.name = "Name is required.";
-    if (!serviceRequestID)
-      newErrors.serviceRequestID = "Service request is required.";
-    if (!employeeID) newErrors.employeeID = "Employee is required.";
-    if (!scheduledDate) newErrors.scheduledDate = "Scheduled date is required.";
-    if (!location) newErrors.location = "Location is required.";
+    if (!startDtae) newErrors.startDtae = "Name is required.";
+    if (!numberOfDays) newErrors.numberOfDays = "Issue date is required.";
+    if (!employeeId) newErrors.employeeId = "Employee is required.";
+    if (!vacationTypeId) newErrors.vacationTypeId = "Issue place is required.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -396,18 +365,19 @@ const ListCashTransactions = () => {
     setLoading(true);
 
     try {
-      await ServicesService.createCashTransaction(
-        name,
-        serviceRequestID,
-        employeeID,
-        scheduledDate,
-        location
+      await WelfareService.createVacation(
+        startDtae,
+        numberOfDays,
+        vacationTypeId,
+        employeeId
       );
+
       handleCloseModal();
-      toast.success("CashTransaction created successfully.");
+      toast.success("Vacation created successfully.");
       await fetchAllData();
     } catch (error) {
-      toast.error("Failed to create cashTransaction.");
+      console.error("Create error:", error);
+      toast.error("Failed to create vacation.");
     } finally {
       setLoading(false);
     }
@@ -427,9 +397,7 @@ const ListCashTransactions = () => {
 
       <div className="flex flex-col gap-5 mt-5">
         <div className="flex items-center justify-between">
-          <div className="font-semibold text-xl capitalize">
-            CashTransaction
-          </div>
+          <div className="font-semibold text-xl capitalize">Vacation</div>
           <button
             onClick={handleOpenModal}
             className="px-3 py-2 bg-blue-950 text-white rounded-md"
@@ -443,15 +411,15 @@ const ListCashTransactions = () => {
             <div className="flex items-center justify-end">
               <input
                 type="text"
-                placeholder="Search cashTransaction"
-                value={searchQuery.cashTransaction}
-                onChange={handleSearchChange("cashTransaction")}
+                placeholder="Search vacation"
+                value={searchQuery.vacation}
+                onChange={handleSearchChange("vacation")}
                 className="border border-gray-300 px-3 py-2 rounded-md outline-none mb-3"
               />
             </div>
             <DataTable
-              columns={renderColumns("cashTransaction")}
-              data={cashTransaction}
+              columns={renderColumns("vacation")}
+              data={vacations}
               pagination
               paginationComponentOptions={paginationComponentOptions}
               customStyles={{
@@ -495,59 +463,15 @@ const ListCashTransactions = () => {
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
           <div className="bg-white p-4 rounded-lg w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-5">
-              Create Service Schedule
-            </h2>
+            <h2 className="text-xl font-semibold mb-5">Create Vacation</h2>
             <form onSubmit={handleSubmit}>
-              <label className="block mb-1">
-                <span className="block font-medium text-primary mb-1">
-                  Name:
-                </span>
-                <input
-                  type="text"
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                  placeholder="Enter name"
-                  name="name"
-                  value={values.name}
-                  onChange={handleChangeInput}
-                />
-                {errors.name && (
-                  <span className="text-red-700">{errors.name}</span>
-                )}
-              </label>
-              {/* <label className="block mb-1">
-                <span className="block font-medium text-primary mb-1">
-                  Service Request:
-                </span>
-                <select
-                  name="serviceRequestID"
-                  value={values.serviceRequestID}
-                  onChange={handleChangeInput}
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                >
-                  <option value="">Select</option>
-                  {serviceRequests.map((serviceRequest) => (
-                    <option
-                      key={serviceRequest.serviceRequestID}
-                      value={serviceRequest.serviceRequestID}
-                    >
-                      {serviceRequest.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.serviceRequestID && (
-                  <span className="text-red-700">
-                    {errors.serviceRequestID}
-                  </span>
-                )}
-              </label> */}
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
                   Employee:
                 </span>
                 <select
-                  name="employeeID"
-                  value={values.employeeID}
+                  name="employeeId"
+                  value={values.employeeId}
                   onChange={handleChangeInput}
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                 >
@@ -558,39 +482,61 @@ const ListCashTransactions = () => {
                     </option>
                   ))}
                 </select>
-                {errors.employeeID && (
-                  <span className="text-red-700">{errors.employeeID}</span>
+                {errors.employeeId && (
+                  <span className="text-red-700">{errors.employeeId}</span>
                 )}
               </label>
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
-                  Location:
+                  Vacation Type:
                 </span>
-                <textarea
-                  name="location"
-                  value={values.location}
+                <select
+                  name="vacationTypeId"
+                  value={values.vacationTypeId}
                   onChange={handleChangeInput}
-                  placeholder="Enter location"
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                ></textarea>
-                {errors.location && (
-                  <span className="text-red-700">{errors.location}</span>
+                >
+                  <option value="">Select</option>
+                  {vacationTypes.map((vacationType) => (
+                    <option key={vacationType.Id} value={vacationType.Id}>
+                      {vacationType.Name}
+                    </option>
+                  ))}
+                </select>
+                {errors.vacationTypeId && (
+                  <span className="text-red-700">{errors.vacationTypeId}</span>
                 )}
               </label>
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
-                  Scheduled Date:
+                  Number Of Days:
+                </span>
+                <input
+                  type="number"
+                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                  placeholder="Enter name"
+                  name="numberOfDays"
+                  value={values.numberOfDays}
+                  onChange={handleChangeInput}
+                />
+                {errors.numberOfDays && (
+                  <span className="text-red-700">{errors.numberOfDays}</span>
+                )}
+              </label>
+              <label className="block mb-1">
+                <span className="block font-medium text-primary mb-1">
+                  Start Date:
                 </span>
                 <input
                   type="date"
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                   placeholder="Enter Phone"
-                  name="scheduledDate"
-                  value={values.scheduledDate}
+                  name="startDtae"
+                  value={values.startDtae}
                   onChange={handleChangeInput}
                 />
-                {errors.scheduledDate && (
-                  <span className="text-red-700">{errors.scheduledDate}</span>
+                {errors.startDtae && (
+                  <span className="text-red-700">{errors.startDtae}</span>
                 )}
               </label>
               <div className="flex items-center gap-2 mt-4">
@@ -616,4 +562,4 @@ const ListCashTransactions = () => {
   );
 };
 
-export default ListCashTransactions;
+export default ListVacation;
