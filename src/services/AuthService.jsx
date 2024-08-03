@@ -6,20 +6,31 @@ const setUser = (token, refreshToken) => {
   Cookies.set("refreshToken", refreshToken);
 };
 
-const login = async (email, password, rememberMe = false) => {
+const login = async (email, password) => {
   try {
-    const response = await axios.post("/authencation/login", {
+    const response = await axios.post("/authenCation/login", {
       email,
       password,
-      rememberMe,
     });
     if (response.data.token && response.data.refreshToken) {
       setUser(response.data.token, response.data.refreshToken);
       return response.data.token;
     }
-    return null;
+
+    if (!response.data.flag) {
+      throw new Error(response.data.message || "An unknown error occurred");
+    }
+
+    return response.data;
   } catch (error) {
-    throw error.response?.data || error.message;
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "An unknown error occurred";
+    throw {
+      flag: false,
+      message: errorMessage,
+    };
   }
 };
 
@@ -32,7 +43,12 @@ const profile = async (id) => {
   }
 };
 
-const changePassword = async (id, oldPassword, newPassword, confirmPassword) => {
+const changePassword = async (
+  id,
+  oldPassword,
+  newPassword,
+  confirmPassword
+) => {
   try {
     const response = await axios.put(`/auth/${id}`, {
       oldPassword,

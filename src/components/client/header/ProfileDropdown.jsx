@@ -8,6 +8,8 @@ import { IoSettingsOutline } from "react-icons/io5";
 import { no_avatar } from "../../../assets/index";
 
 const ProfileDropdown = ({
+  token,
+  handleLogout,
   isOpen,
   toggleDropdown,
   onClose,
@@ -37,14 +39,15 @@ const ProfileDropdown = ({
         }}
       >
         <img
-          src={no_avatar}
+          src={token.Image? token.Image : no_avatar}
           alt="Profile"
           className="w-10 h-10 object-cover rounded-full"
         />
       </button>
       {isOpen && (
         <ul className="absolute top-full mt-2 right-0 bg-white shadow-md rounded-md overflow-hidden">
-          <li>
+          {token.Role === "Director" && (
+            <li>
               <Link
                 to="/dashboard"
                 className="flex items-center gap-2 px-4 py-2 hover:bg-red-700 hover:text-white"
@@ -54,9 +57,10 @@ const ProfileDropdown = ({
                 Dashboard
               </Link>
             </li>
+          )}
           <li>
             <Link
-              to="/profile"
+              to={`/profile/${token.EmployeeId}`}
               className="flex items-center gap-2 px-4 py-2 hover:bg-red-700 hover:text-white"
               onClick={onClose}
             >
@@ -67,7 +71,9 @@ const ProfileDropdown = ({
           <li>
             <div
               className="flex items-center gap-2 px-4 py-2 hover:bg-red-700 hover:text-white cursor-pointer"
-              onClick={onClose}
+              onClick={() => {
+                handleLogout();
+              }}
             >
               <IoIosLogOut className="text-xl" />
               Logout

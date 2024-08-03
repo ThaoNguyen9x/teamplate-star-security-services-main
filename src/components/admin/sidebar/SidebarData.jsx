@@ -69,17 +69,17 @@ const SidebarData = ({ toggle }) => {
         {
           title: "Interview",
           path: "/dashboard/interview",
-          icon: <i className="bi bi-upc-scan"></i>
+          icon: <i className="bi bi-bookmarks"></i>
         },
         {
           title: "Sanction",
           path: "/dashboard/sanction",
-          icon: <i className="bi bi-upc-scan"></i>
+          icon: <i className="bi bi-border-style"></i>
         },
         {
           title: "Training Histories",
           path: "/dashboard/training-histories",
-          icon: <i className="bi bi-upc-scan"></i>
+          icon: <i className="bi bi-cast"></i>
         },
         {
           title: "Overtime",
@@ -89,17 +89,17 @@ const SidebarData = ({ toggle }) => {
         {
           title: "Testimonial",
           path: "/dashboard/testimonial",
-          icon: <i className="bi bi-upc-scan"></i>
+          icon: <i className="bi bi-check-all"></i>
         },
         {
           title: "Vacation",
           path: "/dashboard/vacation",
-          icon: <i className="bi bi-upc-scan"></i>
+          icon: <i className="bi bi-clipboard"></i>
         },
         {
           title: "Insurance",
           path: "/dashboard/insurance",
-          icon: <i className="bi bi-upc-scan"></i>
+          icon: <i className="bi bi-command"></i>
         },
         {
           title: "General",
@@ -120,26 +120,6 @@ const SidebarData = ({ toggle }) => {
           title: "Educations",
           path: "/dashboard/educations",
           icon: <i className="bi bi-backpack"></i>,
-        },
-        {
-          title: "Transactions",
-          path: "/dashboard/transactions",
-          icon: <i className="bi bi-coin"></i>,
-        },
-      ],
-    },
-    {
-      title: "Account",
-      list: [
-        {
-          title: "Settings",
-          path: "/dashboard/settings",
-          icon: <i className="bi bi-gear"></i>,
-        },
-        {
-          title: "Help",
-          path: "/dashboard/help",
-          icon: <i className="bi bi-patch-question"></i>,
         },
       ],
     },

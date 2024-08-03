@@ -6,20 +6,15 @@ import AdminLayout from "../components/AdminLayout";
 const PrivateRouter = () => {
   const { token } = useContext(AuthContext);
 
-  // if (token && (token.position === "Supper Admin" || token.position === "Admin")) {
-  //   return (
-  //     <AdminLayout>
-  //       <Outlet />
-  //     </AdminLayout>
-  //   );
-  // } else {
-  //   return <Navigate to="/" replace />;
-  // }
-  return (
-    <AdminLayout>
-      <Outlet />
-    </AdminLayout>
-  );
+  if (token && (token.Role === "Director")) {
+    return (
+      <AdminLayout>
+        <Outlet />
+      </AdminLayout>
+    );
+  } else {
+    return <Navigate to="/" replace />;
+  }
 };
 
 export default PrivateRouter;
