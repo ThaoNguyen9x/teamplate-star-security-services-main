@@ -16,13 +16,13 @@ const paginationComponentOptions = {
 
 const ListCashTransactions = () => {
   const [values, setValues] = useState({
-    cashServiceID: "",
-    employeeID: "",
     amount: "",
     transactionDate: "",
     status: "",
+    employeeID: "",
+    cashServiceID: "",
   });
-  const [cashTransaction, setCashTransactions] = useState([]);
+  const [cashTransactions, setCashTransactions] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [cashServices, setCashServices] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -30,11 +30,11 @@ const ListCashTransactions = () => {
   const [currentId, setCurrentId] = useState(null);
   const [editItem, setEditItem] = useState({
     id: "",
-    cashServiceID: "",
-    employeeID: "",
     amount: "",
     transactionDate: "",
     status: "",
+    employeeID: "",
+    cashServiceID: "",
     model: "cashTransaction",
   });
   const [searchQuery, setSearchQuery] = useState({ cashTransaction: "" });
@@ -48,15 +48,16 @@ const ListCashTransactions = () => {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const [cashTransactionsData, cashServicesData, employeesData] = await Promise.all([
-        ServicesService.getAllCashTransactions(),
-        ServicesService.getAllCashServicess(),
-        EmployeeService.getAllEmployees(),
-      ]);
-  
+      const [cashTransactionsData, employeesData, cashServiceData] =
+        await Promise.all([
+          ServicesService.getAllCashTransactions(),
+          EmployeeService.getAllEmployees(),
+          ServicesService.getAllCashServicess(),
+        ]);
+
       setCashTransactions(cashTransactionsData || []);
-      setCashServices(cashServicesData || []);
       setEmployees(employeesData || []);
+      setCashServices(cashServiceData || []);
     } catch (error) {
       toast.error("Failed to fetch data.");
     } finally {
@@ -65,21 +66,14 @@ const ListCashTransactions = () => {
   };
 
   const handleEditClick = useCallback(
-    (
-      transactionID,
-      cashServiceID,
-      employeeID,
-      amount,
-      transactionDate,
-      status
-    ) => {
+    (id, amount, transactionDate, status, employeeID, cashServiceID) => {
       setEditItem({
-        id: transactionID,
-        cashServiceID,
+        id,
         amount,
         transactionDate,
         status,
         employeeID,
+        cashServiceID,
         model: "cashTransaction",
       });
     },
@@ -130,7 +124,7 @@ const ListCashTransactions = () => {
     try {
       await ServicesService.deleteCashTransaction(currentId);
       setCashTransactions((prev) =>
-        prev.filter((c) => c.transactionID !== currentId)
+        prev.filter((c) => c.scheduleId !== currentId)
       );
       toast.success("Deleted successfully.");
       await fetchAllData();
@@ -157,14 +151,16 @@ const ListCashTransactions = () => {
 
   const getCashServicesOptions = () => {
     return cashServices.map((c) => (
-      <option key={c.cashServiceID} value={c.cashServiceID}>
+      <option key={c.serviceRequestID} value={c.serviceRequestID}>
         {c.name}
       </option>
     ));
   };
 
-  const getCashServiceName = (row) => {
-    return cashServices.find((c) => c.id === row.CashServiceID)?.name || "N/A";
+  const getServiceRequestName = (row) => {
+    return (
+      cashServices.find((c) => c.id === row.serviceRequestId)?.name || "N/A"
+    );
   };
 
   const formatDate = (dateString) => {
@@ -183,25 +179,23 @@ const ListCashTransactions = () => {
         sortable: true,
       },
       {
-        name: "Cash Service",
-        selector: (row) => getCashServiceName(row.cashServiceID),
+        name: "Name",
+        selector: (row) => row.name || "",
         cell: (row) =>
-          editItem.id === row.transactionID && editItem.model === model ? (
-            <select
-              value={editItem.cashServiceID}
+          editItem.id === row.scheduleID && editItem.model === model ? (
+            <input
+              type="text"
+              value={editItem.name}
               onChange={(e) =>
                 setEditItem((prevState) => ({
                   ...prevState,
-                  cashServiceID: e.target.value,
+                  name: e.target.value,
                 }))
               }
-              className="border px-3 py-2 rounded-md"
-            >
-              <option value="">Select</option>
-              {getCashServicesOptions()}
-            </select>
+              className="border px-2 py-1 rounded-md outline-none"
+            />
           ) : (
-            getCashServiceName(row.cashServiceID)
+            row.name || ""
           ),
         sortable: true,
       },
@@ -209,7 +203,7 @@ const ListCashTransactions = () => {
         name: "Employee",
         selector: (row) => getEmployeeName(row.employeeID),
         cell: (row) =>
-          editItem.id === row.transactionID && editItem.model === model ? (
+          editItem.id === row.scheduleID && editItem.model === model ? (
             <select
               value={editItem.employeeID}
               onChange={(e) =>
@@ -229,68 +223,67 @@ const ListCashTransactions = () => {
         sortable: true,
       },
       {
-        name: "Amount",
-        selector: (row) => row.amount || "",
+        name: "Service Request",
+        selector: (row) => getServiceRequestName(row),
         cell: (row) =>
-          editItem.id === row.transactionID && editItem.model === model ? (
-            <input
-              type="number"
-              value={editItem.amount}
-              onChange={(e) =>
-                setEditItem((prevState) => ({
-                  ...prevState,
-                  amount: e.target.value,
-                }))
-              }
-              className="border px-2 py-1 rounded-md outline-none"
-            />
-          ) : (
-            row.amount || ""
-          ),
-        sortable: true,
-      },
-      {
-        name: "Transaction Date",
-        selector: (row) => formatDate(row.transactionDate) || "",
-        cell: (row) =>
-          editItem.id === row.transactionID && editItem.model === model ? (
-            <input
-              type="date"
-              value={formatDate(editItem.transactionDate)}
-              onChange={(e) =>
-                setEditItem((prevState) => ({
-                  ...prevState,
-                  transactionDate: e.target.value,
-                }))
-              }
-              className="border px-2 py-1 rounded-md outline-none"
-            />
-          ) : (
-            formatDate(row.transactionDate) || ""
-          ),
-        sortable: true,
-      },
-      {
-        name: "Status",
-        selector: (row) => row.status || "",
-        cell: (row) =>
-          editItem.id === row.transactionID && editItem.model === model ? (
+          editItem.id === row.scheduleID && editItem.model === model ? (
             <select
-              value={editItem.status}
+              value={editItem.serviceRequestID}
               onChange={(e) =>
                 setEditItem((prevState) => ({
                   ...prevState,
-                  status: e.target.value,
+                  serviceRequestID: e.target.value,
                 }))
               }
-              className="border px-2 py-1 rounded-md outline-none"
+              className="border px-3 py-2 rounded-md"
             >
               <option value="">Select</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
+              {getCashServicesOptions()}
             </select>
           ) : (
-            row.status || ""
+            getServiceRequestName(row)
+          ),
+        sortable: true,
+      },
+      {
+        name: "Location",
+        selector: (row) => row.location || "",
+        cell: (row) =>
+          editItem.id === row.scheduleID && editItem.model === model ? (
+            <input
+              type="text"
+              value={editItem.location}
+              onChange={(e) =>
+                setEditItem((prevState) => ({
+                  ...prevState,
+                  location: e.target.value,
+                }))
+              }
+              className="border px-2 py-1 rounded-md outline-none"
+            />
+          ) : (
+            row.location || ""
+          ),
+        sortable: true,
+      },
+      {
+        name: "Scheduled Date",
+        selector: (row) => formatDate(row.scheduledDate) || "",
+        cell: (row) =>
+          editItem.id === row.scheduleID && editItem.model === model ? (
+            <input
+              type="date"
+              value={formatDate(editItem.scheduledDate)}
+              onChange={(e) =>
+                setEditItem((prevState) => ({
+                  ...prevState,
+                  scheduledDate: e.target.value,
+                }))
+              }
+              className="border px-2 py-1 rounded-md outline-none"
+            />
+          ) : (
+            formatDate(row.scheduledDate) || ""
           ),
         sortable: true,
       },
@@ -298,7 +291,7 @@ const ListCashTransactions = () => {
         name: "Actions",
         cell: (row) => (
           <div className="flex items-center gap-2">
-            {editItem.id === row.transactionID && editItem.model === model ? (
+            {editItem.id === row.scheduleID && editItem.model === model ? (
               <>
                 <button
                   onClick={handleUpdate}
@@ -310,11 +303,11 @@ const ListCashTransactions = () => {
                   onClick={() =>
                     setEditItem({
                       id: "",
-                      cashServiceID: "",
+                      name: "",
                       employeeID: "",
-                      amount: "",
-                      transactionDate: "",
-                      status: "",
+                      serviceRequestID: "",
+                      scheduledDate: "",
+                      location: "",
                       model: "cashTransaction",
                     })
                   }
@@ -328,12 +321,12 @@ const ListCashTransactions = () => {
                 <button
                   onClick={() =>
                     handleEditClick(
-                      row.transactionID,
-                      row.cashServiceID,
+                      row.scheduleID,
+                      row.name,
+                      row.serviceRequestID,
                       row.employeeID,
-                      row.amount,
-                      row.transactionDate,
-                      row.status
+                      row.scheduledDate,
+                      row.location
                     )
                   }
                   className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
@@ -341,7 +334,7 @@ const ListCashTransactions = () => {
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDeleteClick(row.transactionID, model)}
+                  onClick={() => handleDeleteClick(row.scheduleID, model)}
                   className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
                 >
                   Delete
@@ -366,23 +359,29 @@ const ListCashTransactions = () => {
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setValues("");
+    setValues({
+      amount: "",
+      transactionDate: "",
+      status: "",
+      employeeID: "",
+      cashServiceID: "",
+    });
     setErrors({});
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { cashServiceID, employeeID, amount, transactionDate, status } =
+    const { amount, transactionDate, status, employeeID, cashServiceID } =
       values;
+
     let newErrors = {};
 
-    if (!cashServiceID)
-      newErrors.cashServiceID = "Service request is required.";
+    if (!amount) newErrors.amount = "Name is required.";
+    if (!transactionDate) newErrors.transactionDate = "Issue date is required.";
+    if (!status) newErrors.status = "Employee is required.";
     if (!employeeID) newErrors.employeeID = "Employee is required.";
-    if (!amount) newErrors.amount = "Scheduled date is required.";
-    if (!transactionDate) newErrors.transactionDate = "Location is required.";
-    if (!status) newErrors.status = "Location is required.";
+    if (!cashServiceID) newErrors.cashServiceID = "Issue place is required.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -395,17 +394,19 @@ const ListCashTransactions = () => {
 
     try {
       await ServicesService.createCashTransaction(
-        cashServiceID,
-        employeeID,
         amount,
         transactionDate,
-        status
+        status,
+        employeeID,
+        cashServiceID
       );
-      await fetchAllData();
-      toast.success("CashTransaction created successfully.");
+
       handleCloseModal();
+      toast.success("Created successfully.");
+      await fetchAllData();
     } catch (error) {
-      toast.error("Failed to create cashTransaction.");
+      console.error("Create error:", error);
+      toast.error("Failed to create sanction.");
     } finally {
       setLoading(false);
     }
@@ -426,7 +427,7 @@ const ListCashTransactions = () => {
       <div className="flex flex-col gap-5 mt-5">
         <div className="flex items-center justify-between">
           <div className="font-semibold text-xl capitalize">
-            CashTransaction
+            Cash Transaction
           </div>
           <button
             onClick={handleOpenModal}
@@ -449,7 +450,11 @@ const ListCashTransactions = () => {
             </div>
             <DataTable
               columns={renderColumns("cashTransaction")}
-              data={cashTransaction}
+              data={cashTransactions.filter((c) =>
+                c.name
+                  ?.toLowerCase()
+                  .includes(searchQuery.cashTransaction.toLowerCase())
+              )}
               pagination
               paginationComponentOptions={paginationComponentOptions}
               customStyles={{
@@ -494,7 +499,7 @@ const ListCashTransactions = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
           <div className="bg-white p-4 rounded-lg w-full max-w-md">
             <h2 className="text-xl font-semibold mb-5">
-              Create Cash Transactions
+              Create Cash Transaction
             </h2>
             <form onSubmit={handleSubmit}>
               <label className="block mb-1">
@@ -509,10 +514,7 @@ const ListCashTransactions = () => {
                 >
                   <option value="">Select</option>
                   {cashServices.map((cashService) => (
-                    <option
-                      key={cashService.cashServiceID}
-                      value={cashService.cashServiceID}
-                    >
+                    <option key={cashService.id} value={cashService.id}>
                       {cashService.name}
                     </option>
                   ))}
@@ -547,12 +549,12 @@ const ListCashTransactions = () => {
                   Amount:
                 </span>
                 <input
-                  type="text"
+                  type="number"
+                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                   placeholder="Enter name"
                   name="amount"
                   value={values.amount}
                   onChange={handleChangeInput}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 outline-none"
                 />
                 {errors.amount && (
                   <span className="text-red-700">{errors.amount}</span>

@@ -16,14 +16,16 @@ const paginationComponentOptions = {
 
 const ListCandidate = () => {
   const [candidates, setCandidates] = useState([]);
+  const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [remove, setRemove] = useState(false);
-  const [currentpositionID, setCurrentpositionID] = useState(null);
+  const [currentID, setCurrentID] = useState(null);
   const [editItem, setEditItem] = useState({
     id: "",
     name: "",
     email: "",
     phone: "",
+    cvFile: "",
     status: "",
     model: "candidate",
   });
@@ -35,6 +37,7 @@ const ListCandidate = () => {
     name: "",
     email: "",
     phone: "",
+    cvFile: null,
     status: "",
   });
   const [errors, setErrors] = useState({});
@@ -124,10 +127,10 @@ const ListCandidate = () => {
         email: "",
         phone: "",
         status: "",
-        model: "job",
+        model: "candidate",
       });
     }
-  }, [currentpositionID]);
+  }, []);
 
   const handleSendMailReject = async (candidateID) => {
     setLoading(true);
@@ -343,16 +346,18 @@ const ListCandidate = () => {
 
   const handleChangeInput = (e) => {
     const { name, value } = e.target;
-    setValues((prevValues) => ({
-      ...prevValues,
-      [name]: value,
-    }));
+    setValues((prevValues) => ({ ...prevValues, [name]: value }));
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setValues((prevValues) => ({ ...prevValues, cvFile: file }));
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const { name, email, phone, status } = values;
+    const { name, email, phone, cvFile, status } = values;
 
     let newErrors = {};
 
@@ -360,17 +365,26 @@ const ListCandidate = () => {
     if (!email) newErrors.email = "Email is required.";
     if (!phone) newErrors.phone = "Phone is required.";
     if (!status) newErrors.status = "Status is required.";
+    if (!cvFile) newErrors.cvFile = "cvFile is required.";
 
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setTimeout(() => setErrors({}), 5000);
+      return;
+    }
+
+    setErrors({});
     setLoading(true);
 
-    setLoading(true);
     try {
-      await JobService.createCandidate(name, email, phone, status);
-      await fetchAllData();
-      toast.success("Created successfully.");
+      await JobService.createCandidate(name, email, phone, cvFile, status);
+
       handleCloseModal();
+      toast.success("Created successfully.");
+      await fetchAllData();
     } catch (error) {
-      toast.error("Failed to create job.");
+      console.error("Create error:", error);
+      toast.error("Failed to create vacation.");
     } finally {
       setLoading(false);
     }
@@ -502,6 +516,19 @@ const ListCandidate = () => {
                 />
                 {errors.phone && (
                   <span className="text-red-700">{errors.phone}</span>
+                )}
+              </label>
+              <label className="block">
+                <span className="block font-medium text-primary mb-1">CV:</span>
+                <input
+                  type="file"
+                  name="cvFile"
+                  onChange={handleFileChange}
+                  accept=".pdf"
+                  className="block w-full border border-gray-300 rounded-md px-3 py-2 outline-none"
+                />
+                {errors.cvFile && (
+                  <span className="text-red-700">{errors.cvFile}</span>
                 )}
               </label>
               <label className="block mb-1">

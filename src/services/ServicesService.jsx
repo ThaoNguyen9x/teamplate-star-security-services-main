@@ -520,16 +520,16 @@ const getAllCashTransactions = async () => {
 };
 
 const createCashTransaction = async ({
-  cashServiceID,
-  employeeID,
   amount,
   transactionDate,
   status,
+  employeeID,
+  cashServiceID,
 }) => {
   try {
     const response = await axios.post(
-      "/cashTransactions",
-      { cashServiceID, employeeID, amount, transactionDate, status },
+      "/CashTransactions",
+      { amount, transactionDate, status, employeeID, cashServiceID },
       {
         headers: {
           "Content-Type": "application/json",
@@ -553,7 +553,6 @@ const createCashTransaction = async ({
     };
   }
 };
-
 
 const getByIdCashTransaction = async (id) => {
   try {

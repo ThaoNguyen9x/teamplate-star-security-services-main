@@ -146,19 +146,16 @@ const getAllCandidates = async () => {
   }
 };
 
-const createCandidate = async (name, email, phone, status) => {
+const createCandidate = async (name, email, phone, cvFile, status) => {
   try {
     const response = await axios.post(
       "/candidates",
       {
-        name,
-        email,
-        phone,
-        status,
+        name, email, phone, cvFile, status
       },
       {
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "multipart/form-data",
         },
       }
     );

@@ -269,19 +269,19 @@ const getAllVacations = async () => {
 };
 
 const createVacation = async (
-  startDtae,
+  employeeId,
   numberOfDays,
-  vacationTypeId,
-  employeeId
+  startDtae,
+  vacationTypeId
 ) => {
   try {
     const response = await axios.post(
       "/vacation/add",
       {
-        startDtae,
-        numberOfDays,
-        vacationTypeId,
         employeeId,
+        numberOfDays,
+        startDtae,
+        vacationTypeId,
       },
       {
         headers: {
@@ -676,25 +676,25 @@ const getAllOvertimes = async () => {
 };
 
 const createOvertime = async (
-  startDate,
-  endDate,
-  overtimTypeId,
   employeeId,
   approvedById,
-  approvalDate,
-  remarks
+  overtimTypeId,
+  remarks,
+  startDate,
+  endDate,
+  approvalDate
 ) => {
   try {
     const response = await axios.post(
       "/overtime/add",
       {
-        startDate,
-        endDate,
-        overtimTypeId,
         employeeId,
         approvedById,
-        approvalDate,
+        overtimTypeId,
         remarks,
+        startDate,
+        endDate,
+        approvalDate,
       },
       {
         headers: {

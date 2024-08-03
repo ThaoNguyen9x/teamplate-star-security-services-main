@@ -81,11 +81,11 @@ const SidebarData = ({ toggle }) => {
           path: "/dashboard/training-histories",
           icon: <i className="bi bi-upc-scan"></i>
         },
-        // {
-        //   title: "Overtime",
-        //   path: "/dashboard/over-time",
-        //   icon: <i className="bi bi-upc-scan"></i>
-        // },
+        {
+          title: "Overtime",
+          path: "/dashboard/over-time",
+          icon: <i className="bi bi-upc-scan"></i>
+        },
         {
           title: "Vacation",
           path: "/dashboard/vacation",

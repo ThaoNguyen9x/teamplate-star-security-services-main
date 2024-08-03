@@ -17,11 +17,10 @@ const paginationComponentOptions = {
 
 const ListVacation = () => {
   const [values, setValues] = useState({
-    startDate: "",
-    endDate: "",
-    numberOfDays: "",
-    vacationTypeId: "",
     employeeId: "",
+    numberOfDays: "",
+    startDtae: "",
+    vacationTypeId: "",
   });
   const [vacations, setVacations] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -31,11 +30,10 @@ const ListVacation = () => {
   const [currentId, setCurrentId] = useState(null);
   const [editItem, setEditItem] = useState({
     id: "",
-    startDate: "",
-    endDate: "",
-    numberOfDays: "",
-    vacationTypeId: "",
     employeeId: "",
+    numberOfDays: "",
+    startDtae: "",
+    vacationTypeId: "",
     model: "vacation",
   });
   const [searchQuery, setSearchQuery] = useState({ vacation: "" });
@@ -346,7 +344,7 @@ const ListVacation = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { startDtae, numberOfDays, vacationTypeId, employeeId } = values;
+    const { employeeId, numberOfDays, startDtae, vacationTypeId } = values;
 
     let newErrors = {};
 
@@ -366,10 +364,10 @@ const ListVacation = () => {
 
     try {
       await WelfareService.createVacation(
-        startDtae,
+        employeeId,
         numberOfDays,
-        vacationTypeId,
-        employeeId
+        startDtae,
+        vacationTypeId
       );
 
       handleCloseModal();
