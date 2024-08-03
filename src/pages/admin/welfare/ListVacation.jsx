@@ -268,7 +268,7 @@ const ListVacation = () => {
       {
         name: "Actions",
         cell: (row) => (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 whitespace-nowrap">
             {editItem.id === row.Id && editItem.model === model ? (
               <>
                 <button
@@ -323,7 +323,7 @@ const ListVacation = () => {
         ),
       },
     ],
-    [editItem, handleEditClick, handleUpdate, handleDeleteClick]
+    [editItem, handleEditClick, handleUpdate, handleDeleteClick, employees]
   );
 
   const handleSearchChange = (model) => (event) => {
@@ -348,10 +348,10 @@ const ListVacation = () => {
 
     let newErrors = {};
 
-    if (!startDtae) newErrors.startDtae = "Name is required.";
-    if (!numberOfDays) newErrors.numberOfDays = "Issue date is required.";
-    if (!employeeId) newErrors.employeeId = "Employee is required.";
-    if (!vacationTypeId) newErrors.vacationTypeId = "Issue place is required.";
+    if (!startDtae) newErrors.startDtae = "Not Empty.";
+    if (!numberOfDays) newErrors.numberOfDays = "Not Empty.";
+    if (!employeeId) newErrors.employeeId = "Not Empty.";
+    if (!vacationTypeId) newErrors.vacationTypeId = "Not Empty.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -371,11 +371,10 @@ const ListVacation = () => {
       );
 
       handleCloseModal();
-      toast.success("Vacation created successfully.");
+      toast.success("Created successfully.");
       await fetchAllData();
     } catch (error) {
-      console.error("Create error:", error);
-      toast.error("Failed to create vacation.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -423,25 +422,18 @@ const ListVacation = () => {
               customStyles={{
                 headCells: {
                   style: {
-                    fontSize: "16px",
-                    fontWeight: "700",
                     textTransform: "uppercase",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 cells: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 pagination: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
               }}

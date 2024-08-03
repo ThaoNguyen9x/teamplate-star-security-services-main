@@ -21,7 +21,7 @@ const ListSanction = () => {
     punishment: "",
     punishmentDate: "",
     employeeId: "",
-    sanctionTypeId: "",
+    sanctionId: "",
   });
   const [sanctions, setSanctions] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -35,7 +35,7 @@ const ListSanction = () => {
     punishment: "",
     punishmentDate: "",
     employeeId: "",
-    sanctionTypeId: "",
+    sanctionId: "",
     model: "sanction",
   });
   const [searchQuery, setSearchQuery] = useState({ sanction: "" });
@@ -68,14 +68,14 @@ const ListSanction = () => {
   };
 
   const handleEditClick = useCallback(
-    (id, date, punishment, punishmentDate, employeeId, sanctionTypeId) => {
+    (id, employeeId, sanctionId, punishment, date, punishmentDate) => {
       setEditItem({
         id,
-        date,
-        punishment,
-        punishmentDate,
         employeeId,
-        sanctionTypeId,
+        sanctionId,
+        punishment,
+        date,
+        punishmentDate,
         model: "sanction",
       });
     },
@@ -83,37 +83,48 @@ const ListSanction = () => {
   );
 
   const handleUpdate = useCallback(async () => {
+    if (
+      !editItem.date ||
+      !editItem.punishment ||
+      !editItem.punishmentDate ||
+      !editItem.employeeId ||
+      !editItem.sanctionId
+    ) {
+      toast.error("Please fill out all required fields.");
+      return;
+    }
+
     setLoading(true);
     try {
       const {
         id,
-        date,
-        punishment,
-        punishmentDate,
         employeeId,
-        sanctionTypeId,
+        sanctionId,
+        punishment,
+        date,
+        punishmentDate,
       } = editItem;
       await WelfareService.updateSanction(
         id,
-        date,
-        punishment,
-        punishmentDate,
         employeeId,
-        sanctionTypeId
+        sanctionId,
+        punishment,
+        date,
+        punishmentDate
       );
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      toast.error("Failed to update data. Please try again.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setEditItem({
         id: "",
-        date: "",
-        punishment: "",
-        punishmentDate: "",
         employeeId: "",
-        sanctionTypeId: "",
+        sanctionId: "",
+        punishment: "",
+        date: "",
+        punishmentDate: "",
         model: "sanction",
       });
     }
@@ -134,7 +145,7 @@ const ListSanction = () => {
       await fetchAllData();
       handleCloseModal();
     } catch (error) {
-      toast.error("Failed to delete data.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setRemove(false);
@@ -205,15 +216,15 @@ const ListSanction = () => {
       },
       {
         name: "Sanction Type",
-        selector: (row) => getSanctionTypeName(row.SanctionTypeId),
+        selector: (row) => getSanctionTypeName(row.SanctionId),
         cell: (row) =>
           editItem.id === row.Id && editItem.model === model ? (
             <select
-              value={editItem.sanctionTypeId}
+              value={editItem.sanctionId}
               onChange={(e) =>
                 setEditItem((prev) => ({
                   ...prev,
-                  sanctionTypeId: e.target.value,
+                  sanctionId: e.target.value,
                 }))
               }
               className="border px-3 py-2 rounded-md"
@@ -222,7 +233,7 @@ const ListSanction = () => {
               {getSanctionTypesOptions()}
             </select>
           ) : (
-            getSanctionTypeName(row.SanctionTypeId)
+            getSanctionTypeName(row.SanctionId)
           ),
         sortable: true,
       },
@@ -292,7 +303,7 @@ const ListSanction = () => {
       {
         name: "Actions",
         cell: (row) => (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 whitespace-nowrap">
             {editItem.id === row.Id && editItem.model === model ? (
               <>
                 <button
@@ -305,11 +316,11 @@ const ListSanction = () => {
                   onClick={() =>
                     setEditItem({
                       id: "",
-                      date: "",
-                      punishment: "",
-                      punishmentDate: "",
                       employeeId: "",
-                      sanctionTypeId: "",
+                      sanctionId: "",
+                      punishment: "",
+                      date: "",
+                      punishmentDate: "",
                       model: "sanction",
                     })
                   }
@@ -324,11 +335,11 @@ const ListSanction = () => {
                   onClick={() =>
                     handleEditClick(
                       row.Id,
-                      row.Date,
-                      row.Punishment,
-                      row.PunishmentDate,
                       row.EmployeeId,
-                      row.SanctionTypeId
+                      row.SanctionId,
+                      row.Punishment,
+                      row.Date,
+                      row.PunishmentDate
                     )
                   }
                   className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
@@ -347,7 +358,7 @@ const ListSanction = () => {
         ),
       },
     ],
-    [editItem, handleEditClick, handleUpdate, handleDeleteClick]
+    [editItem, handleEditClick, handleUpdate, handleDeleteClick, employees]
   );
 
   const handleSearchChange = (model) => (event) => {
@@ -368,17 +379,16 @@ const ListSanction = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { date, punishment, punishmentDate, employeeId, sanctionTypeId } =
+    const { employeeId, sanctionId, punishment, punishmentDate, date } =
       values;
 
     let newErrors = {};
 
-    if (!date) newErrors.date = "Name is required.";
-    if (!punishment) newErrors.punishment = "Issue date is required.";
-    if (!employeeId) newErrors.employeeId = "Employee is required.";
-    if (!punishmentDate) newErrors.punishmentDate = "Issue place is required.";
-    if (!sanctionTypeId)
-      newErrors.sanctionTypeId = "Health check place is required.";
+    if (!date) newErrors.date = "Not Empty.";
+    if (!punishment) newErrors.punishment = "Not Empty.";
+    if (!employeeId) newErrors.employeeId = "Not Empty.";
+    if (!punishmentDate) newErrors.punishmentDate = "Not Empty.";
+    if (!sanctionId) newErrors.sanctionId = "Not Empty.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -391,19 +401,18 @@ const ListSanction = () => {
 
     try {
       await WelfareService.createSanction(
-        date,
+        employeeId,
+        sanctionId,
         punishment,
         punishmentDate,
-        employeeId,
-        sanctionTypeId
+        date
       );
 
       handleCloseModal();
-      toast.success("Sanction created successfully.");
+      toast.success("Created successfully.");
       await fetchAllData();
     } catch (error) {
-      console.error("Create error:", error);
-      toast.error("Failed to create sanction.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -433,7 +442,7 @@ const ListSanction = () => {
         </div>
 
         <div className="grid p-5 bg-gray-100 rounded-md">
-          <div>
+          <div className="w-full overflow-x-scroll">
             <div className="flex items-center justify-end">
               <input
                 type="text"
@@ -451,25 +460,18 @@ const ListSanction = () => {
               customStyles={{
                 headCells: {
                   style: {
-                    fontSize: "16px",
-                    fontWeight: "700",
                     textTransform: "uppercase",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 cells: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 pagination: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
               }}
@@ -517,8 +519,8 @@ const ListSanction = () => {
                   Sanction Type:
                 </span>
                 <select
-                  name="sanctionTypeId"
-                  value={values.sanctionTypeId}
+                  name="sanctionId"
+                  value={values.sanctionId}
                   onChange={handleChangeInput}
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                 >
@@ -529,8 +531,8 @@ const ListSanction = () => {
                     </option>
                   ))}
                 </select>
-                {errors.sanctionTypeId && (
-                  <span className="text-red-700">{errors.sanctionTypeId}</span>
+                {errors.sanctionId && (
+                  <span className="text-red-700">{errors.sanctionId}</span>
                 )}
               </label>
               <label className="block mb-1">

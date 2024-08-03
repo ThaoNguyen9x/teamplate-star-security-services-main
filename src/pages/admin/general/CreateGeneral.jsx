@@ -43,21 +43,21 @@ const CreateGeneral = () => {
     let newErrors = {};
 
     if (showModal === "workType") {
-      if (!name) newErrors.name = "Name is required.";
-      if (!coefficient) newErrors.coefficient = "Coefficient is required.";
+      if (!name) newErrors.name = "Not Empty.";
+      if (!coefficient) newErrors.coefficient = "Not Empty.";
     } else if (showModal === "trainingProgram") {
-      if (!name) newErrors.name = "Name is required.";
-      if (!description) newErrors.description = "Description is required.";
-      if (!startDate) newErrors.startDate = "Start date is required.";
-      if (!endDate) newErrors.endDate = "End date is required.";
-      if (!instructor) newErrors.instructor = "Instructor is required.";
+      if (!name) newErrors.name = "Not Empty.";
+      if (!description) newErrors.description = "Not Empty.";
+      if (!startDate) newErrors.startDate = "Not Empty.";
+      if (!endDate) newErrors.endDate = "Not Empty.";
+      if (!instructor) newErrors.instructor = "Not Empty.";
     } else if (showModal === "vacationType") {
-      if (!name) newErrors.name = "Name is required.";
+      if (!name) newErrors.name = "Not Empty.";
     } else if (showModal === "sanctionType") {
-      if (!name) newErrors.name = "Name is required.";
+      if (!name) newErrors.name = "Not Empty.";
     } else if (showModal === "overtimeType") {
-      if (!name) newErrors.name = "Name is required.";
-      if (!description) newErrors.description = "Description is required.";
+      if (!name) newErrors.name = "Not Empty.";
+      if (!description) newErrors.description = "Not Empty.";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -72,7 +72,6 @@ const CreateGeneral = () => {
     try {
       if (showModal === "workType") {
         await GeneralService.createWorkType(name, coefficient);
-        toast.success("WorkType created successfully.");
       } else if (showModal === "trainingProgram") {
         await GeneralService.createTrainingProgram(
           name,
@@ -82,17 +81,15 @@ const CreateGeneral = () => {
           endDate,
           instructor
         );
-        toast.success("TrainingProgram created successfully.");
       } else if (showModal === "vacationType") {
         await GeneralService.createVacationType(name);
-        toast.success("Vacation Type created successfully.");
       } else if (showModal === "sanctionType") {
         await GeneralService.createSanctionType(name);
-        toast.success("Sanction Type created successfully.");
       } else if (showModal === "overtimeType") {
         await GeneralService.createOvertimeType(name, description);
-        toast.success("Overtime Type created successfully.");
       }
+
+      toast.success("Created successfully.");
       setValues({
         value: "",
       });

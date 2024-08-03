@@ -90,7 +90,19 @@ const ListTrainingHistories = () => {
   );
 
   const handleUpdate = useCallback(async () => {
+    if (
+      !editItem.name ||
+      !editItem.programID ||
+      !editItem.employeeID ||
+      !editItem.completionStatus ||
+      !editItem.completionDate
+    ) {
+      toast.error("Please fill out all required fields.");
+      return;
+    }
+
     setLoading(true);
+
     try {
       const {
         id,
@@ -111,7 +123,7 @@ const ListTrainingHistories = () => {
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      toast.error("Failed to update data. Please try again.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setEditItem({
@@ -306,7 +318,7 @@ const ListTrainingHistories = () => {
       {
         name: "Actions",
         cell: (row) => (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 whitespace-nowrap">
             {editItem.id === row.trainingID && editItem.model === model ? (
               <>
                 <button
@@ -361,7 +373,7 @@ const ListTrainingHistories = () => {
         ),
       },
     ],
-    [editItem, handleEditClick, handleUpdate, handleDeleteClick]
+    [editItem, handleEditClick, handleUpdate, handleDeleteClick, employees]
   );
 
   const handleSearchChange = (model) => (event) => {
@@ -387,13 +399,13 @@ const ListTrainingHistories = () => {
 
     let newErrors = {};
 
-    if (!name) newErrors.name = "Name is required.";
-    if (!programID) newErrors.programID = "Issue date is required.";
-    if (!employeeID) newErrors.employeeID = "Employee is required.";
+    if (!name) newErrors.name = "Not Empty.";
+    if (!programID) newErrors.programID = "Not Empty.";
+    if (!employeeID) newErrors.employeeID = "Not Empty.";
     if (!completionStatus)
-      newErrors.completionStatus = "Issue place is required.";
+      newErrors.completionStatus = "Not Empty.";
     if (!completionDate)
-      newErrors.completionDate = "Health check place is required.";
+      newErrors.completionDate = "Not Empty.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -414,11 +426,10 @@ const ListTrainingHistories = () => {
       );
 
       handleCloseModal();
-      toast.success("Sanction created successfully.");
+      toast.success("Created successfully.");
       await fetchAllData();
     } catch (error) {
-      console.error("Create error:", error);
-      toast.error("Failed to create trainingHistory.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -450,7 +461,7 @@ const ListTrainingHistories = () => {
         </div>
 
         <div className="grid p-5 bg-gray-100 rounded-md">
-          <div>
+        <div className="w-full overflow-x-scroll">
             <div className="flex items-center justify-end">
               <input
                 type="text"
@@ -468,25 +479,18 @@ const ListTrainingHistories = () => {
               customStyles={{
                 headCells: {
                   style: {
-                    fontSize: "16px",
-                    fontWeight: "700",
                     textTransform: "uppercase",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 cells: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 pagination: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
               }}

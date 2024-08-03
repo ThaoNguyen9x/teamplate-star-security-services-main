@@ -99,6 +99,20 @@ const ListContract = () => {
   );
 
   const handleUpdate = useCallback(async () => {
+    if (
+      !editItem.contractNumber ||
+      !editItem.startDate ||
+      !editItem.endDate || 
+      !editItem.signDate || 
+      !editItem.content || 
+      !editItem.employeeId || 
+      !editItem.renewalCount || 
+      !editItem.duration
+    ) {
+      toast.error("Please fill out all required fields.");
+      return;
+    }
+
     setLoading(true);
     try {
       const {
@@ -126,7 +140,7 @@ const ListContract = () => {
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      toast.error("Failed to update data. Please try again.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setEditItem({
@@ -158,7 +172,7 @@ const ListContract = () => {
       await fetchAllData();
       handleCloseModal();
     } catch (error) {
-      toast.error("Failed to delete data.");
+      toast.error("Failed to delete.");
     } finally {
       setLoading(false);
       setRemove(false);
@@ -444,14 +458,14 @@ const ListContract = () => {
 
     let newErrors = {};
 
-    if (!contractNumber) newErrors.contractNumber = "Not empty.";
-    if (!startDate) newErrors.startDate = "Not empty.";
-    if (!endDate) newErrors.endDate = "Not empty.";
-    if (!signDate) newErrors.signDate = "Not empty.";
-    if (!content) newErrors.content = "Not empty.";
-    if (!renewalCount) newErrors.renewalCount = "Not empty.";
-    if (!employeeId) newErrors.employeeId = "Not empty.";
-    if (!duration) newErrors.duration = "Not empty.";
+    if (!contractNumber) newErrors.contractNumber = "Mandatory.";
+    if (!startDate) newErrors.startDate = "Mandatory.";
+    if (!endDate) newErrors.endDate = "Mandatory.";
+    if (!signDate) newErrors.signDate = "Mandatory.";
+    if (!content) newErrors.content = "Mandatory.";
+    if (!renewalCount) newErrors.renewalCount = "Mandatory.";
+    if (!employeeId) newErrors.employeeId = "Mandatory.";
+    if (!duration) newErrors.duration = "Mandatory.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -474,10 +488,10 @@ const ListContract = () => {
         duration
       );
       handleCloseModal();
-      toast.success("ServiceSchedule created successfully.");
+      toast.success("Created successfully.");
       await fetchAllData();
     } catch (error) {
-      toast.error("Failed to create contractService.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }

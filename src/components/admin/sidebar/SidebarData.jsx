@@ -87,6 +87,11 @@ const SidebarData = ({ toggle }) => {
           icon: <i className="bi bi-upc-scan"></i>
         },
         {
+          title: "Testimonial",
+          path: "/dashboard/testimonial",
+          icon: <i className="bi bi-upc-scan"></i>
+        },
+        {
           title: "Vacation",
           path: "/dashboard/vacation",
           icon: <i className="bi bi-upc-scan"></i>

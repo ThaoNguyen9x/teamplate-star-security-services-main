@@ -6,6 +6,11 @@ import DataTable from "react-data-table-component";
 import JobService from "../../../services/JobService";
 import axios from "axios";
 
+const phone_REGEX = /\(?([0-9]{3})\)?([ .-]?)([0-9]{3})\2([0-9]{4})/;
+const email_REGEX =
+  /^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$/;
+  
+
 const paginationComponentOptions = {
   rowsPerPageText: "Rows per page",
   rangeSeparatorText: "of",
@@ -73,6 +78,25 @@ const ListCandidate = () => {
   );
 
   const handleUpdate = useCallback(async () => {
+    if (
+      !editItem.name ||
+      !editItem.phone ||
+      !editItem.status 
+    ) {
+      toast.error("Please fill out all required fields.");
+      return;
+    }
+
+    if (!email_REGEX.test(editItem.email)) {
+      toast.error("Email invalid format.");
+      return;
+    }
+    
+    if (!phone_REGEX.test(editItem.phone)) {
+      toast.error("Phone invalid format.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -82,12 +106,7 @@ const ListCandidate = () => {
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "An unknown error occurred";
-      toast.error(errorMessage);
-      throw error;
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setEditItem({
@@ -175,7 +194,7 @@ const ListCandidate = () => {
           name: "Name",
           selector: (row) => getName(row),
           cell: (row) =>
-            editItem.id === row.candidateID && editItem.model === model ? (
+            editItem.id === row.id && editItem.model === model ? (
               <input
                 type="text"
                 value={editItem.name}
@@ -195,29 +214,13 @@ const ListCandidate = () => {
         {
           name: "Email",
           selector: (row) => row.email,
-          cell: (row) =>
-            editItem.id === row.candidateID && editItem.model === model ? (
-              <input
-                type="text"
-                value={editItem.email}
-                onChange={(e) =>
-                  setEditItem((prevState) => ({
-                    ...prevState,
-                    email: e.target.value,
-                  }))
-                }
-                className="border px-2 py-1 rounded-md outline-none"
-              />
-            ) : (
-              row.email
-            ),
           sortable: true,
         },
         {
           name: "Phone",
           selector: (row) => row.phone,
           cell: (row) =>
-            editItem.id === row.candidateID && editItem.model === model ? (
+            editItem.id === row.id && editItem.model === model ? (
               <input
                 type="text"
                 value={editItem.phone}
@@ -238,7 +241,7 @@ const ListCandidate = () => {
           name: "Status",
           selector: (row) => row.status || "",
           cell: (row) =>
-            editItem.id === row.candidateID && editItem.model === model ? (
+            editItem.id === row.id && editItem.model === model ? (
               <select
                 value={editItem.status}
                 onChange={(e) =>
@@ -262,7 +265,7 @@ const ListCandidate = () => {
           name: "Actions",
           cell: (row) => (
             <>
-              {editItem.id === row.candidateID && editItem.model === model ? (
+              {editItem.id === row.id && editItem.model === model ? (
                 <div className="flex items-center gap-2 whitespace-nowrap">
                   <button
                     onClick={handleUpdate}
@@ -303,7 +306,7 @@ const ListCandidate = () => {
                   <button
                     onClick={() =>
                       handleEditClick(
-                        row.candidateID,
+                        row.id,
                         getName(row),
                         row.email,
                         row.phone,
@@ -315,7 +318,7 @@ const ListCandidate = () => {
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDeleteClick(row.candidateID, model)}
+                    onClick={() => handleDeleteClick(row.id, model)}
                     className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
                   >
                     Delete
@@ -361,11 +364,22 @@ const ListCandidate = () => {
 
     let newErrors = {};
 
-    if (!name) newErrors.name = "Name is required.";
-    if (!email) newErrors.email = "Email is required.";
-    if (!phone) newErrors.phone = "Phone is required.";
-    if (!status) newErrors.status = "Status is required.";
-    if (!cvFile) newErrors.cvFile = "cvFile is required.";
+    if (!name) newErrors.name = "Not Empty.";
+    if (!email) {
+      newErrors.email = "Not Empty.";
+    } else if (!email_REGEX.test(email))
+    {
+      newErrors.email = "Email invalid format.";
+    }
+
+    if (!phone) {
+      newErrors.phone = "Not Empty.";
+    } else if (!phone_REGEX.test(phone))
+    {
+      newErrors.phone = "Phone invalid format.";
+    }
+    if (!status) newErrors.status = "Not Empty.";
+    if (!cvFile) newErrors.cvFile = "Not Empty.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -383,8 +397,7 @@ const ListCandidate = () => {
       toast.success("Created successfully.");
       await fetchAllData();
     } catch (error) {
-      console.error("Create error:", error);
-      toast.error("Failed to create vacation.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -428,25 +441,18 @@ const ListCandidate = () => {
               customStyles={{
                 headCells: {
                   style: {
-                    fontSize: "16px",
-                    fontWeight: "700",
                     textTransform: "uppercase",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 cells: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 pagination: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
               }}
@@ -469,8 +475,8 @@ const ListCandidate = () => {
             <h3 className="text-xl font-bold mb-4 text-center">
               Create Candidate
             </h3>
-            <form onSubmit={handleSubmit}>
-              <label className="block">
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 xl:grid-cols-2 gap-2">
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
                   Name:
                 </span>
@@ -483,10 +489,10 @@ const ListCandidate = () => {
                   className="block w-full border border-gray-300 rounded-md px-3 py-2 outline-none"
                 />
                 {errors.name && (
-                  <span className="text-red-600 text-sm">{errors.name}</span>
+                  <span className="text-red-700">{errors.name}</span>
                 )}
               </label>
-              <label className="block">
+              <label className="col-span-2 xl:col-span-1">
                 <span className="block font-medium text-primary mb-1">
                   Email:
                 </span>
@@ -502,7 +508,7 @@ const ListCandidate = () => {
                   <span className="text-red-700">{errors.email}</span>
                 )}
               </label>
-              <label className="block">
+              <label className="col-span-2 xl:col-span-1">
                 <span className="block font-medium text-primary mb-1">
                   Phone:
                 </span>
@@ -518,7 +524,7 @@ const ListCandidate = () => {
                   <span className="text-red-700">{errors.phone}</span>
                 )}
               </label>
-              <label className="block">
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">CV:</span>
                 <input
                   type="file"
@@ -531,7 +537,7 @@ const ListCandidate = () => {
                   <span className="text-red-700">{errors.cvFile}</span>
                 )}
               </label>
-              <label className="block mb-1">
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
                   Status:
                 </span>

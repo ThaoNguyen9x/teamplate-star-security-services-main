@@ -68,25 +68,37 @@ const ListGeo = () => {
 
   const handleUpdate = useCallback(async () => {
     setLoading(true);
+    
     try {
       const { id, name, type, countryId, provinceId, model } = editItem;
 
       if (model === "country") {
+        if (!name) {
+          toast.error("Please fill out all required fields.");
+          return;
+        }
+
         await GeoService.updateCountry(id, name);
       } else if (model === "province") {
+        if (!name || !type || !countryId) {
+          toast.error("Please fill out all required fields.");
+          return;
+        }
+
         await GeoService.updateProvince(id, name, type, countryId);
       } else if (model === "district") {
+        if (!name || !type || !provinceId) {
+          toast.error("Please fill out all required fields.");
+          return;
+        }
+
         await GeoService.updateDistrict(id, name, type, provinceId);
       }
 
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      toast.error("Failed to updated data.");
-      console.error(
-        "Update error:",
-        error.response ? error.response.data : error.message
-      );
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setEditItem({
@@ -125,13 +137,9 @@ const ListGeo = () => {
       }
 
       await fetchAllData();
-      toast.success("Data deleted successfully.");
+      toast.success("Deleted successfully.");
     } catch (error) {
-      toast.error("Failed to deleted data.");
-      console.error(
-        "Delete error:",
-        error.response ? error.response.data : error.message
-      );
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setRemove(false);

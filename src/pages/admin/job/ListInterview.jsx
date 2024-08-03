@@ -47,17 +47,14 @@ const ListInterview = () => {
 
   const fetchAllData = async () => {
     setLoading(true);
-  
+
     try {
       console.log("Fetching data...");
       const [interviewsData, candidatesData] = await Promise.all([
         JobService.getAllInterviews(),
         JobService.getAllCandidates(),
       ]);
-  
-      console.log("Interviews data:", interviewsData);
-      console.log("Candidates data:", candidatesData);
-  
+
       setInterviews(interviewsData || []);
       setCandidates(candidatesData || []);
     } catch (error) {
@@ -67,7 +64,6 @@ const ListInterview = () => {
       setLoading(false);
     }
   };
-  
 
   const handleEditClick = useCallback(
     (
@@ -94,6 +90,18 @@ const ListInterview = () => {
   );
 
   const handleUpdate = useCallback(async () => {
+    if (
+      !editItem.name ||
+      !editItem.candidateID ||
+      !editItem.interviewDate ||
+      !editItem.interviewLocation ||
+      !editItem.interviewResult ||
+      !editItem.comments
+    ) {
+      toast.error("Please fill out all required fields.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -118,8 +126,7 @@ const ListInterview = () => {
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      console.error("Update error:", error);
-      toast.error("Failed to update data. Please try again.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setEditItem({
@@ -412,13 +419,12 @@ const ListInterview = () => {
 
     let newErrors = {};
 
-    if (!name) newErrors.name = "Name is required.";
-    if (!candidateID) newErrors.candidateID = "Issue date is required.";
-    if (!interviewResult) newErrors.interviewResult = "Employee is required.";
-    if (!interviewDate) newErrors.interviewDate = "Issue place is required.";
-    if (!interviewLocation)
-      newErrors.interviewLocation = "Health check place is required.";
-    if (!comments) newErrors.comments = "Health check place is required.";
+    if (!name) newErrors.name = "Not Empty.";
+    if (!candidateID) newErrors.candidateID = "Not Empty.";
+    if (!interviewResult) newErrors.interviewResult = "Not Empty.";
+    if (!interviewDate) newErrors.interviewDate = "Not Empty.";
+    if (!interviewLocation) newErrors.interviewLocation = "Not Empty.";
+    if (!comments) newErrors.comments = "Not Empty.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -440,11 +446,10 @@ const ListInterview = () => {
       );
 
       handleCloseModal();
-      toast.success("Insurance created successfully.");
+      toast.success("Created successfully.");
       await fetchAllData();
     } catch (error) {
-      console.error("Create error:", error);
-      toast.error("Failed to create interview.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -531,8 +536,11 @@ const ListInterview = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
           <div className="bg-white p-4 rounded-lg w-full max-w-md">
             <h2 className="text-xl font-semibold mb-5">Create Interview</h2>
-            <form onSubmit={handleSubmit}>
-              <label className="block mb-1">
+            <form
+              onSubmit={handleSubmit}
+              className="grid gap-2 xl:grid-cols-2 grid-cols-1"
+            >
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
                   Name:
                 </span>
@@ -548,7 +556,7 @@ const ListInterview = () => {
                   <span className="text-red-700">{errors.name}</span>
                 )}
               </label>
-              <label className="block mb-1">
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
                   Interview Result:
                 </span>
@@ -564,7 +572,7 @@ const ListInterview = () => {
                   <span className="text-red-700">{errors.interviewResult}</span>
                 )}
               </label>
-              <label className="block mb-1">
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
                   Comments:
                 </span>
@@ -580,7 +588,7 @@ const ListInterview = () => {
                   <span className="text-red-700">{errors.comments}</span>
                 )}
               </label>
-              <label className="block mb-1">
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
                   Interview Location:
                 </span>

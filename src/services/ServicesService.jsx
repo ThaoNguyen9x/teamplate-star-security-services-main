@@ -1,3 +1,4 @@
+import axio from "axios";
 import axios from "./axios";
 
 const getAllServices = async () => {
@@ -13,11 +14,11 @@ const getAllServices = async () => {
   }
 };
 
-const createService = async (serviceName, description, price) => {
+const createService = async (serviceName, description, price, isActive) => {
   try {
     const response = await axios.post(
       "/service",
-      { serviceName, description, price },
+      { serviceName, description, price, isActive },
       {
         headers: {
           "Content-Type": "application/json",
@@ -63,35 +64,30 @@ const getByIdService = async (id) => {
   }
 };
 
-const updateService = async (id, name) => {
+const updateService = async (id, serviceName, description, price, isActive) => {
   try {
-    const response = await axios.post(
-      `/service/update`,
-      {
-        id,
-        name,
+    const response = await fetch(`http://localhost:5000/api/service/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
       },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+      body: JSON.stringify({
+        id,
+        serviceName,
+        description,
+        price,
+        isActive,
+      }),
+    });
 
-    if (!response.data.flag) {
-      throw new Error(response.data.message || "An unknown error occurred");
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return response.data;
+    return await response.json();
   } catch (error) {
-    const errorMessage =
-      error.response?.data?.message ||
-      error.message ||
-      "An unknown error occurred";
-    throw {
-      flag: false,
-      message: errorMessage,
-    };
+    console.error("Failed to update service request:", error);
+    throw error;
   }
 };
 
@@ -190,43 +186,38 @@ const getByIdServiceRequest = async (id) => {
 const updateServiceRequest = async (
   id,
   name,
-  customerID,
   serviceType,
   requestDetails,
+  customerID,
   status
 ) => {
   try {
-    const response = await axios.post(
-      `/servicerequests/update`,
+    const response = await fetch(
+      `http://localhost:5000/api/ServiceRequests/${id}`,
       {
-        id,
-        name,
-        customerID,
-        serviceType,
-        requestDetails,
-        status,
-      },
-      {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          id,
+          name,
+          serviceType,
+          requestDetails,
+          customerID,
+          status,
+        }),
       }
     );
 
-    if (!response.data.flag) {
-      throw new Error(response.data.message || "An unknown error occurred");
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return response.data;
+    return await response.json();
   } catch (error) {
-    const errorMessage =
-      error.response?.data?.message ||
-      error.message ||
-      "An unknown error occurred";
-    throw {
-      flag: false,
-      message: errorMessage,
-    };
+    console.error("Failed to update service request:", error);
+    throw error;
   }
 };
 
@@ -325,34 +316,38 @@ const getByIdServiceSchedule = async (id) => {
 const updateServiceSchedule = async (
   id,
   name,
-  serviceRequestID,
   employeeID,
-  scheduledDate,
-  location
+  serviceRequestID,
+  location,
+  scheduledDate
 ) => {
   try {
-    const response = await axios.put(`/serviceschedules/${id}`, {
-      name,
-      serviceRequestID,
-      employeeID,
-      scheduledDate,
-      location,
-    });
+    const response = await fetch(
+      `http://localhost:5000/api/serviceschedules/${id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+          name,
+          employeeID,
+          serviceRequestID,
+          location,
+          scheduledDate,
+        }),
+      }
+    );
 
-    if (!response.data.flag) {
-      throw new Error(response.data.message || "An unknown error occurred");
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return response.data;
+    return await response.json();
   } catch (error) {
-    const errorMessage =
-      error.response?.data?.message ||
-      error.message ||
-      "An unknown error occurred";
-    throw {
-      flag: false,
-      message: errorMessage,
-    };
+    console.error("Failed to update service request:", error);
+    throw error;
   }
 };
 
@@ -521,15 +516,23 @@ const getAllCashTransactions = async () => {
 
 const createCashTransaction = async ({
   amount,
-  transactionDate,
-  status,
-  employeeID,
   cashServiceID,
+  employeeID,
+  status,
+  transactionDate,
 }) => {
+  const payload = {
+    amount,
+    cashServiceID,
+    employeeID,
+    status,
+    transactionDate,
+  };
+
   try {
-    const response = await axios.post(
-      "/CashTransactions",
-      { amount, transactionDate, status, employeeID, cashServiceID },
+    const response = await axio.post(
+      "http://localhost:5000/api/CashTransactions",
+      payload,
       {
         headers: {
           "Content-Type": "application/json",

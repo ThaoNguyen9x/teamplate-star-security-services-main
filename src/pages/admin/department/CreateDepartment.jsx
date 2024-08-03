@@ -4,6 +4,10 @@ import { toast } from "react-toastify";
 import Loading from "../../../components/Loading";
 import DepartmentService from "../../../services/DepartmentService";
 
+const phone_REGEX = /\(?([0-9]{3})\)?([ .-]?)([0-9]{3})\2([0-9]{4})/;
+const email_REGEX =
+  /^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$/;
+
 const CreateDepartment = () => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -53,25 +57,25 @@ const CreateDepartment = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const {
-      name,
-      generalDepartmentId,
-      email,
-      address,
-      contactNumber,
-      departnentId,
-    } = values;
+    const { name, generalDepartmentId, email, address, contactNumber } = values;
     let newErrors = {};
 
-    if (!name) newErrors.name = "Name is required.";
+    if (!name) newErrors.name = "Not empty.";
     if (showModal === "department") {
-      if (!generalDepartmentId)
-        newErrors.generalDepartmentId = "General department is required.";
+      if (!generalDepartmentId) newErrors.generalDepartmentId = "Not empty.";
     }
     if (showModal === "branch") {
-      if (!email) newErrors.email = "Email is required.";
-      if (!address) newErrors.address = "Address is required.";
-      if (!contactNumber) newErrors.contactNumber = "Contact number is required.";
+      if (!email) {
+        newErrors.email = "Not empty.";
+      } else if (!email_REGEX.test(email)) {
+        newErrors.email = "Invalid email format.";
+      }
+      if (!address) newErrors.address = "Not empty.";
+      if (!contactNumber) {
+        newErrors.contactNumber = "Contact number cannot be empty.";
+      } else if (!phone_REGEX.test(contactNumber)) {
+        newErrors.contactNumber = "Invalid contact number format.";
+      }
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -86,14 +90,10 @@ const CreateDepartment = () => {
     try {
       if (showModal === "generalDepartment") {
         await DepartmentService.createGeneralDepartment(name);
-        toast.success("General department created successfully.");
       } else if (showModal === "position") {
         await DepartmentService.createPosition(name);
-        toast.success("Position created successfully.");
       } else if (showModal === "department") {
         await DepartmentService.createDepartment(name, generalDepartmentId);
-
-        toast.success("Department created successfully.");
       } else if (showModal === "branch") {
         await DepartmentService.createBranch(
           name,
@@ -101,11 +101,10 @@ const CreateDepartment = () => {
           address,
           contactNumber
         );
-        toast.success("Branch created successfully.");
       }
-      setValues({
-        value: "",
-      });
+
+      toast.success("Created successfully.");
+      setValues({ value: "" });
       navigate("/dashboard/departments");
     } catch (error) {
       toast.error(error.message);

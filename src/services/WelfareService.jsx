@@ -402,21 +402,21 @@ const getAllSanctions = async () => {
 };
 
 const createSanction = async (
-  date,
+  employeeId,
+  sanctionId,
   punishment,
   punishmentDate,
-  employeeId,
-  sanctionTypeId
+  date
 ) => {
   try {
     const response = await axios.post(
       "/sanction/add",
       {
-        date,
+        employeeId,
+        sanctionId,
         punishment,
         punishmentDate,
-        employeeId,
-        sanctionTypeId,
+        date,
       },
       {
         headers: {
@@ -465,22 +465,22 @@ const getByIdSanction = async (id) => {
 
 const updateSanction = async (
   id,
-  date,
-  punishment,
-  punishmentDate,
   employeeId,
-  sanctionTypeId
+  sanctionId,
+  punishment,
+  date,
+  punishmentDate
 ) => {
   try {
     const response = await axios.post(
       `/sanction/update`,
       {
         id,
-        date,
-        punishment,
-        punishmentDate,
         employeeId,
-        sanctionTypeId,
+        sanctionId,
+        punishment,
+        date,
+        punishmentDate,
       },
       {
         headers: {
@@ -743,26 +743,28 @@ const getByIdOvertime = async (id) => {
 
 const updateOvertime = async (
   id,
-  startDate,
-  endDate,
-  overtimTypeId,
   employeeId,
   approvedById,
-  approvalDate,
-  remarks
+  overtimTypeId,
+  remarks,
+  numberOfDay,
+  startDate,
+  endDate,
+  approvalDate
 ) => {
   try {
     const response = await axios.post(
       `/overtime/update`,
       {
         id,
-        startDate,
-        endDate,
-        overtimTypeId,
         employeeId,
         approvedById,
-        approvalDate,
+        overtimTypeId,
         remarks,
+        numberOfDay,
+        startDate,
+        endDate,
+        approvalDate,
       },
       {
         headers: {

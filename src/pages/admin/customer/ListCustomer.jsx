@@ -314,15 +314,15 @@ const ListCustomer = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { Name, Email, Phone, file, EmployeeIds, CashServiceId, ServiceId } = values;
+    const { Name, Email, Phone, file, EmployeeIds, CashServiceId, ServiceId } =
+      values;
 
     let newErrors = {};
 
     if (!Name) newErrors.Name = "Full name is required.";
     if (!Phone) newErrors.Phone = "Phone is required.";
     if (!file) newErrors.file = "Image is required.";
-    if (!EmployeeIds)
-      newErrors.EmployeeIds = "Employee Supports is required.";
+    if (!EmployeeIds) newErrors.EmployeeIds = "Employee Supports is required.";
 
     if (!Email) newErrors.Email = "Email is required.";
     else if (!Email_REGEX.test(Email))
@@ -429,25 +429,19 @@ const ListCustomer = () => {
               customStyles={{
                 headCells: {
                   style: {
-                    fontSize: "16px",
-                    fontWeight: "700",
                     textTransform: "uppercase",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 cells: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
+                    padding: "12px 0",
                   },
                 },
                 pagination: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
               }}

@@ -17,10 +17,10 @@ const paginationComponentOptions = {
 const ListServiceSchedules = () => {
   const [values, setValues] = useState({
     name: "",
-    serviceRequestID: "",
     employeeID: "",
-    scheduledDate: "",
+    serviceRequestID: "",
     location: "",
+    scheduledDate: "",
   });
   const [serviceScheduleSchedules, setServiceSchedules] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -31,10 +31,10 @@ const ListServiceSchedules = () => {
   const [editItem, setEditItem] = useState({
     id: "",
     name: "",
-    serviceRequestID: "",
     employeeID: "",
-    scheduledDate: "",
+    serviceRequestID: "",
     location: "",
+    scheduledDate: "",
     model: "serviceSchedule",
   });
   const [searchQuery, setSearchQuery] = useState({ serviceSchedule: "" });
@@ -66,14 +66,21 @@ const ListServiceSchedules = () => {
   };
 
   const handleEditClick = useCallback(
-    (id, name, serviceRequestID, employeeID, scheduledDate, location) => {
+    (
+      scheduleID,
+      name,
+      employeeID,
+      serviceRequestID,
+      location,
+      scheduledDate
+    ) => {
       setEditItem({
-        id,
+        id: scheduleID,
         name,
-        serviceRequestID,
         employeeID,
-        scheduledDate,
+        serviceRequestID,
         location,
+        scheduledDate,
         model: "serviceSchedule",
       });
     },
@@ -81,38 +88,48 @@ const ListServiceSchedules = () => {
   );
 
   const handleUpdate = useCallback(async () => {
+    if (
+      !editItem.name ||
+      !editItem.serviceRequestID ||
+      !editItem.employeeID ||
+      !editItem.scheduledDate ||
+      !editItem.location
+    ) {
+      toast.error("Please fill out all required fields.");
+      return;
+    }
     setLoading(true);
+
     try {
       const {
         id,
         name,
-        serviceRequestID,
         employeeID,
-        scheduledDate,
+        serviceRequestID,
         location,
+        scheduledDate,
       } = editItem;
       await ServicesService.updateServiceSchedule(
         id,
         name,
-        serviceRequestID,
         employeeID,
+        serviceRequestID,
+        location,
         scheduledDate,
-        location
       );
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      console.error("Update error:", error);
-      toast.error("Failed to update data. Please try again.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setEditItem({
         id: "",
         name: "",
-        serviceRequestID: "",
         employeeID: "",
-        scheduledDate: "",
+        serviceRequestID: "",
         location: "",
+        scheduledDate: "",
         model: "serviceSchedule",
       });
     }
@@ -296,7 +313,7 @@ const ListServiceSchedules = () => {
       {
         name: "Actions",
         cell: (row) => (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 whitespace-nowrap">
             {editItem.id === row.scheduleID && editItem.model === model ? (
               <>
                 <button
@@ -312,8 +329,8 @@ const ListServiceSchedules = () => {
                       name: "",
                       employeeID: "",
                       serviceRequestID: "",
-                      scheduledDate: "",
                       location: "",
+                      scheduledDate: "",
                       model: "serviceSchedule",
                     })
                   }
@@ -329,10 +346,10 @@ const ListServiceSchedules = () => {
                     handleEditClick(
                       row.scheduleID,
                       row.name,
-                      row.serviceRequestID,
                       row.employeeID,
-                      row.scheduledDate,
-                      row.location
+                      row.serviceRequestID,
+                      row.location,
+                      row.scheduledDate
                     )
                   }
                   className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
@@ -351,7 +368,7 @@ const ListServiceSchedules = () => {
         ),
       },
     ],
-    [editItem, handleEditClick, handleUpdate, handleDeleteClick]
+    [editItem, handleEditClick, handleUpdate, handleDeleteClick, employees]
   );
 
   const handleSearchChange = (model) => (event) => {
@@ -376,12 +393,11 @@ const ListServiceSchedules = () => {
       values;
     let newErrors = {};
 
-    if (!name) newErrors.name = "Name is required.";
-    if (!serviceRequestID)
-      newErrors.serviceRequestID = "Service request is required.";
-    if (!employeeID) newErrors.employeeID = "Employee is required.";
-    if (!scheduledDate) newErrors.scheduledDate = "Scheduled date is required.";
-    if (!location) newErrors.location = "Location is required.";
+    if (!name) newErrors.name = "Mandatory.";
+    if (!serviceRequestID) newErrors.serviceRequestID = "Mandatory.";
+    if (!employeeID) newErrors.employeeID = "Mandatory.";
+    if (!scheduledDate) newErrors.scheduledDate = "Mandatory.";
+    if (!location) newErrors.location = "Mandatory.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -401,10 +417,10 @@ const ListServiceSchedules = () => {
         location
       );
       handleCloseModal();
-      toast.success("ServiceSchedule created successfully.");
+      toast.success("Created successfully.");
       await fetchAllData();
     } catch (error) {
-      toast.error("Failed to create serviceSchedule.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -425,7 +441,7 @@ const ListServiceSchedules = () => {
       <div className="flex flex-col gap-5 mt-5">
         <div className="flex items-center justify-between">
           <div className="font-semibold text-xl capitalize">
-            ServiceSchedule
+            Service Schedule
           </div>
           <button
             onClick={handleOpenModal}
@@ -436,7 +452,7 @@ const ListServiceSchedules = () => {
         </div>
 
         <div className="grid p-5 bg-gray-100 rounded-md">
-          <div>
+          <div className="w-full overflow-x-scroll">
             <div className="flex items-center justify-end">
               <input
                 type="text"
@@ -458,25 +474,18 @@ const ListServiceSchedules = () => {
               customStyles={{
                 headCells: {
                   style: {
-                    fontSize: "16px",
-                    fontWeight: "700",
                     textTransform: "uppercase",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 cells: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 pagination: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
               }}
@@ -499,8 +508,11 @@ const ListServiceSchedules = () => {
             <h2 className="text-xl font-semibold mb-5">
               Create Service Schedule
             </h2>
-            <form onSubmit={handleSubmit}>
-              <label className="block mb-1">
+            <form
+              onSubmit={handleSubmit}
+              className="grid xl:grid-cols-2 grid-cols-1 gap-2"
+            >
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
                   Name:
                 </span>
@@ -516,7 +528,7 @@ const ListServiceSchedules = () => {
                   <span className="text-red-700">{errors.name}</span>
                 )}
               </label>
-              <label className="block mb-1">
+              <label className="col-span-2 xl:col-span-1">
                 <span className="block font-medium text-primary mb-1">
                   Service Request:
                 </span>
@@ -542,7 +554,7 @@ const ListServiceSchedules = () => {
                   </span>
                 )}
               </label>
-              <label className="block mb-1">
+              <label className="col-span-2 xl:col-span-1">
                 <span className="block font-medium text-primary mb-1">
                   Employee:
                 </span>
@@ -563,7 +575,7 @@ const ListServiceSchedules = () => {
                   <span className="text-red-700">{errors.employeeID}</span>
                 )}
               </label>
-              <label className="block mb-1">
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
                   Location:
                 </span>
@@ -594,7 +606,7 @@ const ListServiceSchedules = () => {
                   <span className="text-red-700">{errors.scheduledDate}</span>
                 )}
               </label>
-              <div className="flex items-center gap-2 mt-4">
+              <div className="flex items-center gap-2 mt-4 col-span-2">
                 <button
                   type="submit"
                   className="px-4 py-2 bg-blue-950 text-white rounded-md"

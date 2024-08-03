@@ -119,8 +119,25 @@ const ListGeneral = () => {
       } = editItem;
 
       if (model === "workType") {
+        if (!name || !coefficient) {
+          toast.error("Please fill out all required fields.");
+          return;
+        }
+
         await GeneralService.updateWorkType(id, name, coefficient);
       } else if (model === "trainingProgram") {
+        if (
+          !name ||
+          !description ||
+          !objectives ||
+          !startDate ||
+          !endDate ||
+          !instructor
+        ) {
+          toast.error("Please fill out all required fields.");
+          return;
+        }
+
         await GeneralService.updateTrainingProgram(
           id,
           name,
@@ -131,21 +148,32 @@ const ListGeneral = () => {
           instructor
         );
       } else if (model === "vacationType") {
+        if (!name) {
+          toast.error("Please fill out all required fields.");
+          return;
+        }
+
         await GeneralService.updateVacationType(id, name);
       } else if (model === "sanctionType") {
+        if (!name) {
+          toast.error("Please fill out all required fields.");
+          return;
+        }
+
         await GeneralService.updateSanctionType(id, name);
       } else if (model === "overtimeType") {
+        if (!name || !description) {
+          toast.error("Please fill out all required fields.");
+          return;
+        }
+
         await GeneralService.updateOvertimeType(id, name, description);
       }
 
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      toast.error("Failed to updated data.");
-      console.error(
-        "Update error:",
-        error.response ? error.response.data : error.message
-      );
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setEditItem({
@@ -195,11 +223,7 @@ const ListGeneral = () => {
       await fetchAllData();
       toast.success("Deleted successfully.");
     } catch (error) {
-      toast.error("Failed to deleted data.");
-      console.error(
-        "Delete error:",
-        error.response ? error.response.data : error.message
-      );
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setRemove(false);
@@ -435,29 +459,6 @@ const ListGeneral = () => {
                   ),
                 sortable: true,
               },
-              // {
-              //   name: "VacationType",
-              //   selector: (row) => getVacationTypeName(row),
-              //   cell: (row) =>
-              //     editItem.id === row.Id && editItem.model === model ? (
-              //       <select
-              //         value={editItem.departnentId}
-              //         onChange={(e) =>
-              //           setEditItem((prevState) => ({
-              //             ...prevState,
-              //             departnentId: e.target.value,
-              //           }))
-              //         }
-              //         className="border px-3 py-1 rounded-md outline-none"
-              //       >
-              //         <option value="">Select VacationType</option>
-              //         {getVacationTypesOptions()}
-              //       </select>
-              //     ) : (
-              //       getVacationTypeName(row)
-              //     ),
-              //   sortable: true,
-              // },
             ]
           : []),
         ...(model === "overtimeType"
@@ -654,25 +655,18 @@ const ListGeneral = () => {
                   customStyles={{
                     headCells: {
                       style: {
-                        fontSize: "16px",
-                        fontWeight: "700",
                         textTransform: "uppercase",
                         background: "#f3f4f6",
-                        padding: "12px 24px",
                       },
                     },
                     cells: {
                       style: {
-                        fontSize: "14px",
                         background: "#f3f4f6",
-                        padding: "12px 24px",
                       },
                     },
                     pagination: {
                       style: {
-                        fontSize: "14px",
                         background: "#f3f4f6",
-                        padding: "12px 24px",
                       },
                     },
                   }}

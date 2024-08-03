@@ -75,7 +75,19 @@ const ListCashService = () => {
   );
 
   const handleUpdate = useCallback(async () => {
+    if (
+      !editItem.name ||
+      !editItem.serviceType ||
+      !editItem.scope || 
+      !editItem.price || 
+      !editItem.conditions
+    ) {
+      toast.error("Please fill out all required fields.");
+      return;
+    }
+
     setLoading(true);
+
     try {
       const { id, name, serviceType, scope, price, conditions } = editItem;
       await ServicesService.updateCashServices(
@@ -254,7 +266,7 @@ const ListCashService = () => {
           cell: (row) => (
             <>
               {editItem.id === row.cashServiceID && editItem.model === model ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 whitespace-nowrap">
                   <button
                     onClick={handleUpdate}
                     className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
@@ -279,7 +291,7 @@ const ListCashService = () => {
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 whitespace-nowrap">
                   <button
                     onClick={() =>
                       handleEditClick(
@@ -330,11 +342,11 @@ const ListCashService = () => {
     const { name, serviceType, scope, price, conditions } = values;
     let newErrors = {};
   
-    if (!name) newErrors.name = "Name is required.";
-    if (!serviceType) newErrors.serviceType = "Service Type is required.";
-    if (!scope) newErrors.scope = "Scope is required.";
-    if (!price) newErrors.price = "Price is required.";
-    if (!conditions) newErrors.conditions = "Conditions are required.";
+    if (!name) newErrors.name = "Mandatory.";
+    if (!serviceType) newErrors.serviceType = "Mandatory.";
+    if (!scope) newErrors.scope = "Mandatory.";
+    if (!price) newErrors.price = "Mandatory.";
+    if (!conditions) newErrors.conditions = "Mandatory.";
   
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -343,13 +355,6 @@ const ListCashService = () => {
   
     setLoading(true);
     try {
-      console.log("Creating Cash Service with data:", {
-        name,
-        serviceType,
-        scope,
-        price,
-        conditions,
-      });
       await ServicesService.createCashServices({
         name,
         serviceType,
@@ -358,10 +363,10 @@ const ListCashService = () => {
         conditions,
       });
       await fetchAllData();
-      toast.success("Service created successfully.");
+      toast.success("Created successfully.");
       handleCloseModal();
     } catch (error) {
-      toast.error(`Failed to create service: ${error.message}`);
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -383,7 +388,7 @@ const ListCashService = () => {
       <div className="flex flex-col gap-5 mt-5">
         <div className="flex items-center justify-between">
           <div className="font-semibold text-xl capitalize">
-            ServicesService
+            Cash Services
           </div>
           <button
             onClick={handleOpenModal}
@@ -416,25 +421,18 @@ const ListCashService = () => {
               customStyles={{
                 headCells: {
                   style: {
-                    fontSize: "16px",
-                    fontWeight: "700",
                     textTransform: "uppercase",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 cells: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 pagination: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
               }}
@@ -457,8 +455,8 @@ const ListCashService = () => {
             <h3 className="text-xl font-bold mb-4 text-center">
               Create CashService
             </h3>
-            <form onSubmit={handleSubmit}>
-              <label className="block">
+            <form onSubmit={handleSubmit} className="grid xl:grid-cols-2 grid-cols-1 gap-2">
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
                   Name:
                 </span>
@@ -471,10 +469,10 @@ const ListCashService = () => {
                   className="block w-full border border-gray-300 rounded-md px-3 py-2 outline-none"
                 />
                 {errors.name && (
-                  <span className="text-red-600 text-sm">{errors.name}</span>
+                  <span className="text-red-700">{errors.name}</span>
                 )}
               </label>
-              <label className="block">
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
                   Service Type:
                 </span>
@@ -487,12 +485,12 @@ const ListCashService = () => {
                   className="block w-full border border-gray-300 rounded-md px-3 py-2 outline-none"
                 />
                 {errors.serviceType && (
-                  <span className="text-red-600 text-sm">
+                  <span className="text-red-700">
                     {errors.serviceType}
                   </span>
                 )}
               </label>
-              <label className="block">
+              <label className="col-span-2 xl:col-span-1">
                 <span className="block font-medium text-primary mb-1">
                   Scope:
                 </span>
@@ -505,10 +503,10 @@ const ListCashService = () => {
                   className="block w-full border border-gray-300 rounded-md px-3 py-2 outline-none"
                 />
                 {errors.scope && (
-                  <span className="text-red-600 text-sm">{errors.scope}</span>
+                  <span className="text-red-700">{errors.scope}</span>
                 )}
               </label>
-              <label className="block">
+              <label className="col-span-2 xl:col-span-1">
                 <span className="block font-medium text-primary mb-1">
                   Price:
                 </span>
@@ -521,7 +519,7 @@ const ListCashService = () => {
                   className="block w-full border border-gray-300 rounded-md px-3 py-2 outline-none"
                 />
                 {errors.price && (
-                  <span className="text-red-600 text-sm">{errors.price}</span>
+                  <span className="text-red-700">{errors.price}</span>
                 )}
               </label>
               <label className="col-span-2">

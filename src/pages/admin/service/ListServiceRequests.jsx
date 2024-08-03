@@ -17,9 +17,9 @@ const paginationComponentOptions = {
 const ListServiceRequestRequests = () => {
   const [values, setValues] = useState({
     name: "",
-    customerID: "",
     serviceType: "",
     requestDetails: "",
+    customerID: "",
     status: "",
   });
   const [serviceRequests, setServiceRequests] = useState([]);
@@ -31,9 +31,9 @@ const ListServiceRequestRequests = () => {
   const [editItem, setEditItem] = useState({
     id: "",
     name: "",
-    customerID: "",
     serviceType: "",
     requestDetails: "",
+    customerID: "",
     status: "",
     model: "serviceRequest",
   });
@@ -66,13 +66,20 @@ const ListServiceRequestRequests = () => {
   };
 
   const handleEditClick = useCallback(
-    (id, name, customerID, serviceType, requestDetails, status) => {
+    (
+      serviceRequestID,
+      name,
+      serviceType,
+      requestDetails,
+      customerID,
+      status
+    ) => {
       setEditItem({
-        id,
+        id: serviceRequestID,
         name,
-        customerID,
         serviceType,
         requestDetails,
+        customerID,
         status,
         model: "serviceRequest",
       });
@@ -81,27 +88,49 @@ const ListServiceRequestRequests = () => {
   );
 
   const handleUpdate = useCallback(async () => {
+    if (
+      !editItem.name ||
+      !editItem.customerID ||
+      !editItem.serviceType ||
+      !editItem.requestDetails ||
+      !editItem.status
+    ) {
+      toast.error("Please fill out all required fields.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const { id, name, customerID, serviceType, requestDetails, status } =
+      const { id, name, serviceType, requestDetails, customerID, status } =
         editItem;
-      await ServicesService.updateServiceRequest(
+
+      console.log("Updating service request:", editItem);
+      const response = await ServicesService.updateServiceRequest(
         id,
         name,
-        customerID,
         serviceType,
         requestDetails,
+        customerID,
         status
       );
+      console.log("API response:", response);
+
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      toast.error("Failed to update data.");
+      toast.error("Failed to update.");
+      console.error("Update error:", error);
     } finally {
       setLoading(false);
       setEditItem({
-        editItem: null,
+        id: "",
+        name: "",
+        serviceType: "",
+        requestDetails: "",
+        customerID: "",
+        status: "",
+        model: "serviceRequest",
       });
     }
   }, [editItem]);
@@ -125,7 +154,7 @@ const ListServiceRequestRequests = () => {
       await fetchAllData();
       handleCloseModal();
     } catch (error) {
-      toast.error("Failed to delete data.");
+      toast.error("Failed to delete.");
     } finally {
       setLoading(false);
       setRemove(false);
@@ -141,7 +170,9 @@ const ListServiceRequestRequests = () => {
   };
 
   const getCustomerName = (row) => {
-    return customers.find((c) => c.id === row.customerId)?.customerName || "N/A";
+    return (
+      customers.find((c) => c.id === row.customerId)?.customerName || "N/A"
+    );
   };
 
   const getServiceTypesOptions = () => {
@@ -167,7 +198,7 @@ const ListServiceRequestRequests = () => {
         name: "Name",
         selector: (row) => row.name || "",
         cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
+          editItem.id === row.serviceRequestID && editItem.model === model ? (
             <input
               type="text"
               value={editItem.name}
@@ -188,7 +219,7 @@ const ListServiceRequestRequests = () => {
         name: "Service",
         selector: (row) => getServiceTypeName(row),
         cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
+          editItem.id === row.serviceRequestID && editItem.model === model ? (
             <select
               value={editItem.serviceType}
               onChange={(e) =>
@@ -211,7 +242,7 @@ const ListServiceRequestRequests = () => {
         name: "Details",
         selector: (row) => row.requestDetails || "",
         cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
+          editItem.id === row.serviceRequestID && editItem.model === model ? (
             <input
               type="text"
               value={editItem.requestDetails}
@@ -232,7 +263,7 @@ const ListServiceRequestRequests = () => {
         name: "Customer",
         selector: (row) => getCustomerName(row),
         cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
+          editItem.id === row.serviceRequestID && editItem.model === model ? (
             <select
               value={editItem.customerID}
               onChange={(e) =>
@@ -255,7 +286,7 @@ const ListServiceRequestRequests = () => {
         name: "Status",
         selector: (row) => row.status || "",
         cell: (row) =>
-          editItem.id === row.id && editItem.model === model ? (
+          editItem.id === row.serviceRequestID && editItem.model === model ? (
             <select
               value={editItem.status}
               onChange={(e) =>
@@ -264,11 +295,13 @@ const ListServiceRequestRequests = () => {
                   status: e.target.value,
                 }))
               }
-              className="border px-2 py-1 rounded-md outline-none"
+              className="border px-3 py-2 rounded-md"
             >
-              <option value="">Select Status</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
+              <option value="">Select</option>
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
             </select>
           ) : (
             row.status || ""
@@ -278,8 +311,9 @@ const ListServiceRequestRequests = () => {
       {
         name: "Actions",
         cell: (row) => (
-          <div className="flex items-center gap-2">
-            {editItem.id === row.id && editItem.model === model ? (
+          <div className="flex items-center gap-2 whitespace-nowrap">
+            {editItem.id === row.serviceRequestID &&
+            editItem.model === model ? (
               <>
                 <button
                   onClick={handleUpdate}
@@ -309,11 +343,11 @@ const ListServiceRequestRequests = () => {
                 <button
                   onClick={() =>
                     handleEditClick(
-                      row.id,
+                      row.serviceRequestID,
                       row.name,
-                      row.customerID,
                       row.serviceType,
                       row.requestDetails,
+                      row.customerID,
                       row.status
                     )
                   }
@@ -333,7 +367,7 @@ const ListServiceRequestRequests = () => {
         ),
       },
     ],
-    [editItem, handleEditClick, handleUpdate, handleDeleteClick]
+    [editItem, handleEditClick, handleUpdate, handleDeleteClick, serviceTypes]
   );
 
   const handleSearchChange = (model) => (event) => {
@@ -357,12 +391,11 @@ const ListServiceRequestRequests = () => {
     const { name, customerID, serviceType, requestDetails, status } = values;
     let newErrors = {};
 
-    if (!name) newErrors.name = "Name is required.";
-    if (!serviceType) newErrors.serviceType = "Service type is required.";
-    if (!customerID) newErrors.customerID = "Customer is required.";
-    if (!requestDetails)
-      newErrors.requestDetails = "Request details is required.";
-    if (!status) newErrors.status = "Status is required.";
+    if (!name) newErrors.name = "Mandatory.";
+    if (!serviceType) newErrors.serviceType = "Mandatory.";
+    if (!customerID) newErrors.customerID = "Mandatory.";
+    if (!requestDetails) newErrors.requestDetails = "Mandatory.";
+    if (!status) newErrors.status = "Mandatory.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -382,10 +415,10 @@ const ListServiceRequestRequests = () => {
         status
       );
       handleCloseModal();
-      toast.success("ServiceRequest created successfully.");
+      toast.success("Created successfully.");
       await fetchAllData();
     } catch (error) {
-      toast.error("Failed to create serviceRequest.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -405,7 +438,9 @@ const ListServiceRequestRequests = () => {
 
       <div className="flex flex-col gap-5 mt-5">
         <div className="flex items-center justify-between">
-          <div className="font-semibold text-xl capitalize">ServiceRequest</div>
+          <div className="font-semibold text-xl capitalize">
+            Service Request
+          </div>
           <button
             onClick={handleOpenModal}
             className="px-3 py-2 bg-blue-950 text-white rounded-md"
@@ -415,7 +450,7 @@ const ListServiceRequestRequests = () => {
         </div>
 
         <div className="grid p-5 bg-gray-100 rounded-md">
-          <div>
+          <div className="w-full overflow-x-scroll">
             <div className="flex items-center justify-end">
               <input
                 type="text"
@@ -437,25 +472,18 @@ const ListServiceRequestRequests = () => {
               customStyles={{
                 headCells: {
                   style: {
-                    fontSize: "16px",
-                    fontWeight: "700",
                     textTransform: "uppercase",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 cells: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 pagination: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
               }}
@@ -476,10 +504,13 @@ const ListServiceRequestRequests = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
           <div className="bg-white p-4 rounded-lg w-full max-w-md">
             <h2 className="text-xl font-semibold mb-5">
-              Create ServiceRequest
+              Create Service Request
             </h2>
-            <form onSubmit={handleSubmit}>
-              <label className="block mb-1">
+            <form
+              onSubmit={handleSubmit}
+              className="grid grid-cols-1 xl:grid-cols-2 gap-2"
+            >
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
                   Name:
                 </span>
@@ -495,7 +526,7 @@ const ListServiceRequestRequests = () => {
                   <span className="text-red-700">{errors.name}</span>
                 )}
               </label>
-              <label className="block mb-1">
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
                   Service Type:
                 </span>
@@ -516,7 +547,7 @@ const ListServiceRequestRequests = () => {
                   <span className="text-red-700">{errors.serviceType}</span>
                 )}
               </label>
-              <label className="block mb-1">
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
                   Description:
                 </span>
@@ -531,7 +562,7 @@ const ListServiceRequestRequests = () => {
                   <span className="text-red-700">{errors.description}</span>
                 )}
               </label>
-              <label className="block mb-1">
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
                   Request Details:
                 </span>
@@ -546,7 +577,7 @@ const ListServiceRequestRequests = () => {
                   <span className="text-red-700">{errors.requestDetails}</span>
                 )}
               </label>
-              <label className="block mb-1">
+              <label className="col-span-2 xl:col-span-1">
                 <span className="block font-medium text-primary mb-1">
                   Customer:
                 </span>
@@ -570,7 +601,7 @@ const ListServiceRequestRequests = () => {
                   <span className="text-red-700">{errors.customerID}</span>
                 )}
               </label>
-              <label className="block mb-1">
+              <label className="col-span-2 xl:col-span-1">
                 <span className="block font-medium text-primary mb-1">
                   Status:
                 </span>
@@ -581,8 +612,10 @@ const ListServiceRequestRequests = () => {
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                 >
                   <option value="">Select</option>
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
+                  <option value="Pending">Pending</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Cancelled">Cancelled</option>
                 </select>
                 {errors.status && (
                   <span className="text-red-700">{errors.status}</span>

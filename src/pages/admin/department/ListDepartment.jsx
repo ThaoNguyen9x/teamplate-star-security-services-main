@@ -14,6 +14,10 @@ const paginationComponentOptions = {
   selectAllRowsItemText: "All",
 };
 
+const phone_REGEX = /\(?([0-9]{3})\)?([ .-]?)([0-9]{3})\2([0-9]{4})/;
+const email_REGEX =
+  /^([a-zA-Z0-9_\-\.]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?)$/;
+
 const ListDepartment = () => {
   const [generalDepartments, setGeneralDepartments] = useState([]);
   const [positions, setPositions] = useState([]);
@@ -97,12 +101,12 @@ const ListDepartment = () => {
 
   const handleUpdate = useCallback(async () => {
     setLoading(true);
+
     try {
       const {
         id,
         name,
         generalDepartmentId,
-        departmentId,
         email,
         address,
         contactNumber,
@@ -110,12 +114,42 @@ const ListDepartment = () => {
       } = editItem;
 
       if (model === "generalDepartment") {
+        if (!name) {
+          toast.error("Please fill out all required fields.");
+          return;
+        }
+
         await DepartmentService.updateGeneralDepartment(id, name);
       } else if (model === "position") {
+        if (!name) {
+          toast.error("Please fill out all required fields.");
+          return;
+        }
+
         await DepartmentService.updatePosition(id, name);
       } else if (model === "department") {
+        if (!name || !generalDepartmentId) {
+          toast.error("Please fill out all required fields.");
+          return;
+        }
+
         await DepartmentService.updateDepartment(id, name, generalDepartmentId);
       } else if (model === "branch") {
+        if (!name || !email || !address || !contactNumber) {
+          toast.error("Please fill out all required fields.");
+          return;
+        }
+
+        if (!email_REGEX.test(email)) {
+          toast.error("Invalid email.");
+          return;
+        }
+
+        if (!phone_REGEX.test(contactNumber)) {
+          toast.error("Invalid contact number.");
+          return;
+        }
+
         await DepartmentService.updateBranch(
           id,
           name,
@@ -128,11 +162,7 @@ const ListDepartment = () => {
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      toast.error("Failed to update data.");
-      console.error(
-        "Update error:",
-        error.response ? error.response.data : error.message
-      );
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setEditItem({
@@ -177,18 +207,14 @@ const ListDepartment = () => {
         );
       } else if (model === "branch") {
         await DepartmentService.deleteBranch(currentId);
-        setBranches((prevBranches) =>
+        setBranchs((prevBranches) =>
           prevBranches.filter((d) => d.Id !== currentId)
         );
       }
       await fetchAllData();
       toast.success("Deleted successfully.");
     } catch (error) {
-      toast.error("Failed to delete data.");
-      console.error(
-        "Delete error:",
-        error.response ? error.response.data : error.message
-      );
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setRemove(false);
@@ -230,14 +256,12 @@ const ListDepartment = () => {
         ));
       };
 
-
       const getGeneralDepartmentName = (row) => {
         return (
           generalDepartments.find((c) => c.Id === row.GeneralDepartmentId)
             ?.Name || "N/A"
         );
       };
-
 
       return [
         {
@@ -295,70 +319,70 @@ const ListDepartment = () => {
           : []),
         ...(model === "branch"
           ? [
-            {
-              name: "Email",
-              selector: (row) => row.Email || "",
-              cell: (row) =>
-                editItem.id === row.Id && editItem.model === model ? (
-                  <input
-                    type="text"
-                    value={editItem.email}
-                    onChange={(e) =>
-                      setEditItem((prevState) => ({
-                        ...prevState,
-                        email: e.target.value,
-                      }))
-                    }
-                    className="border px-2 py-1 rounded-md outline-none"
-                  />
-                ) : (
-                  row.Email || ""
-                ),
-              sortable: true,
-            },
-            {
-              name: "Address",
-              selector: (row) => row.Address || "",
-              cell: (row) =>
-                editItem.id === row.Id && editItem.model === model ? (
-                  <input
-                    type="text"
-                    value={editItem.address}
-                    onChange={(e) =>
-                      setEditItem((prevState) => ({
-                        ...prevState,
-                        address: e.target.value,
-                      }))
-                    }
-                    className="border px-2 py-1 rounded-md outline-none"
-                  />
-                ) : (
-                  row.Address || ""
-                ),
-              sortable: true,
-            },
-            {
-              name: "Contact Number",
-              selector: (row) => row.ContactNumber || "",
-              cell: (row) =>
-                editItem.id === row.Id && editItem.model === model ? (
-                  <input
-                    type="text"
-                    value={editItem.contactNumber}
-                    onChange={(e) =>
-                      setEditItem((prevState) => ({
-                        ...prevState,
-                        contactNumber: e.target.value,
-                      }))
-                    }
-                    className="border px-2 py-1 rounded-md outline-none"
-                  />
-                ) : (
-                  row.ContactNumber || ""
-                ),
-              sortable: true,
-            },
-          ]
+              {
+                name: "Email",
+                selector: (row) => row.Email || "",
+                cell: (row) =>
+                  editItem.id === row.Id && editItem.model === model ? (
+                    <input
+                      type="text"
+                      value={editItem.email}
+                      onChange={(e) =>
+                        setEditItem((prevState) => ({
+                          ...prevState,
+                          email: e.target.value,
+                        }))
+                      }
+                      className="border px-2 py-1 rounded-md outline-none"
+                    />
+                  ) : (
+                    row.Email || ""
+                  ),
+                sortable: true,
+              },
+              {
+                name: "Address",
+                selector: (row) => row.Address || "",
+                cell: (row) =>
+                  editItem.id === row.Id && editItem.model === model ? (
+                    <input
+                      type="text"
+                      value={editItem.address}
+                      onChange={(e) =>
+                        setEditItem((prevState) => ({
+                          ...prevState,
+                          address: e.target.value,
+                        }))
+                      }
+                      className="border px-2 py-1 rounded-md outline-none"
+                    />
+                  ) : (
+                    row.Address || ""
+                  ),
+                sortable: true,
+              },
+              {
+                name: "Contact Number",
+                selector: (row) => row.ContactNumber || "",
+                cell: (row) =>
+                  editItem.id === row.Id && editItem.model === model ? (
+                    <input
+                      type="text"
+                      value={editItem.contactNumber}
+                      onChange={(e) =>
+                        setEditItem((prevState) => ({
+                          ...prevState,
+                          contactNumber: e.target.value,
+                        }))
+                      }
+                      className="border px-2 py-1 rounded-md outline-none"
+                    />
+                  ) : (
+                    row.ContactNumber || ""
+                  ),
+                sortable: true,
+              },
+            ]
           : []),
         {
           name: "Actions",
@@ -376,13 +400,13 @@ const ListDepartment = () => {
                     onClick={() =>
                       setEditItem({
                         id: "",
-                      name: "",
-                      generalDepartmentId: "",
-                      departmentId: "",
-                      email: "",
-                      address: "",
-                      contactNumber: "",
-                      model: "",
+                        name: "",
+                        generalDepartmentId: "",
+                        departmentId: "",
+                        email: "",
+                        address: "",
+                        contactNumber: "",
+                        model: "",
                       })
                     }
                     className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
@@ -467,12 +491,14 @@ const ListDepartment = () => {
                     type="text"
                     placeholder={`Search ${
                       model === "generalDepartment"
-                        ? "generalDepartments"
+                        ? "General Departments"
                         : model === "position"
-                        ? "positions"
-                        : model === "departments"
-                        ? "departments"
-                        : "branchs"
+                        ? "Positions"
+                        : model === "department"
+                        ? "Departments"
+                        : model === "branch"
+                        ? "Branchs"
+                        : ""
                     }`}
                     value={searchQuery[model]}
                     onChange={handleSearchChange(model)}

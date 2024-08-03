@@ -85,7 +85,19 @@ const ListInsurance = () => {
   );
 
   const handleUpdate = useCallback(async () => {
+    if (
+      !editItem.insuranceNumber ||
+      !editItem.issueDate ||
+      !editItem.issuePlace ||
+      !editItem.healthCheckPlace ||
+      !editItem.employeeId 
+    ) {
+      toast.error("Please fill out all required fields.");
+      return;
+    }
+
     setLoading(true);
+
     try {
       const {
         id,
@@ -106,8 +118,7 @@ const ListInsurance = () => {
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      console.error("Update error:", error);
-      toast.error("Failed to update data. Please try again.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setEditItem({
@@ -138,7 +149,7 @@ const ListInsurance = () => {
       await fetchAllData();
       handleCloseModal();
     } catch (error) {
-      toast.error("Failed to delete data.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setRemove(false);
@@ -282,7 +293,7 @@ const ListInsurance = () => {
       {
         name: "Actions",
         cell: (row) => (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 whitespace-nowrap">
             {editItem.id === row.Id && editItem.model === model ? (
               <>
                 <button
@@ -337,7 +348,7 @@ const ListInsurance = () => {
         ),
       },
     ],
-    [editItem, handleEditClick, handleUpdate, handleDeleteClick]
+    [editItem, handleEditClick, handleUpdate, handleDeleteClick, employees]
   );
 
   const handleSearchChange = (model) => (event) => {
@@ -368,12 +379,12 @@ const ListInsurance = () => {
 
     let newErrors = {};
 
-    if (!insuranceNumber) newErrors.insuranceNumber = "Name is required.";
-    if (!issueDate) newErrors.issueDate = "Issue date is required.";
-    if (!employeeId) newErrors.employeeId = "Employee is required.";
-    if (!issuePlace) newErrors.issuePlace = "Issue place is required.";
+    if (!insuranceNumber) newErrors.insuranceNumber = "Not Empty.";
+    if (!issueDate) newErrors.issueDate = "Not Empty.";
+    if (!employeeId) newErrors.employeeId = "Not Empty.";
+    if (!issuePlace) newErrors.issuePlace = "Not Empty.";
     if (!healthCheckPlace)
-      newErrors.healthCheckPlace = "Health check place is required.";
+      newErrors.healthCheckPlace = "Not Empty.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -394,11 +405,10 @@ const ListInsurance = () => {
       );
 
       handleCloseModal();
-      toast.success("Insurance created successfully.");
+      toast.success("Created successfully.");
       await fetchAllData();
     } catch (error) {
-      console.error("Create error:", error);
-      toast.error("Failed to create insurance.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -446,25 +456,18 @@ const ListInsurance = () => {
               customStyles={{
                 headCells: {
                   style: {
-                    fontSize: "16px",
-                    fontWeight: "700",
                     textTransform: "uppercase",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 cells: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 pagination: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
               }}

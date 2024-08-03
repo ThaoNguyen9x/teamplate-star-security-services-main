@@ -59,6 +59,7 @@ import ListSanction from "./pages/admin/welfare/ListSanction";
 import ListTrainingHistories from "./pages/admin/welfare/ListTrainingHistories";
 import ListOvertime from "./pages/admin/welfare/ListOvertime";
 import ScheduleInterview from "./pages/client/ScheduleInterview";
+import ListTestimonial from "./pages/admin/testimonial/ListTestimonial";
 
 // ScrollToTop Component
 const ScrollToTop = () => {
@@ -183,6 +184,7 @@ function App() {
           <Route path="sanction" element={<ListSanction />} />
           <Route path="training-histories" element={<ListTrainingHistories />} />
           <Route path="over-time" element={<ListOvertime />} />
+          <Route path="testimonial" element={<ListTestimonial />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

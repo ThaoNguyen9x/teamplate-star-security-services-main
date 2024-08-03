@@ -53,16 +53,33 @@ const ListService = () => {
     }
   };
 
-  const handleEditClick = useCallback((id, name, description, price) => {
-    setEditItem({ id, name, description, price, model: "service" });
-  }, []);
+  const handleEditClick = useCallback(
+    (id, name, description, price, isActive) => {
+      setEditItem({ id, name, description, price, isActive, model: "service" });
+    },
+    []
+  );
 
   const handleUpdate = useCallback(async () => {
+    if (
+      !editItem.name ||
+      !editItem.description ||
+      !editItem.price 
+    ) {
+      toast.error("Please fill out all required fields.");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { id, name, description, price } = editItem;
-      await ServicesService.updateService(id, name, description, price);
+      await ServicesService.updateService(
+        id,
+        name,
+        description,
+        price,
+      );
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
@@ -172,7 +189,7 @@ const ListService = () => {
       {
         name: "Actions",
         cell: (row) => (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 whitespace-nowrap">
             {editItem.id === row.id && editItem.model === model ? (
               <>
                 <button
@@ -188,6 +205,7 @@ const ListService = () => {
                       name: "",
                       description: "",
                       price: "",
+                      isActive: "",
                       model: "service",
                     })
                   }
@@ -204,7 +222,8 @@ const ListService = () => {
                       row.id,
                       row.name,
                       row.description,
-                      row.price
+                      row.price,
+                      row.isActive
                     )
                   }
                   className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
@@ -244,12 +263,12 @@ const ListService = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { serviceName, description, price } = values;
+    const { serviceName, description, price, isActive } = values;
     let newErrors = {};
 
-    if (!serviceName) newErrors.serviceName = "Name is required.";
-    if (!price) newErrors.price = "Price is required.";
-    if (!description) newErrors.description = "Description is required.";
+    if (!serviceName) newErrors.serviceName = "Mandatory.";
+    if (!price) newErrors.price = "Mandatory.";
+    if (!description) newErrors.description = "Mandatory.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -261,7 +280,12 @@ const ListService = () => {
     setLoading(true);
 
     try {
-      await ServicesService.createService(serviceName, description, price);
+      await ServicesService.createService(
+        serviceName,
+        description,
+        price,
+        isActive
+      );
       handleCloseModal();
       toast.success("Service created successfully.");
       await fetchAllData();
@@ -296,7 +320,7 @@ const ListService = () => {
         </div>
 
         <div className="grid p-5 bg-gray-100 rounded-md">
-          <div>
+          <div className="w-full overflow-x-scroll">
             <div className="flex items-center justify-end">
               <input
                 type="text"
@@ -318,25 +342,18 @@ const ListService = () => {
               customStyles={{
                 headCells: {
                   style: {
-                    fontSize: "16px",
-                    fontWeight: "700",
                     textTransform: "uppercase",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 cells: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 pagination: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
               }}

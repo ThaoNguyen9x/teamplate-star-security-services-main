@@ -113,8 +113,6 @@ const ListAccount = () => {
       setEditItem({ id: "", fullname: "", model: "account" });
     }
   }, [currentId]);
-  
-  
 
   const getEmployeeName = (row) => {
     return employees.find((c) => c.Id === row.employeeID)?.name;

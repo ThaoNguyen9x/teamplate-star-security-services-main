@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "react-toastify";
 import Loading from "../../../components/Loading";
 import Delete from "../../../components/admin/Delete";
@@ -30,11 +30,11 @@ const ListCashTransactions = () => {
   const [currentId, setCurrentId] = useState(null);
   const [editItem, setEditItem] = useState({
     id: "",
+    employeeID: "",
+    cashServiceID: "",
     amount: "",
     transactionDate: "",
     status: "",
-    employeeID: "",
-    cashServiceID: "",
     model: "cashTransaction",
   });
   const [searchQuery, setSearchQuery] = useState({ cashTransaction: "" });
@@ -66,14 +66,21 @@ const ListCashTransactions = () => {
   };
 
   const handleEditClick = useCallback(
-    (id, amount, transactionDate, status, employeeID, cashServiceID) => {
+    (
+      transactionID,
+      employeeID,
+      cashServiceID,
+      amount,
+      transactionDate,
+      status
+    ) => {
       setEditItem({
-        id,
+        id: transactionID,
+        employeeID,
+        cashServiceID,
         amount,
         transactionDate,
         status,
-        employeeID,
-        cashServiceID,
         model: "cashTransaction",
       });
     },
@@ -81,7 +88,19 @@ const ListCashTransactions = () => {
   );
 
   const handleUpdate = useCallback(async () => {
+    if (
+      !editItem.amount ||
+      !editItem.transactionDate ||
+      !editItem.status ||
+      !editItem.employeeID ||
+      !editItem.cashServiceID
+    ) {
+      toast.error("Please fill out all required fields.");
+      return;
+    }
+
     setLoading(true);
+
     try {
       const { id, amount, transactionDate, status, employeeID, cashServiceID } =
         editItem;
@@ -96,8 +115,7 @@ const ListCashTransactions = () => {
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      console.error("Update error:", error);
-      toast.error("Failed to update data. Please try again.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setEditItem({
@@ -130,7 +148,7 @@ const ListCashTransactions = () => {
       await fetchAllData();
       handleCloseModal();
     } catch (error) {
-      toast.error("Failed to delete data.");
+      toast.error("Failed to delete.");
     } finally {
       setLoading(false);
       setRemove(false);
@@ -151,15 +169,15 @@ const ListCashTransactions = () => {
 
   const getCashServicesOptions = () => {
     return cashServices.map((c) => (
-      <option key={c.serviceRequestID} value={c.serviceRequestID}>
+      <option key={c.cashServiceID} value={c.cashServiceID}>
         {c.name}
       </option>
     ));
   };
 
-  const getServiceRequestName = (row) => {
+  const getCashServiceName = (row) => {
     return (
-      cashServices.find((c) => c.id === row.serviceRequestId)?.name || "N/A"
+      cashServices.find((c) => c.id === row.cashServiceID)?.name || "N/A"
     );
   };
 
@@ -171,39 +189,19 @@ const ListCashTransactions = () => {
     return `${year}-${month}-${day}`;
   };
 
-  const renderColumns = useCallback(
-    (model) => [
+  const columns = useMemo(
+    () => [
       {
         name: "#",
         selector: (row, index) => index + 1,
         sortable: true,
       },
       {
-        name: "Name",
-        selector: (row) => row.name || "",
-        cell: (row) =>
-          editItem.id === row.scheduleID && editItem.model === model ? (
-            <input
-              type="text"
-              value={editItem.name}
-              onChange={(e) =>
-                setEditItem((prevState) => ({
-                  ...prevState,
-                  name: e.target.value,
-                }))
-              }
-              className="border px-2 py-1 rounded-md outline-none"
-            />
-          ) : (
-            row.name || ""
-          ),
-        sortable: true,
-      },
-      {
         name: "Employee",
         selector: (row) => getEmployeeName(row.employeeID),
         cell: (row) =>
-          editItem.id === row.scheduleID && editItem.model === model ? (
+          editItem.id === row.transactionID &&
+          editItem.model === "cashTransaction" ? (
             <select
               value={editItem.employeeID}
               onChange={(e) =>
@@ -223,16 +221,17 @@ const ListCashTransactions = () => {
         sortable: true,
       },
       {
-        name: "Service Request",
-        selector: (row) => getServiceRequestName(row),
+        name: "Cash Service",
+        selector: (row) => getCashServiceName(row.cashServiceID),
         cell: (row) =>
-          editItem.id === row.scheduleID && editItem.model === model ? (
+          editItem.id === row.transactionID &&
+          editItem.model === "cashTransaction" ? (
             <select
-              value={editItem.serviceRequestID}
+              value={editItem.cashServiceID}
               onChange={(e) =>
                 setEditItem((prevState) => ({
                   ...prevState,
-                  serviceRequestID: e.target.value,
+                  cashServiceID: e.target.value,
                 }))
               }
               className="border px-3 py-2 rounded-md"
@@ -241,57 +240,85 @@ const ListCashTransactions = () => {
               {getCashServicesOptions()}
             </select>
           ) : (
-            getServiceRequestName(row)
+            getCashServiceName(row.cashServiceID)
           ),
         sortable: true,
       },
       {
-        name: "Location",
-        selector: (row) => row.location || "",
+        name: "Amount",
+        selector: (row) => row.amount || "",
         cell: (row) =>
-          editItem.id === row.scheduleID && editItem.model === model ? (
+          editItem.id === row.transactionID &&
+          editItem.model === "cashTransaction" ? (
             <input
               type="text"
-              value={editItem.location}
+              value={editItem.amount}
               onChange={(e) =>
                 setEditItem((prevState) => ({
                   ...prevState,
-                  location: e.target.value,
+                  amount: e.target.value,
                 }))
               }
               className="border px-2 py-1 rounded-md outline-none"
             />
           ) : (
-            row.location || ""
+            row.amount || ""
           ),
         sortable: true,
       },
       {
-        name: "Scheduled Date",
-        selector: (row) => formatDate(row.scheduledDate) || "",
+        name: "Transaction Date",
+        selector: (row) => formatDate(row.transactionDate) || "",
         cell: (row) =>
-          editItem.id === row.scheduleID && editItem.model === model ? (
+          editItem.id === row.transactionID &&
+          editItem.model === "cashTransaction" ? (
             <input
               type="date"
-              value={formatDate(editItem.scheduledDate)}
+              value={formatDate(editItem.transactionDate)}
               onChange={(e) =>
                 setEditItem((prevState) => ({
                   ...prevState,
-                  scheduledDate: e.target.value,
+                  transactionDate: e.target.value,
                 }))
               }
               className="border px-2 py-1 rounded-md outline-none"
             />
           ) : (
-            formatDate(row.scheduledDate) || ""
+            formatDate(row.transactionDate) || ""
+          ),
+        sortable: true,
+      },
+      {
+        name: "Status",
+        selector: (row) => row.status || "",
+        cell: (row) =>
+          editItem.id === row.transactionID &&
+          editItem.model === "cashTransaction" ? (
+            <select
+              value={editItem.status}
+              onChange={(e) =>
+                setEditItem((prevState) => ({
+                  ...prevState,
+                  status: e.target.value,
+                }))
+              }
+              className="border px-2 py-1 rounded-md outline-none"
+            >
+              <option value="">Select</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          ) : (
+            row.status || ""
           ),
         sortable: true,
       },
       {
         name: "Actions",
         cell: (row) => (
-          <div className="flex items-center gap-2">
-            {editItem.id === row.scheduleID && editItem.model === model ? (
+          <div className="flex items-center gap-2 whitespace-nowrap">
+            {editItem.id === row.transactionID &&
+            editItem.model === "cashTransaction" ? (
               <>
                 <button
                   onClick={handleUpdate}
@@ -303,11 +330,11 @@ const ListCashTransactions = () => {
                   onClick={() =>
                     setEditItem({
                       id: "",
-                      name: "",
                       employeeID: "",
-                      serviceRequestID: "",
-                      scheduledDate: "",
-                      location: "",
+                      cashServiceID: "",
+                      amount: "",
+                      transactionDate: "",
+                      status: "",
                       model: "cashTransaction",
                     })
                   }
@@ -321,12 +348,12 @@ const ListCashTransactions = () => {
                 <button
                   onClick={() =>
                     handleEditClick(
-                      row.scheduleID,
-                      row.name,
-                      row.serviceRequestID,
+                      row.transactionID,
                       row.employeeID,
-                      row.scheduledDate,
-                      row.location
+                      row.cashServiceID,
+                      row.amount,
+                      row.transactionDate,
+                      row.status
                     )
                   }
                   className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
@@ -334,7 +361,9 @@ const ListCashTransactions = () => {
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDeleteClick(row.scheduleID, model)}
+                  onClick={() =>
+                    handleDeleteClick(row.transactionID, "cashTransaction")
+                  }
                   className="px-3 py-2 border border-red-700 text-red-700 rounded-md"
                 >
                   Delete
@@ -345,7 +374,7 @@ const ListCashTransactions = () => {
         ),
       },
     ],
-    [editItem, handleEditClick, handleUpdate, handleDeleteClick]
+    [editItem, handleEditClick, handleUpdate, handleDeleteClick, employees]
   );
 
   const handleSearchChange = (model) => (event) => {
@@ -376,12 +405,11 @@ const ListCashTransactions = () => {
       values;
 
     let newErrors = {};
-
-    if (!amount) newErrors.amount = "Name is required.";
-    if (!transactionDate) newErrors.transactionDate = "Issue date is required.";
-    if (!status) newErrors.status = "Employee is required.";
-    if (!employeeID) newErrors.employeeID = "Employee is required.";
-    if (!cashServiceID) newErrors.cashServiceID = "Issue place is required.";
+    if (!amount) newErrors.amount = "Mandatory.";
+    if (!transactionDate) newErrors.transactionDate = "Mandatory.";
+    if (!status) newErrors.status = "Mandatory.";
+    if (!employeeID) newErrors.employeeID = "Mandatory.";
+    if (!cashServiceID) newErrors.cashServiceID = "Mandatory.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -389,24 +417,24 @@ const ListCashTransactions = () => {
       return;
     }
 
+    const payload = {
+      amount: parseFloat(amount),
+      transactionDate: new Date(transactionDate).toISOString(),
+      status: status,
+      employeeID: parseInt(employeeID, 10),
+      cashServiceID: cashServiceID,
+    };
+
     setErrors({});
     setLoading(true);
 
     try {
-      await ServicesService.createCashTransaction(
-        amount,
-        transactionDate,
-        status,
-        employeeID,
-        cashServiceID
-      );
-
-      handleCloseModal();
-      toast.success("Created successfully.");
+      await ServicesService.createCashTransaction(payload);
       await fetchAllData();
+      toast.success("Created successfully.");
+      handleCloseModal();
     } catch (error) {
-      console.error("Create error:", error);
-      toast.error("Failed to create sanction.");
+      toast.error("Failed to create cash transaction.");
     } finally {
       setLoading(false);
     }
@@ -438,47 +466,35 @@ const ListCashTransactions = () => {
         </div>
 
         <div className="grid p-5 bg-gray-100 rounded-md">
-          <div>
+          <div className="w-full overflow-x-scroll">
             <div className="flex items-center justify-end">
               <input
                 type="text"
-                placeholder="Search cashTransaction"
+                placeholder="Search cash transaction"
                 value={searchQuery.cashTransaction}
                 onChange={handleSearchChange("cashTransaction")}
                 className="border border-gray-300 px-3 py-2 rounded-md outline-none mb-3"
               />
             </div>
             <DataTable
-              columns={renderColumns("cashTransaction")}
-              data={cashTransactions.filter((c) =>
-                c.name
-                  ?.toLowerCase()
-                  .includes(searchQuery.cashTransaction.toLowerCase())
-              )}
+              columns={columns}
+              data={cashTransactions}
               pagination
               paginationComponentOptions={paginationComponentOptions}
               customStyles={{
                 headCells: {
                   style: {
-                    fontSize: "16px",
-                    fontWeight: "700",
-                    textTransform: "uppercase",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 cells: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
                 pagination: {
                   style: {
-                    fontSize: "14px",
                     background: "#f3f4f6",
-                    padding: "12px 24px",
                   },
                 },
               }}
@@ -514,7 +530,10 @@ const ListCashTransactions = () => {
                 >
                   <option value="">Select</option>
                   {cashServices.map((cashService) => (
-                    <option key={cashService.id} value={cashService.id}>
+                    <option
+                      key={cashService.cashServiceID}
+                      value={cashService.cashServiceID}
+                    >
                       {cashService.name}
                     </option>
                   ))}

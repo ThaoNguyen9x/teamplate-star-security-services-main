@@ -1,81 +1,124 @@
 import axios from "./axios";
 
-const getAll = async () => {
+const getAllTestimonials = async () => {
   try {
-    let response = await axios.get("/testimonial");
+    let response = await axios.get("/testimonial/all");
     return response.data;
   } catch (error) {
-    console.log(error);
     throw error.response?.data || error.message;
   }
 };
 
-const createTestimonial = async (clientId, star, desc) => {
+const createTestimonial = async (customerId, star, desc) => {
   try {
     const response = await axios.post(
-      'http://localhost:5216/api/Testimonial',
-      {
-        clientId,
-        star,
-        desc
-      },
+      "/testimonial/add",
+      { customerId, star, desc },
       {
         headers: {
-          'Content-Type': 'application/json'
-        }
+          "Content-Type": "application/json",
+        },
       }
     );
+
+    if (!response.data.flag) {
+      throw new Error(response.data.message || "An unknown error occurred");
+    }
+
     return response.data;
   } catch (error) {
-    throw error.response?.data || error.message;
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "An unknown error occurred";
+    throw {
+      flag: false,
+      message: errorMessage,
+    };
   }
 };
 
-
-const getById = async (id) => {
+const getByIdTestimonial = async (id) => {
   try {
-    const response = await axios.get(`/testimonial/${id}`);
-    return response.data.data;
+    const response = await axios.get(`/testimonial/single/${id}`);
+
+    if (!response.data.flag) {
+      throw new Error(response.data.message || "An unknown error occurred");
+    }
+
+    return response.data;
   } catch (error) {
-    throw error.response?.data || error.message;
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "An unknown error occurred";
+    throw {
+      flag: false,
+      message: errorMessage,
+    };
   }
 };
 
 const updateTestimonial = async (id, star, desc) => {
   try {
-    const response = await axios.put(
-      `/testimonial/${id}`,
+    const response = await axios.post(
+      `/testimonial/update`,
       {
+        id,
         star,
         desc,
       },
       {
         headers: {
-          "Content-Type": "multipart/form-data",
+          "Content-Type": "application/json",
         },
       }
     );
+
+    if (!response.data.flag) {
+      throw new Error(response.data.message || "An unknown error occurred");
+    }
+
     return response.data;
   } catch (error) {
-    throw error.response?.data || error.message;
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "An unknown error occurred";
+    throw {
+      flag: false,
+      message: errorMessage,
+    };
   }
 };
 
 const deleteTestimonial = async (id) => {
   try {
-    const response = await axios.delete(`/testimonial/${id}`, {
+    const response = await axios.delete(`/testimonial/delete/${id}`, {
       id,
     });
+
+    if (!response.data.flag) {
+      throw new Error(response.data.message || "An unknown error occurred");
+    }
+
     return response.data;
   } catch (error) {
-    throw error.response?.data || error.message;
+    const errorMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "An unknown error occurred";
+    throw {
+      flag: false,
+      message: errorMessage,
+    };
   }
 };
 
 const TestimonialService = {
-  getAll,
+  getAllTestimonials,
   createTestimonial,
-  getById,
+  getByIdTestimonial,
   updateTestimonial,
   deleteTestimonial,
 };

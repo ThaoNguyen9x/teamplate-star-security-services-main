@@ -16,7 +16,6 @@ const paginationComponentOptions = {
 const ListJob = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [pending, setPending] = useState(true);
   const [remove, setRemove] = useState(false);
   const [currentpositionID, setCurrentpositionID] = useState(null);
   const [editItem, setEditItem] = useState({
@@ -43,12 +42,6 @@ const ListJob = () => {
 
   useEffect(() => {
     fetchAllData();
-    // Set timeout for pending state
-    const timer = setTimeout(() => {
-      setPending(false);
-    }, 3000); // Set the timeout duration as needed
-
-    return () => clearTimeout(timer); // Cleanup the timer
   }, []);
 
   const fetchAllData = async () => {
@@ -86,6 +79,17 @@ const ListJob = () => {
   );
 
   const handleUpdate = useCallback(async () => {
+    if (
+      !editItem.jobRequirements ||
+      !editItem.jobDescription ||
+      !editItem.applicationDeadline || 
+      !editItem.positionName || 
+      !editItem.status
+    ) {
+      toast.error("Please fill out all required fields.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -109,12 +113,7 @@ const ListJob = () => {
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "An unknown error occurred";
-      toast.error(errorMessage);
-      throw error;
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setEditItem({
@@ -144,7 +143,7 @@ const ListJob = () => {
       );
       toast.success("Deleted successfully.");
     } catch (error) {
-      toast.error("Failed to delete data.");
+      toast.error("Failed to delete.");
       console.error("Delete error:", error.message);
     } finally {
       setLoading(false);
@@ -385,17 +384,23 @@ const ListJob = () => {
     let newErrors = {};
 
     if (!jobRequirements)
-      newErrors.jobRequirements = "Job Requirements is required.";
+      newErrors.jobRequirements = "Mandatory.";
     if (!jobDescription)
-      newErrors.jobDescription = "Job Description is required.";
+      newErrors.jobDescription = "Mandatory.";
     if (!applicationDeadline)
-      newErrors.applicationDeadline = "Application Deadline is required.";
-    if (!positionName) newErrors.positionName = "Position Name is required.";
-    if (!status) newErrors.status = "Status is required.";
+      newErrors.applicationDeadline = "Mandatory.";
+    if (!positionName) newErrors.positionName = "Mandatory.";
+    if (!status) newErrors.status = "Mandatory.";
 
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setTimeout(() => setErrors({}), 5000);
+      return;
+    }
+
+    setErrors({});
     setLoading(true);
 
-    setLoading(true);
     try {
       await JobService.createJob(
         jobRequirements,
@@ -405,10 +410,10 @@ const ListJob = () => {
         status
       );
       await fetchAllData();
-      toast.success("Job created successfully.");
+      toast.success("Created successfully.");
       handleCloseModal();
     } catch (error) {
-      toast.error("Failed to create job.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -449,11 +454,10 @@ const ListJob = () => {
               )}
               pagination
               paginationComponentOptions={paginationComponentOptions}
-              progressPending={pending}
               customStyles={{
                 headCells: {
                   style: {
-                    textTransform: "capitalize",
+                    textTransform: "uppercase",
                     background: "#f3f4f6",
                   },
                 },
@@ -485,8 +489,8 @@ const ListJob = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
           <div className="bg-white p-4 rounded-lg w-full max-w-md">
             <h3 className="text-xl font-bold mb-4 text-center">Create Job</h3>
-            <form onSubmit={handleSubmit}>
-              <label className="block">
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 xl:grid-cols-2 gap-2">
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
                   Name:
                 </span>
@@ -499,12 +503,12 @@ const ListJob = () => {
                   className="block w-full border border-gray-300 rounded-md px-3 py-2 outline-none"
                 />
                 {errors.positionName && (
-                  <span className="text-red-600 text-sm">
+                  <span className="text-red-700">
                     {errors.positionName}
                   </span>
                 )}
               </label>
-              <label className="block">
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
                   Job Requirements:
                 </span>
@@ -519,7 +523,7 @@ const ListJob = () => {
                   <span className="text-red-700">{errors.jobRequirements}</span>
                 )}
               </label>
-              <label className="block">
+              <label className="col-span-2">
                 <span className="block font-medium text-primary mb-1">
                   Job Description:
                 </span>
@@ -534,7 +538,7 @@ const ListJob = () => {
                   <span className="text-red-700">{errors.jobDescription}</span>
                 )}
               </label>
-              <label className="block">
+              <label className="col-span-2 xl:col-span-1">
                 <span className="block font-medium text-primary mb-1">
                   Application Deadline:
                 </span>
@@ -544,7 +548,7 @@ const ListJob = () => {
                   name="applicationDeadline"
                   value={values.applicationDeadline}
                   onChange={handleChangeInput}
-                  className="block w-full border border-gray-300 rounded-md px-3 py-2 outline-none"
+                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                 />
                 {errors.applicationDeadline && (
                   <span className="text-red-600 text-sm">
@@ -552,7 +556,7 @@ const ListJob = () => {
                   </span>
                 )}
               </label>
-              <label className="block mb-1">
+              <label className="col-span-2 xl:col-span-1">
                 <span className="block font-medium text-primary mb-1">
                   Status:
                 </span>

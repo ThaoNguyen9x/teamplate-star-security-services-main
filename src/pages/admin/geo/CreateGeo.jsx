@@ -58,14 +58,14 @@ const CreateGeo = () => {
     let newErrors = {};
 
     if (showModal === "country") {
-      if (!name) newErrors.name = "Country name is required.";
+      if (!name) newErrors.name = "Not Empty.";
     } else if (showModal === "province") {
-      if (!nameCity) newErrors.nameCity = "Province name is required.";
-      if (!type) newErrors.type = "Type is required.";
-      if (!countryId) newErrors.countryId = "Country is required.";
+      if (!nameCity) newErrors.nameCity = "Not Empty.";
+      if (!type) newErrors.type = "Not Empty.";
+      if (!countryId) newErrors.countryId = "Not Empty.";
     } else if (showModal === "district") {
-      if (!nameDistrict) newErrors.nameDistrict = "District name is required.";
-      if (!provinceId) newErrors.provinceId = "Province is required.";
+      if (!nameDistrict) newErrors.nameDistrict = "Not Empty.";
+      if (!provinceId) newErrors.provinceId = "Not Empty.";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -80,14 +80,14 @@ const CreateGeo = () => {
     try {
       if (showModal === "country") {
         await GeoService.createCountry(name);
-        toast.success("Country created successfully.");
       } else if (showModal === "province") {
         await GeoService.createProvince(nameCity, type, countryId);
-        toast.success("Province created successfully.");
       } else if (showModal === "district") {
         await GeoService.createDistrict(nameDistrict, type, provinceId);
-        toast.success("District created successfully.");
       }
+
+      toast.success("Created successfully.");
+
       setValues({
         value: "",
       });
