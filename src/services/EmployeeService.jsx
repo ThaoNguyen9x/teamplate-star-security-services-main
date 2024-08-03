@@ -35,10 +35,10 @@ const createEmployee = async (
   JobName,
   Address,
   PhoneNumber,
-  BranchId,
-  PositionId,
   Other,
   EducationId,
+  PositionId,
+  BranchId,
   CountryId,
   ProvinceId,
   DistrictId,
@@ -49,7 +49,7 @@ const createEmployee = async (
 ) => {
   try {
     const response = await axios.post(
-      `/employee/api/insert`,
+      `/Employee/api/insert`,
       {
         Name,
         CivilId,
@@ -59,10 +59,10 @@ const createEmployee = async (
         JobName,
         Address,
         PhoneNumber,
-        PositionId,
-        BranchId,
         Other,
         EducationId,
+        PositionId,
+        BranchId,
         CountryId,
         ProvinceId,
         DistrictId,
@@ -101,7 +101,7 @@ const getById = async (id) => {
 };
 
 const updateEmployee = async (
-  id,
+  Id,
   Name,
   CivilId,
   Gender,
@@ -110,23 +110,23 @@ const updateEmployee = async (
   JobName,
   Address,
   PhoneNumber,
-  BranchId,
   Other,
   EducationId,
+  PositionId,
+  BranchId,
   CountryId,
   ProvinceId,
   DistrictId,
   IsDirector,
   IsHeadOfDepartment,
   ManagerId,
-  PositionId,
   file
 ) => {
   try {
     const response = await axios.post(
       `/employee/upload`,
       {
-        id,
+        Id,
         Name,
         CivilId,
         Gender,
@@ -135,16 +135,16 @@ const updateEmployee = async (
         JobName,
         Address,
         PhoneNumber,
-        BranchId,
         Other,
         EducationId,
+        PositionId,
+        BranchId,
         CountryId,
         ProvinceId,
         DistrictId,
         IsDirector,
         IsHeadOfDepartment,
         ManagerId,
-        PositionId,
         file,
       },
       {
@@ -172,7 +172,7 @@ const updateEmployee = async (
 
 const deleteEmployee = async (id) => {
   try {
-    const response = await axios.delete(`/employee/${id}`, {
+    const response = await axios.delete(`/employee/delete/${id}`, {
       id,
     });
     return response.data;

@@ -8,6 +8,7 @@ import CustomerService from "../../../services/CustomerService";
 import Select from "react-select";
 import EmployeeService from "../../../services/EmployeeService";
 import axios from "axios";
+import ServicesService from "../../../services/ServicesService";
 
 const paginationComponentOptions = {
   rowsPerPageText: "Rows per page",
@@ -22,14 +23,18 @@ const Email_REGEX =
 
 const ListCustomer = () => {
   const [values, setValues] = useState({
-    CustomerName: "",
+    Name: "",
     Email: "",
     Phone: "",
     file: null,
-    EmployeeSupports: [],
+    EmployeeIds: [],
+    ServiceIds: [],
+    CashServiceId: "",
+    ServiceId: "",
   });
   const [customers, setCustomers] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [services, setServices] = useState([]);
   const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [remove, setRemove] = useState(false);
@@ -39,6 +44,10 @@ const ListCustomer = () => {
     CustomerName: "",
     Phone: "",
     file: "",
+    EmployeeIds: [],
+    ServiceIds: [],
+    CashServiceId: "",
+    ServiceId: "",
     model: "customer",
   });
   const [searchQuery, setSearchQuery] = useState({ customer: "" });
@@ -52,13 +61,15 @@ const ListCustomer = () => {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const [customersData, employeesData] = await Promise.all([
+      const [customersData, employeesData, servicesData] = await Promise.all([
         CustomerService.getAllCustomers(),
         EmployeeService.getAllEmployees(),
+        ServicesService.getAllServices(),
       ]);
 
       setCustomers(customersData || []);
       setEmployees(employeesData || []);
+      setServices(servicesData || []);
     } catch (error) {
       toast.error("Failed to fetch data.");
     } finally {
@@ -123,7 +134,7 @@ const ListCustomer = () => {
     setLoading(true);
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/customers/send-mail/${customerID}`,
+        `http://localhost:5000/api/customers/send-mail/${customerID}`
       );
       toast.success("Mail sent successfully.");
     } catch (error) {
@@ -303,15 +314,15 @@ const ListCustomer = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { CustomerName, Email, Phone, file, EmployeeSupports } = values;
+    const { Name, Email, Phone, file, EmployeeIds, CashServiceId, ServiceId } = values;
 
     let newErrors = {};
 
-    if (!CustomerName) newErrors.CustomerName = "Full name is required.";
+    if (!Name) newErrors.Name = "Full name is required.";
     if (!Phone) newErrors.Phone = "Phone is required.";
     if (!file) newErrors.file = "Image is required.";
-    if (!EmployeeSupports)
-      newErrors.EmployeeSupports = "Employee Supports is required.";
+    if (!EmployeeIds)
+      newErrors.EmployeeIds = "Employee Supports is required.";
 
     if (!Email) newErrors.Email = "Email is required.";
     else if (!Email_REGEX.test(Email))
@@ -328,11 +339,13 @@ const ListCustomer = () => {
 
     try {
       await CustomerService.createCustomer(
-        CustomerName,
+        Name,
         Email,
         Phone,
         file,
-        EmployeeSupports.map((emp) => emp.value)
+        EmployeeIds.map((emp) => emp.value),
+        CashServiceId,
+        ServiceId
       );
       handleCloseModal();
       toast.success("Customer created successfully.");
@@ -359,10 +372,22 @@ const ListCustomer = () => {
     label: emp.name,
   }));
 
-  const handleSelectChange = (selectedOptions) => {
+  const servicesOptions = services.map((emp) => ({
+    value: emp.id,
+    label: emp.name,
+  }));
+
+  const handleSelectChangeEmployee = (selectedOptions) => {
     setValues((prevValues) => ({
       ...prevValues,
-      EmployeeSupports: selectedOptions,
+      EmployeeIds: selectedOptions,
+    }));
+  };
+
+  const handleSelectChangeService = (selectedOptions) => {
+    setValues((prevValues) => ({
+      ...prevValues,
+      ServiceIds: selectedOptions,
     }));
   };
 
@@ -452,12 +477,12 @@ const ListCustomer = () => {
                   type="text"
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                   placeholder="Enter name"
-                  name="CustomerName"
-                  value={values.CustomerName}
+                  name="Name"
+                  value={values.Name}
                   onChange={handleChangeInput}
                 />
-                {errors.CustomerName && (
-                  <span className="text-red-700">{errors.CustomerName}</span>
+                {errors.Name && (
+                  <span className="text-red-700">{errors.Name}</span>
                 )}
               </label>
               <label className="block mb-1">
@@ -525,7 +550,7 @@ const ListCustomer = () => {
                   options={employeeOptions}
                   isMulti
                   value={values.EmployeeSupports}
-                  onChange={handleSelectChange}
+                  onChange={handleSelectChangeEmployee}
                   getOptionLabel={(option) => option.label}
                   getOptionValue={(option) => option.value}
                   className="basic-multi-select"
@@ -533,6 +558,24 @@ const ListCustomer = () => {
                 />
                 {errors.EmployeeIds && (
                   <span className="text-red-700">{errors.EmployeeIds}</span>
+                )}
+              </label>
+              <label className="block mb-1">
+                <span className="block font-medium text-primary mb-1">
+                  Services:
+                </span>
+                <Select
+                  options={servicesOptions}
+                  isMulti
+                  value={values.ServiceIds}
+                  onChange={handleSelectChangeService}
+                  getOptionLabel={(option) => option.label}
+                  getOptionValue={(option) => option.value}
+                  className="basic-multi-select"
+                  classNamePrefix="select"
+                />
+                {errors.ServiceIds && (
+                  <span className="text-red-700">{errors.ServiceIds}</span>
                 )}
               </label>
               <div className="flex items-center gap-2 mt-4">

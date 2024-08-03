@@ -56,7 +56,7 @@ const ListServiceRequestRequests = () => {
         ]);
 
       setServiceRequests(serviceRequestsData || []);
-      setCustomers(customersData.data || []);
+      setCustomers(customersData || []);
       setServiceTypes(serviceTypesData || []);
     } catch (error) {
       toast.error("Failed to fetch data.");

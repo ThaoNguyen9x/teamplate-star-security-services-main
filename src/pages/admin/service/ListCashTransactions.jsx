@@ -16,11 +16,11 @@ const paginationComponentOptions = {
 
 const ListCashTransactions = () => {
   const [values, setValues] = useState({
+    cashServiceID: "",
+    employeeID: "",
     amount: "",
     transactionDate: "",
     status: "",
-    employeeID: "",
-    cashServiceID: "",
   });
   const [cashTransaction, setCashTransactions] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -30,11 +30,11 @@ const ListCashTransactions = () => {
   const [currentId, setCurrentId] = useState(null);
   const [editItem, setEditItem] = useState({
     id: "",
+    cashServiceID: "",
+    employeeID: "",
     amount: "",
     transactionDate: "",
     status: "",
-    employeeID: "",
-    cashServiceID: "",
     model: "cashTransaction",
   });
   const [searchQuery, setSearchQuery] = useState({ cashTransaction: "" });
@@ -47,15 +47,13 @@ const ListCashTransactions = () => {
 
   const fetchAllData = async () => {
     setLoading(true);
-
     try {
-      const [cashTransactionsData, cashServicesData, employeesData] =
-        await Promise.all([
-          ServicesService.getAllCashTransactions(),
-          ServicesService.getAllCashServicess(),
-          EmployeeService.getAllEmployees(),
-        ]);
-
+      const [cashTransactionsData, cashServicesData, employeesData] = await Promise.all([
+        ServicesService.getAllCashTransactions(),
+        ServicesService.getAllCashServicess(),
+        EmployeeService.getAllEmployees(),
+      ]);
+  
       setCashTransactions(cashTransactionsData || []);
       setCashServices(cashServicesData || []);
       setEmployees(employeesData || []);
@@ -375,16 +373,16 @@ const ListCashTransactions = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { name, serviceRequestID, employeeID, scheduledDate, location } =
+    const { cashServiceID, employeeID, amount, transactionDate, status } =
       values;
     let newErrors = {};
 
-    if (!name) newErrors.name = "Name is required.";
-    if (!serviceRequestID)
-      newErrors.serviceRequestID = "Service request is required.";
+    if (!cashServiceID)
+      newErrors.cashServiceID = "Service request is required.";
     if (!employeeID) newErrors.employeeID = "Employee is required.";
-    if (!scheduledDate) newErrors.scheduledDate = "Scheduled date is required.";
-    if (!location) newErrors.location = "Location is required.";
+    if (!amount) newErrors.amount = "Scheduled date is required.";
+    if (!transactionDate) newErrors.transactionDate = "Location is required.";
+    if (!status) newErrors.status = "Location is required.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -397,15 +395,15 @@ const ListCashTransactions = () => {
 
     try {
       await ServicesService.createCashTransaction(
-        name,
-        serviceRequestID,
+        cashServiceID,
         employeeID,
-        scheduledDate,
-        location
+        amount,
+        transactionDate,
+        status
       );
-      handleCloseModal();
-      toast.success("CashTransaction created successfully.");
       await fetchAllData();
+      toast.success("CashTransaction created successfully.");
+      handleCloseModal();
     } catch (error) {
       toast.error("Failed to create cashTransaction.");
     } finally {
@@ -496,51 +494,33 @@ const ListCashTransactions = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75 z-50">
           <div className="bg-white p-4 rounded-lg w-full max-w-md">
             <h2 className="text-xl font-semibold mb-5">
-              Create Service Schedule
+              Create Cash Transactions
             </h2>
             <form onSubmit={handleSubmit}>
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
-                  Name:
-                </span>
-                <input
-                  type="text"
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                  placeholder="Enter name"
-                  name="name"
-                  value={values.name}
-                  onChange={handleChangeInput}
-                />
-                {errors.name && (
-                  <span className="text-red-700">{errors.name}</span>
-                )}
-              </label>
-              {/* <label className="block mb-1">
-                <span className="block font-medium text-primary mb-1">
-                  Service Request:
+                  Cash Service:
                 </span>
                 <select
-                  name="serviceRequestID"
-                  value={values.serviceRequestID}
+                  name="cashServiceID"
+                  value={values.cashServiceID}
                   onChange={handleChangeInput}
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                 >
                   <option value="">Select</option>
-                  {serviceRequests.map((serviceRequest) => (
+                  {cashServices.map((cashService) => (
                     <option
-                      key={serviceRequest.serviceRequestID}
-                      value={serviceRequest.serviceRequestID}
+                      key={cashService.cashServiceID}
+                      value={cashService.cashServiceID}
                     >
-                      {serviceRequest.name}
+                      {cashService.name}
                     </option>
                   ))}
                 </select>
-                {errors.serviceRequestID && (
-                  <span className="text-red-700">
-                    {errors.serviceRequestID}
-                  </span>
+                {errors.cashServiceID && (
+                  <span className="text-red-700">{errors.cashServiceID}</span>
                 )}
-              </label> */}
+              </label>
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
                   Employee:
@@ -564,33 +544,52 @@ const ListCashTransactions = () => {
               </label>
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
-                  Location:
+                  Amount:
                 </span>
-                <textarea
-                  name="location"
-                  value={values.location}
+                <input
+                  type="text"
+                  placeholder="Enter name"
+                  name="amount"
+                  value={values.amount}
                   onChange={handleChangeInput}
-                  placeholder="Enter location"
-                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
-                ></textarea>
-                {errors.location && (
-                  <span className="text-red-700">{errors.location}</span>
+                  className="block w-full border border-gray-300 rounded-md px-3 py-2 outline-none"
+                />
+                {errors.amount && (
+                  <span className="text-red-700">{errors.amount}</span>
                 )}
               </label>
               <label className="block mb-1">
                 <span className="block font-medium text-primary mb-1">
-                  Scheduled Date:
+                  Transaction Date:
                 </span>
                 <input
                   type="date"
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                   placeholder="Enter Phone"
-                  name="scheduledDate"
-                  value={values.scheduledDate}
+                  name="transactionDate"
+                  value={values.transactionDate}
                   onChange={handleChangeInput}
                 />
-                {errors.scheduledDate && (
-                  <span className="text-red-700">{errors.scheduledDate}</span>
+                {errors.transactionDate && (
+                  <span className="text-red-700">{errors.transactionDate}</span>
+                )}
+              </label>
+              <label className="block mb-1">
+                <span className="block font-medium text-primary mb-1">
+                  Status:
+                </span>
+                <select
+                  name="status"
+                  value={values.status}
+                  onChange={handleChangeInput}
+                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                >
+                  <option value="">Select</option>
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+                {errors.status && (
+                  <span className="text-red-700">{errors.status}</span>
                 )}
               </label>
               <div className="flex items-center gap-2 mt-4">

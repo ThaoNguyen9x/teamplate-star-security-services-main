@@ -14,7 +14,7 @@ const civilId_REGEX = /^[a-zA-Z0-9]{8,12}$/;
 
 const CreateEmployee = () => {
   const { pathname } = useLocation();
-  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -27,9 +27,10 @@ const CreateEmployee = () => {
     JobName: "",
     Address: "",
     PhoneNumber: "",
-    BranchId: "",
     Other: "",
     EducationId: "",
+    PositionId: "",
+    BranchId: "",
     CountryId: "",
     ProvinceId: "",
     DistrictId: "",
@@ -53,8 +54,8 @@ const CreateEmployee = () => {
   const handleChangeInput = (e) => {
     const { name, value, files } = e.target;
     if (name === "file") {
-      setValues({ ...values, file: files[0] });
-      setImage(files[0]);
+      setValues({ ...values, [name]: files[0] });
+      setImagePreview(URL.createObjectURL(files[0]));
     } else {
       setValues({ ...values, [name]: value });
     }
@@ -62,7 +63,7 @@ const CreateEmployee = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     const {
       Name,
       CivilId,
@@ -72,21 +73,21 @@ const CreateEmployee = () => {
       JobName,
       Address,
       PhoneNumber,
-      BranchId,
       Other,
       EducationId,
+      PositionId,
+      BranchId,
       CountryId,
       ProvinceId,
       DistrictId,
       IsDirector,
       IsHeadOfDepartment,
       ManagerId,
-      PositionId,
       file,
     } = values;
-  
+
     let newErrors = {};
-  
+
     // Validate inputs
     if (!Name) newErrors.Name = "Name is required.";
     if (!CivilId) newErrors.CivilId = "Civil Id is required.";
@@ -98,8 +99,8 @@ const CreateEmployee = () => {
     if (!FileName) newErrors.FileName = "File name is required.";
     if (!JobName) newErrors.JobName = "Job name is required.";
     if (!Address) newErrors.Address = "Address is required.";
-    if (!IsDirector) newErrors.IsDirector = "Director is required.";
-    if (!IsHeadOfDepartment)
+    if (IsDirector === "") newErrors.IsDirector = "Director is required.";
+    if (IsHeadOfDepartment === "")
       newErrors.IsHeadOfDepartment = "Head of department is required.";
     if (!PhoneNumber) newErrors.PhoneNumber = "Phone number is required.";
     else if (!phone_REGEX.test(PhoneNumber))
@@ -110,18 +111,18 @@ const CreateEmployee = () => {
     if (!CountryId) newErrors.CountryId = "Country is required.";
     if (!ProvinceId) newErrors.ProvinceId = "Province is required.";
     if (!DistrictId) newErrors.DistrictId = "District is required.";
-  
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       setTimeout(() => setErrors({}), 5000);
       return;
     }
-  
+
     setErrors({});
     setLoading(true);
-  
+
     try {
-      const employeeData = {
+      await EmployeeService.createEmployee(
         Name,
         CivilId,
         Gender,
@@ -130,20 +131,18 @@ const CreateEmployee = () => {
         JobName,
         Address,
         PhoneNumber,
-        BranchId,
         Other,
         EducationId,
+        PositionId,
+        BranchId,
         CountryId,
         ProvinceId,
         DistrictId,
         IsDirector,
         IsHeadOfDepartment,
         ManagerId,
-        PositionId,
-        file,
-      };
-  
-      await EmployeeService.createEmployee(employeeData);
+        file
+      );
       setValues({
         Name: "",
         CivilId: "",
@@ -153,16 +152,16 @@ const CreateEmployee = () => {
         JobName: "",
         Address: "",
         PhoneNumber: "",
-        BranchId: "",
         Other: "",
         EducationId: "",
+        PositionId: "",
+        BranchId: "",
         CountryId: "",
         ProvinceId: "",
         DistrictId: "",
         IsDirector: "",
         IsHeadOfDepartment: "",
         ManagerId: "",
-        PositionId: "",
         file: null,
       });
       toast.success("Create employee successfully.");
@@ -175,7 +174,7 @@ const CreateEmployee = () => {
     } finally {
       setLoading(false);
     }
-  };  
+  };
 
   useEffect(() => {
     fetchAllData();
@@ -385,7 +384,7 @@ const CreateEmployee = () => {
               <label>
                 <img
                   className="h-[10rem] w-[10rem] object-cover rounded-full"
-                  src={image ? URL.createObjectURL(image) : no_avatar}
+                  src={imagePreview ? imagePreview : no_avatar}
                   alt="Current profile photo"
                 />
                 <input

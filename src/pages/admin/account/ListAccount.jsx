@@ -17,6 +17,7 @@ const paginationComponentOptions = {
 const ListAccount = () => {
   const [accounts, setAccounts] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [nots, setNots] = useState([]);
   const [loading, setLoading] = useState(false);
   const [remove, setRemove] = useState(false);
   const [currentId, setCurrentId] = useState(null);
@@ -51,12 +52,14 @@ const ListAccount = () => {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const [accountsData, employeesData] = await Promise.all([
+      const [accountsData, notCreateData, employeesData] = await Promise.all([
         AccountService.getAllAccounts(),
+        AccountService.getNotCreate(),
         EmployeeService.getAllEmployees(),
       ]);
 
       setAccounts(accountsData || []);
+      setNots(notCreateData || []);
       setEmployees(employeesData || []);
     } catch (error) {
       toast.error("Failed to fetch data.");
@@ -65,15 +68,15 @@ const ListAccount = () => {
     }
   };
 
-  const handleEditClick = useCallback((id, fullname, employeeId) => {
-    setEditItem({ id, fullname, employeeId, model: "account" });
+  const handleEditClick = useCallback((id, fullname) => {
+    setEditItem({ id, fullname, model: "account" });
   }, []);
 
   const handleUpdate = useCallback(async () => {
     setLoading(true);
     try {
-      const { id, fullname, employeeId } = editItem;
-      await AccountService.updateAccount(id, fullname, employeeId);
+      const { id, fullname } = editItem;
+      await AccountService.updateAccount(id, fullname);
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
@@ -90,13 +93,14 @@ const ListAccount = () => {
     setCurrentId(id);
     setEditItem((prevState) => ({ ...prevState, model }));
   }, []);
+  
 
   const handleDelete = useCallback(async () => {
     setLoading(true);
     try {
-      await AccountService.deleteAccount(currentId);
+      await AccountService.deleteAccount(currentId); 
       setAccounts((prevAccounts) =>
-        prevAccounts.filter((c) => c.Id !== currentId)
+        prevAccounts.filter((account) => account.Id !== currentId) 
       );
       toast.success("Deleted successfully.");
     } catch (error) {
@@ -105,20 +109,15 @@ const ListAccount = () => {
     } finally {
       setLoading(false);
       setRemove(false);
+      setCurrentId(null); 
       setEditItem({ id: "", fullname: "", model: "account" });
     }
   }, [currentId]);
-
-  const getEmployeesOptions = () => {
-    return employees.map((p) => (
-      <option key={p.id} value={p.id}>
-        {p.name}
-      </option>
-    ));
-  };
+  
+  
 
   const getEmployeeName = (row) => {
-    return employees.find((c) => c.Id === row.employeeID)?.name || "N/A";
+    return employees.find((c) => c.Id === row.employeeID)?.name;
   };
 
   const getName = (row) => row.fullName || "";
@@ -134,7 +133,7 @@ const ListAccount = () => {
         name: "Name",
         selector: (row) => getName(row),
         cell: (row) =>
-          editItem.id === row.Id && editItem.model === "account" ? (
+          editItem.id === row.id && editItem.model === "account" ? (
             <input
               type="text"
               value={editItem.fullname}
@@ -159,24 +158,6 @@ const ListAccount = () => {
       {
         name: "Employee",
         selector: (row) => getEmployeeName(row),
-        cell: (row) =>
-          editItem.id === row.Id && editItem.model === "account" ? (
-            <select
-              value={editItem.employeeId}
-              onChange={(e) => {
-                setEditItem((prevState) => ({
-                  ...prevState,
-                  employeeId: e.target.value,
-                }));
-              }}
-              className="border px-3 py-2 rounded-md"
-            >
-              <option value="">Select</option>
-              {getEmployeesOptions()}
-            </select>
-          ) : (
-            getEmployeeName(row)
-          ),
         sortable: true,
       },
       {
@@ -309,7 +290,7 @@ const ListAccount = () => {
         </div>
 
         <div className="grid p-5 bg-gray-100 rounded-md">
-          <div key="account">
+          <div className="w-full overflow-x-scroll">
             <div className="flex items-center justify-end">
               <input
                 type="text"
@@ -454,9 +435,9 @@ const ListAccount = () => {
                   className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
                 >
                   <option value="">Select</option>
-                  {employees.map((employee) => (
-                    <option key={employee.id} value={employee.id}>
-                      {employee.name}
+                  {nots.map((not) => (
+                    <option key={not.id} value={not.id}>
+                      {not.name}
                     </option>
                   ))}
                 </select>

@@ -99,7 +99,7 @@ const updateAccount = async (id, name) => {
 
 const deleteAccount = async (id) => {
   try {
-    const response = await axios.delete(`/authencation/delete/${id}`, {
+    const response = await axios.delete(`/account/delete/${id}`, {
       id,
     });
 
@@ -120,12 +120,22 @@ const deleteAccount = async (id) => {
   }
 };
 
+const getNotCreate = async () => {
+  try {
+    let response = await axios.get("/account/not-create");
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
 const AccountService = {
   getAllAccounts,
   createAccount,
   getByIdAccount,
   updateAccount,
   deleteAccount,
+  getNotCreate
 };
 
 export default AccountService;

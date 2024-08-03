@@ -125,16 +125,16 @@ const EditEmployee = () => {
       JobName,
       Address,
       PhoneNumber,
-      BranchId,
       Other,
       EducationId,
+      PositionId,
+      BranchId,
       CountryId,
       ProvinceId,
       DistrictId,
       IsDirector,
       IsHeadOfDepartment,
       ManagerId,
-      PositionId,
       file,
     } = values;
 
@@ -187,16 +187,16 @@ const EditEmployee = () => {
         JobName,
         Address,
         PhoneNumber,
-        BranchId,
         Other,
         EducationId,
+        PositionId,
+        BranchId,
         CountryId,
         ProvinceId,
         DistrictId,
         IsDirector,
         IsHeadOfDepartment,
         ManagerId,
-        PositionId,
         file
       );
 
@@ -262,13 +262,43 @@ const EditEmployee = () => {
 
   const inputFields = [
     { label: "Name", type: "text", value: "Name", placeholder: "Enter name" },
-    { label: "Civil Id", type: "text", value: "CivilId", placeholder: "Enter civil id" },
+    {
+      label: "Civil Id",
+      type: "text",
+      value: "CivilId",
+      placeholder: "Enter civil id",
+    },
     { label: "Birthday", type: "date", value: "Birthday" },
-    { label: "File Name", type: "text", value: "FileName", placeholder: "Enter file name" },
-    { label: "Job Name", type: "text", value: "JobName", placeholder: "Enter job name" },
-    { label: "Phone Number", type: "text", value: "PhoneNumber", placeholder: "Enter phone number" },
-    { label: "Address", type: "text", value: "Address", placeholder: "Enter address" },
-    { label: "Other", type: "text", value: "Other", placeholder: "Enter other details" },
+    {
+      label: "File Name",
+      type: "text",
+      value: "FileName",
+      placeholder: "Enter file name",
+    },
+    {
+      label: "Job Name",
+      type: "text",
+      value: "JobName",
+      placeholder: "Enter job name",
+    },
+    {
+      label: "Phone Number",
+      type: "text",
+      value: "PhoneNumber",
+      placeholder: "Enter phone number",
+    },
+    {
+      label: "Address",
+      type: "text",
+      value: "Address",
+      placeholder: "Enter address",
+    },
+    {
+      label: "Other",
+      type: "text",
+      value: "Other",
+      placeholder: "Enter other details",
+    },
   ];
 
   const selectFields = [
@@ -404,7 +434,7 @@ const EditEmployee = () => {
             </div>
             <div className="sm:col-span-8">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4">
-              {inputFields.map((item, index) => (
+                {inputFields.map((item, index) => (
                   <label
                     className={`${
                       item.full ? "xl:col-span-2 col-span-1" : "col-span-1"
@@ -429,8 +459,8 @@ const EditEmployee = () => {
                 ))}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4">
-              {selectFields.map((item, index) => (
-                    <label className="block" key={index}>
+                {selectFields.map((item, index) => (
+                  <label className="block" key={index}>
                     <span className="block font-medium text-primary">
                       {item.label}:
                     </span>

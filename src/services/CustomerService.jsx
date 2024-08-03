@@ -14,16 +14,18 @@ const getAllCustomers = async () => {
 };
 
 const createCustomer = async (
-  CustomerName,
+  Name,
   Email,
   Phone,
   file,
-  EmployeeSupports
+  EmployeeIds,
+  CashServiceId,
+  ServiceId
 ) => {
   try {
     const response = await axios.post(
       "/customers",
-      { CustomerName, Email, Phone, file, EmployeeSupports },
+      { Name, Email, Phone, file, EmployeeIds, CashServiceId, ServiceId },
       {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -50,7 +52,7 @@ const createCustomer = async (
 
 const getByIdCustomer = async (id) => {
   try {
-    const response = await axios.get(`/authencation/single/${id}`);
+    const response = await axios.get(`/customers/${id}`);
 
     if (!response.data.flag) {
       throw new Error(response.data.message || "An unknown error occurred");
@@ -69,13 +71,25 @@ const getByIdCustomer = async (id) => {
   }
 };
 
-const updateCustomer = async (id, name) => {
+const updateCustomer = async (
+  id,
+  Name,
+  Email,
+  Phone,
+  EmployeeIds,
+  ServiceIds,
+  file
+) => {
   try {
     const response = await axios.post(
-      `/authencation/update`,
+      `/customers/${id}`,
       {
-        id,
-        name,
+        Name,
+        Email,
+        Phone,
+        EmployeeIds,
+        ServiceIds,
+        file,
       },
       {
         headers: {
