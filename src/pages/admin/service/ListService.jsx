@@ -4,6 +4,7 @@ import Loading from "../../../components/Loading";
 import Delete from "../../../components/admin/Delete";
 import DataTable from "react-data-table-component";
 import ServicesService from "../../../services/ServicesService";
+import { no_avatar } from "../../../assets";
 
 const paginationComponentOptions = {
   rowsPerPageText: "Rows per page",
@@ -18,16 +19,21 @@ const ListService = () => {
     name: "",
     description: "",
     price: "",
+    file: null,
+    status: "",
   });
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [remove, setRemove] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
   const [currentId, setCurrentId] = useState(null);
   const [editItem, setEditItem] = useState({
     id: "",
     name: "",
     description: "",
     price: "",
+    file: "",
+    status: "",
     model: "service",
   });
   const [searchQuery, setSearchQuery] = useState({ service: "" });
@@ -54,8 +60,16 @@ const ListService = () => {
   };
 
   const handleEditClick = useCallback(
-    (id, name, description, price, isActive) => {
-      setEditItem({ id, name, description, price, isActive, model: "service" });
+    (id, name, description, price, file, status) => {
+      setEditItem({
+        id,
+        name,
+        description,
+        price,
+        file,
+        status,
+        model: "service",
+      });
     },
     []
   );
@@ -64,7 +78,8 @@ const ListService = () => {
     if (
       !editItem.name ||
       !editItem.description ||
-      !editItem.price 
+      !editItem.price ||
+      !editItem.status
     ) {
       toast.error("Please fill out all required fields.");
       return;
@@ -73,17 +88,19 @@ const ListService = () => {
     setLoading(true);
 
     try {
-      const { id, name, description, price } = editItem;
+      const { id, name, description, price, file, status } = editItem;
       await ServicesService.updateService(
         id,
         name,
         description,
         price,
+        file,
+        status
       );
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      toast.error("Failed to update data.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setEditItem({
@@ -109,12 +126,26 @@ const ListService = () => {
       await fetchAllData();
       handleCloseModal();
     } catch (error) {
-      toast.error("Failed to delete data.");
+      toast.error("Failed to delete.");
     } finally {
       setLoading(false);
       setRemove(false);
     }
   }, [currentId]);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditItem((prev) => ({
+          ...prev,
+          file: reader.result,
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const renderColumns = useCallback(
     (model) => [
@@ -187,6 +218,56 @@ const ListService = () => {
         sortable: true,
       },
       {
+        name: "Image",
+        selector: (row) => row.image || "",
+        cell: (row) =>
+          editItem.id === row.id && editItem.model === model ? (
+            <label>
+              <img
+                src={editItem.file || row.image || no_avatar}
+                alt=""
+                className="w-12 h-12 rounded-full object-cover"
+              />
+              <input
+                type="file"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </label>
+          ) : (
+            <img
+              src={row.image || no_avatar}
+              alt=""
+              className="w-12 h-12 rounded-full object-cover"
+            />
+          ),
+        sortable: true,
+      },
+      {
+        name: "Status",
+        selector: (row) => row.status || "",
+        cell: (row) =>
+          editItem.id === row.id && editItem.model === model ? (
+            <select
+              value={editItem.status}
+              onChange={(e) =>
+                setEditItem((prevState) => ({
+                  ...prevState,
+                  status: e.target.value,
+                }))
+              }
+              className="border px-2 py-1 rounded-md outline-none"
+            >
+              <option value="">Select</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          ) : (
+            row.status || ""
+          ),
+        sortable: true,
+      },
+      {
         name: "Actions",
         cell: (row) => (
           <div className="flex items-center gap-2 whitespace-nowrap">
@@ -205,7 +286,8 @@ const ListService = () => {
                       name: "",
                       description: "",
                       price: "",
-                      isActive: "",
+                      file: "",
+                      status: "",
                       model: "service",
                     })
                   }
@@ -223,7 +305,9 @@ const ListService = () => {
                       row.name,
                       row.description,
                       row.price,
-                      row.isActive
+                      row.file,
+                      row.status,
+                      model
                     )
                   }
                   className="px-3 py-2 border border-blue-950 text-blue-950 rounded-md"
@@ -257,18 +341,21 @@ const ListService = () => {
   const handleCloseModal = () => {
     setShowModal(false);
     setValues("");
+    setImagePreview(null);
     setErrors({});
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { serviceName, description, price, isActive } = values;
+    const { serviceName, description, price, file, status } = values;
     let newErrors = {};
 
     if (!serviceName) newErrors.serviceName = "Mandatory.";
     if (!price) newErrors.price = "Mandatory.";
     if (!description) newErrors.description = "Mandatory.";
+    if (!file) newErrors.file = "Mandatory.";
+    if (!status) newErrors.status = "Mandatory.";
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -284,24 +371,27 @@ const ListService = () => {
         serviceName,
         description,
         price,
-        isActive
+        file,
+        status
       );
       handleCloseModal();
-      toast.success("Service created successfully.");
+      toast.success("Created successfully.");
       await fetchAllData();
     } catch (error) {
-      toast.error("Failed to create service.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleChangeInput = (e) => {
-    const { name, value } = e.target;
-    setValues((prevValues) => ({
-      ...prevValues,
-      [name]: value,
-    }));
+    const { name, value, files } = e.target;
+    if (name === "file") {
+      setValues({ ...values, file: files[0] });
+      setImagePreview(files[0]);
+    } else {
+      setValues({ ...values, [name]: value });
+    }
   };
 
   return (
@@ -349,6 +439,7 @@ const ListService = () => {
                 cells: {
                   style: {
                     background: "#f3f4f6",
+                    padding: "12px 0",
                   },
                 },
                 pagination: {
@@ -420,6 +511,49 @@ const ListService = () => {
                 />
                 {errors.price && (
                   <span className="text-red-700">{errors.price}</span>
+                )}
+              </label>
+              <label className="block mb-1">
+                <span className="block font-medium text-primary mb-1">
+                  Image:
+                </span>
+                <label className="flex items-center justify-center">
+                  <img
+                    className="h-[4rem] w-[4rem] object-cover rounded-full"
+                    src={
+                      imagePreview
+                        ? URL.createObjectURL(imagePreview)
+                        : no_avatar
+                    }
+                    alt="Current profile photo"
+                  />
+                  <input
+                    type="file"
+                    name="file"
+                    className="hidden"
+                    onChange={handleChangeInput}
+                  />
+                </label>
+                {errors.file && (
+                  <span className="text-red-700">{errors.file}</span>
+                )}
+              </label>
+              <label className="block mb-1">
+                <span className="block font-medium text-primary mb-1">
+                  Status:
+                </span>
+                <select
+                  name="status"
+                  value={values.status}
+                  onChange={handleChangeInput}
+                  className="px-3 py-2 border shadow-sm border-primary placeholder-slate-400 focus:outline-none block w-full rounded-lg sm:text-sm"
+                >
+                  <option value="">Select</option>
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                </select>
+                {errors.status && (
+                  <span className="text-red-700">{errors.status}</span>
                 )}
               </label>
               <div className="flex items-center gap-2 mt-4">

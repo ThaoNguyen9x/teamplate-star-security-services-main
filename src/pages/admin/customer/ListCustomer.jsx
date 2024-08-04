@@ -98,7 +98,7 @@ const ListCustomer = () => {
       await fetchAllData();
       toast.success("Updated successfully.");
     } catch (error) {
-      toast.error("Failed to update data.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
       setEditItem({
@@ -348,10 +348,10 @@ const ListCustomer = () => {
         ServiceId
       );
       handleCloseModal();
-      toast.success("Customer created successfully.");
+      toast.success("Created successfully.");
       await fetchAllData();
     } catch (error) {
-      toast.error("Failed to create customer.");
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }

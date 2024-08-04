@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { AuthContext } from "../../../context/AuthContent";
 
 const SidebarData = ({ toggle }) => {
   const data = [
@@ -59,47 +60,47 @@ const SidebarData = ({ toggle }) => {
         {
           title: "Contract",
           path: "/dashboard/contract",
-          icon: <i className="bi bi-chevron-contract"></i>
+          icon: <i className="bi bi-chevron-contract"></i>,
         },
         {
           title: "Candidates",
           path: "/dashboard/candidates",
-          icon: <i className="bi bi-upc-scan"></i>
+          icon: <i className="bi bi-upc-scan"></i>,
         },
         {
           title: "Interview",
           path: "/dashboard/interview",
-          icon: <i className="bi bi-bookmarks"></i>
+          icon: <i className="bi bi-bookmarks"></i>,
         },
         {
           title: "Sanction",
           path: "/dashboard/sanction",
-          icon: <i className="bi bi-border-style"></i>
+          icon: <i className="bi bi-border-style"></i>,
         },
         {
           title: "Training Histories",
           path: "/dashboard/training-histories",
-          icon: <i className="bi bi-cast"></i>
+          icon: <i className="bi bi-cast"></i>,
         },
         {
           title: "Overtime",
           path: "/dashboard/over-time",
-          icon: <i className="bi bi-upc-scan"></i>
+          icon: <i className="bi bi-upc-scan"></i>,
         },
         {
           title: "Testimonial",
           path: "/dashboard/testimonial",
-          icon: <i className="bi bi-check-all"></i>
+          icon: <i className="bi bi-check-all"></i>,
         },
         {
           title: "Vacation",
           path: "/dashboard/vacation",
-          icon: <i className="bi bi-clipboard"></i>
+          icon: <i className="bi bi-clipboard"></i>,
         },
         {
           title: "Insurance",
           path: "/dashboard/insurance",
-          icon: <i className="bi bi-command"></i>
+          icon: <i className="bi bi-command"></i>,
         },
         {
           title: "General",
@@ -125,6 +126,7 @@ const SidebarData = ({ toggle }) => {
     },
   ];
 
+  const { handleLogout } = useContext(AuthContext);
   const { pathname } = useLocation();
 
   return (
@@ -160,7 +162,12 @@ const SidebarData = ({ toggle }) => {
           </li>
         ))}
       </ul>
-      <button className="flex items-center mx-2 p-2 gap-5 hover:bg-white hover:text-blue-950 rounded-md">
+      <button
+        className="flex items-center mx-2 p-2 gap-5 hover:bg-white hover:text-blue-950 rounded-md"
+        onClick={() => {
+          handleLogout();
+        }}
+      >
         <div className="text-2xl">
           <i className="bi bi-box-arrow-right"></i>
         </div>
